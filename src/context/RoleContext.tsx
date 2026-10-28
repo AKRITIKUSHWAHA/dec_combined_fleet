@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserRole } from '../types';
+import { useAuth } from './AuthContext';
 
 export interface RoleConfig {
   id: UserRole;
@@ -67,7 +68,15 @@ interface RoleContextType {
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentRole, setCurrentRole] = useState<UserRole>('owner_admin');
+  const { role: authRole } = useAuth();
+  const [currentRole, setCurrentRole] = useState<UserRole>(authRole || 'owner_admin');
+
+  // Sync with auth role changes (e.g. upon login or account switch)
+  useEffect(() => {
+    if (authRole) {
+      setCurrentRole(authRole);
+    }
+  }, [authRole]);
 
   const roleConfig = ROLE_CONFIGS[currentRole];
   const canViewDBS = currentRole === 'owner_admin' || currentRole === 'hr_vetting';

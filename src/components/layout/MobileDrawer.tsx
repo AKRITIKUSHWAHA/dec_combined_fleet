@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
 import { useCompany } from '../../context/CompanyContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutDashboard, 
   MapPin, 
@@ -17,7 +18,8 @@ import {
   Smartphone,
   X,
   Building2,
-  Palette
+  Palette,
+  LogOut
 } from 'lucide-react';
 
 interface MobileDrawerProps {
@@ -28,6 +30,7 @@ interface MobileDrawerProps {
 export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) => {
   const { currentRole } = useRole();
   const { subCompanies, selectedCompanyId, setSelectedCompanyId } = useCompany();
+  const { user, requestLogout } = useAuth();
 
   if (!isOpen) return null;
 
@@ -47,6 +50,11 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
   ];
 
   const visibleItems = navItems.filter(item => item.roles.includes(currentRole));
+
+  const handleLogoutClick = () => {
+    onClose();
+    requestLogout();
+  };
 
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
@@ -74,6 +82,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
           <button 
             onClick={onClose}
             className="p-2 rounded-[12px] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+            aria-label="Close navigation"
           >
             <X className="w-5 h-5" />
           </button>
@@ -146,7 +155,27 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
           </div>
         </div>
 
+        {/* Fixed Logout Button at bottom of Mobile Drawer */}
+        <div className="pt-3 border-t border-[var(--border)] space-y-2">
+          <button
+            type="button"
+            onClick={handleLogoutClick}
+            className="w-full flex items-center justify-between px-3.5 py-3 rounded-[14px] text-xs font-heading font-bold text-[#FF5D6C] hover:bg-[#FF5D6C]/15 border border-[#FF5D6C]/40 transition-all duration-180 min-h-[48px]"
+            aria-label="Log Out"
+          >
+            <div className="flex items-center gap-2.5">
+              <LogOut className="w-4 h-4 text-[#FF5D6C]" />
+              <span>Log Out</span>
+            </div>
+            <span className="text-[10px] font-mono text-[var(--text-muted)] truncate max-w-[120px]">
+              {user?.name || 'Staff'}
+            </span>
+          </button>
+        </div>
+
       </div>
     </div>
   );
 };
+
+export default MobileDrawer;

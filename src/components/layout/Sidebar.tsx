@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutDashboard, 
   MapPin, 
@@ -17,7 +18,8 @@ import {
   Smartphone,
   ChevronRight,
   Lock,
-  Palette
+  Palette,
+  LogOut
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,6 +29,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = () => {
   const { currentRole, canViewDBS } = useRole();
   const { bookings, defects, vehicles } = useData();
+  const { user, requestLogout } = useAuth();
 
   // Badges calculation
   const unallocatedJobs = bookings.filter(b => b.status === 'unallocated').length;
@@ -237,11 +240,34 @@ export const Sidebar: React.FC<SidebarProps> = () => {
         })}
       </div>
 
-      {/* Footer System Info */}
-      <div className="p-3 border-t border-[var(--border)] text-[11px] text-[var(--text-muted)] flex items-center justify-between">
-        <span>UK DVSA / DVLA Live</span>
-        <span className="w-2.5 h-2.5 rounded-full bg-[#34D399] animate-pulse" title="System operational" />
+      {/* FIXED LOGOUT BUTTON (Prominent at the bottom of the sidebar) */}
+      <div className="p-3 border-t border-[var(--border)] bg-[var(--surface)] space-y-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => requestLogout()}
+          className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-[14px] text-xs font-heading font-semibold text-[#FF5D6C] hover:bg-[#FF5D6C]/15 border border-[#FF5D6C]/30 hover:border-[#FF5D6C]/60 transition-all duration-180 group nr-focus cursor-pointer"
+          aria-label="Log out of DEC Fleet System"
+        >
+          <div className="flex items-center gap-2.5">
+            <LogOut className="w-4 h-4 text-[#FF5D6C] group-hover:scale-110 transition-transform duration-180 shrink-0" />
+            <span className="font-bold">Log Out</span>
+          </div>
+          <span className="text-[10px] font-mono text-[var(--text-muted)] group-hover:text-[#FF5D6C] truncate max-w-[80px]">
+            {user?.name ? user.name.split(' ')[0] : 'Sign Out'}
+          </span>
+        </button>
+
+        {/* Footer System Status Info */}
+        <div className="px-1 text-[10px] text-[var(--text-muted)] flex items-center justify-between">
+          <span>UK DVSA / DVLA Live</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#34D399] animate-pulse" />
+            <span className="font-mono text-[9px] uppercase tracking-wider text-[#34D399] font-bold">Online</span>
+          </span>
+        </div>
       </div>
     </aside>
   );
 };
+
+export default Sidebar;
