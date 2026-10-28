@@ -45,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
   return (
     <>
       <header className="sticky top-0 z-40 bg-[var(--surface)] border-b border-[var(--border)] transition-colors duration-180">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
 
             {/* Left: Mobile hamburger & Logo with Lime Road Dash */}
