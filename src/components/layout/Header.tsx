@@ -17,7 +17,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Smartphone,
-  Palette,
   Clock,
   LogOut,
   User as UserIcon
@@ -108,16 +107,6 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
 
             {/* Right Action Tools: All items unified at 36px height (h-9) */}
             <div className="flex items-center gap-2 shrink-0">
-
-              {/* Design System Specimen Link */}
-              <Link
-                to="/design-system"
-                className="hidden xl:inline-flex items-center gap-1.5 px-3 h-9 rounded-[12px] text-xs font-heading font-semibold bg-[#3FE0C5]/10 text-[#0B2B26] dark:text-[#3FE0C5] border border-[#3FE0C5]/30 hover:bg-[#3FE0C5]/20 transition-all duration-180 whitespace-nowrap nr-focus"
-                title="View Night Road Design System Specimen"
-              >
-                <Palette className="w-3.5 h-3.5 text-[#3FE0C5] shrink-0" />
-                <span>Design System</span>
-              </Link>
 
               {/* Quick Staff Cockpit Shortcut */}
               {(currentRole === 'driver' || currentRole === 'pa') && (
