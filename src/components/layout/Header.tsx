@@ -36,7 +36,6 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
   const { notifications, markNotificationAsRead } = useData();
   const { user, requestLogout, toastMessage } = useAuth();
 
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -130,83 +129,6 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
                   <span className="hidden sm:inline">Active App</span>
                 </Link>
               )}
-
-              {/* Persona / Role Switcher Pill (Single line, no 2-line wraps) */}
-              <div className="relative shrink-0">
-                <button
-                  onClick={() => setShowRoleMenu(!showRoleMenu)}
-                  className={`flex items-center gap-1.5 px-2.5 sm:px-3 h-9 rounded-[12px] text-xs font-heading font-semibold border transition-all duration-180 whitespace-nowrap nr-focus ${roleConfig.badgeColor}`}
-                  title="Switch test persona"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden sm:inline font-bold whitespace-nowrap">
-                    {getCleanRoleLabel(currentRole)}
-                  </span>
-                  <span className="sm:hidden font-bold">
-                    {currentRole.substring(0, 4).toUpperCase()}
-                  </span>
-                  <ChevronDown className="w-3 h-3 ml-0.5 opacity-70 shrink-0" />
-                </button>
-
-                {/* Role Switcher Dropdown */}
-                {showRoleMenu && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowRoleMenu(false)}
-                    />
-                    <div className="absolute right-0 mt-2 w-72 bg-[var(--surface)] text-[var(--text)] rounded-[18px] shadow-2xl border border-[var(--border)] py-2 z-50 text-left animate-in fade-in duration-180">
-                      <div className="px-3.5 py-2 border-b border-[var(--border)]">
-                        <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                          Select Active Persona / Role
-                        </p>
-                        <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                          Simulates role permissions &amp; data gates
-                        </p>
-                      </div>
-
-                      <div className="max-h-80 overflow-y-auto nr-scrollbar p-1.5 space-y-1">
-                        {(Object.keys(ROLE_CONFIGS) as UserRole[]).map((rKey) => {
-                          const r = ROLE_CONFIGS[rKey];
-                          const isSelected = currentRole === rKey;
-                          return (
-                            <button
-                              key={rKey}
-                              onClick={() => {
-                                setCurrentRole(rKey);
-                                setShowRoleMenu(false);
-                              }}
-                              className={`w-full text-left px-3 py-2.5 rounded-[12px] text-xs transition-all duration-180 flex items-start justify-between ${
-                                isSelected
-                                  ? 'bg-[#B6F23C]/15 text-[var(--text)] font-bold border border-[#B6F23C]/40'
-                                  : 'hover:bg-[var(--surface-2)] text-[var(--text)]'
-                              }`}
-                            >
-                              <div>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="font-heading font-semibold">{r.label}</span>
-                                  {r.isMobileCockpit && (
-                                    <span className="text-[10px] bg-[var(--surface-2)] px-1.5 py-0.2 rounded font-mono text-[var(--text-muted)]">
-                                      App
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[10px] text-[var(--text-muted)] mt-0.5 font-normal line-clamp-1">
-                                  {r.description}
-                                </p>
-                              </div>
-                              {isSelected && <CheckCircle2 className="w-4 h-4 text-[#B6F23C] shrink-0 mt-0.5" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Subtle divider */}
-              <div className="hidden sm:block h-5 w-px bg-[var(--border)] mx-0.5" />
 
               {/* Notifications Dropdown */}
               <div className="relative shrink-0">
@@ -328,6 +250,36 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
                           <span className="text-[10px] font-mono text-[#3FE0C5]">
                             {user?.badgeNumber || 'VERIFIED'}
                           </span>
+                        </div>
+                      </div>
+
+                      {/* Role / Persona Switcher Section inside User Menu */}
+                      <div className="p-1.5 border-b border-[var(--border)]">
+                        <p className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)] font-bold">
+                          Switch Active Role / Persona
+                        </p>
+                        <div className="max-h-44 overflow-y-auto nr-scrollbar space-y-0.5">
+                          {(Object.keys(ROLE_CONFIGS) as UserRole[]).map((rKey) => {
+                            const r = ROLE_CONFIGS[rKey];
+                            const isSelected = currentRole === rKey;
+                            return (
+                              <button
+                                key={rKey}
+                                onClick={() => {
+                                  setCurrentRole(rKey);
+                                  setShowUserMenu(false);
+                                }}
+                                className={`w-full text-left px-2.5 py-1.5 rounded-[10px] text-xs transition flex items-center justify-between ${
+                                  isSelected
+                                    ? 'bg-[#B6F23C]/15 text-[var(--text)] font-bold'
+                                    : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                                }`}
+                              >
+                                <span className="truncate">{r.label}</span>
+                                {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#B6F23C] shrink-0 ml-1" />}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
