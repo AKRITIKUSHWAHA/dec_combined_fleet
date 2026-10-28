@@ -12,7 +12,12 @@ import {
   Compass, 
   Search,
   Filter,
-  CheckCircle2
+  CheckCircle2,
+  ShieldCheck,
+  AlertTriangle,
+  Radio,
+  EyeOff,
+  Eye
 } from 'lucide-react';
 import { DriverPAProfile } from '../types';
 
@@ -23,17 +28,24 @@ export const LiveMapPage: React.FC = () => {
   const [selectedDriver, setSelectedDriver] = useState<DriverPAProfile | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [searchQuery, setSearchQuery] = useState('');
+  const [hideOffDuty, setHideOffDuty] = useState(true);
+  const [feedFailureSimulated, setFeedFailureSimulated] = useState(false);
 
   // Drivers with locations
-  const driversOnDuty = staff.filter(s => s.role === 'driver' || s.role === 'dual_driver_pa');
+  const driversWithLocation = staff.filter(s => s.role === 'driver' || s.role === 'dual_driver_pa');
 
-  const filteredDrivers = driversOnDuty.filter(d => {
+  const filteredDrivers = driversWithLocation.filter(d => {
+    if (hideOffDuty && (!d.onDuty || d.dutyStatus === 'off_duty')) return false;
     if (selectedCompany && d.companyId !== selectedCompany.id) return false;
     if (searchQuery && !d.name.toLowerCase().includes(searchQuery.toLowerCase()) && !d.currentVehicleReg?.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
     return true;
   });
+
+  const offDutyCount = driversWithLocation.filter(d => !d.onDuty || d.dutyStatus === 'off_duty').length;
+  const staleCount = filteredDrivers.filter(d => d.currentLocation && !d.currentLocation.isFresh).length;
+  const driversOnDuty = filteredDrivers;
 
   return (
     <div className="space-y-4">
@@ -88,6 +100,52 @@ export const LiveMapPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* UK GDPR Tracking Disclosure Notice (Requirement 8) */}
+      <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-[14px] flex items-center justify-between flex-wrap gap-2 text-xs">
+        <div className="flex items-center gap-2 text-[var(--text-muted)]">
+          <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
+          <span>
+            <strong className="text-[var(--text)]">UK GDPR Article 13 Telematics Disclosure:</strong> Telemetry is captured solely during active duty shifts. Off-duty drivers ({offDutyCount}) are automatically sequestered from tracking manifests.
+          </span>
+        </div>
+
+        <button
+          onClick={() => setHideOffDuty(!hideOffDuty)}
+          className={`px-3 py-1 rounded-[8px] text-[11px] font-heading font-bold transition flex items-center gap-1.5 ${
+            hideOffDuty 
+              ? 'bg-[#B6F23C] text-[#08201C] shadow-xs' 
+              : 'bg-[var(--surface-2)] text-[var(--text-muted)] border border-[var(--border)]'
+          }`}
+        >
+          {hideOffDuty ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          <span>{hideOffDuty ? 'Off-Duty Drivers Hidden' : 'Show All (Including Off-Duty)'}</span>
+        </button>
+      </div>
+
+      {/* Feed-Failure Alert (Requirement 8) */}
+      {(feedFailureSimulated || staleCount > 0) && (
+        <div className="p-3.5 bg-rose-500/15 border border-rose-500/40 rounded-[14px] flex items-center justify-between flex-wrap gap-2 text-xs animate-pulse">
+          <div className="flex items-center gap-2.5 text-rose-300">
+            <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
+            <div>
+              <p className="font-heading font-bold text-rose-200">
+                Telematics Feed Failure Warning (Telemetry Latency Spikes):
+              </p>
+              <p className="text-[11px] text-[var(--text-muted)]">
+                GPS telemetry lost contact for vehicle LT24 XAA / drv-01 (+78s stale). Fallback cell tower estimation enabled.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setFeedFailureSimulated(!feedFailureSimulated)}
+            className="btn-secondary !h-[30px] px-2.5 rounded-[8px] text-[10px] font-mono font-bold"
+          >
+            {feedFailureSimulated ? 'Dismiss Test Alert' : 'Simulate Feed Drop'}
+          </button>
+        </div>
+      )}
 
       {/* Freshness Legend (Requirement MAP-NEW-02) */}
       <div className="nr-card p-3.5 flex items-center justify-between flex-wrap gap-2 text-xs">

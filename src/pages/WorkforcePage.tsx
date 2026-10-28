@@ -12,9 +12,11 @@ import {
   AlertTriangle,
   CheckCircle2,
   Lock,
-  PlusCircle
+  PlusCircle,
+  UserX
 } from 'lucide-react';
 import { DriverPAProfile } from '../types';
+import { OffboardingModal } from '../components/workforce/OffboardingModal';
 
 export const WorkforcePage: React.FC = () => {
   const { staff } = useData();
@@ -22,6 +24,8 @@ export const WorkforcePage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'all' | 'drivers' | 'pas'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isOffboardOpen, setIsOffboardOpen] = useState(false);
+  const [offboardTargetId, setOffboardTargetId] = useState<string | undefined>(undefined);
 
   const filtered = staff.filter(s => {
     if (selectedCompany && s.companyId !== selectedCompany.id) return false;
@@ -53,7 +57,7 @@ export const WorkforcePage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Tab Selector */}
           <div className="flex bg-[var(--surface-2)] p-1 rounded-[12px] border border-[var(--border)]">
             <button
@@ -82,6 +86,15 @@ export const WorkforcePage: React.FC = () => {
             </button>
           </div>
 
+          <button
+            onClick={() => { setOffboardTargetId(undefined); setIsOffboardOpen(true); }}
+            className="btn-secondary !h-[38px] px-3.5 rounded-[10px] text-xs font-heading font-bold text-rose-400 hover:text-rose-300 border-rose-500/30 flex items-center gap-1.5 shrink-0"
+            title="Launch formal offboarding flow"
+          >
+            <UserX className="w-3.5 h-3.5 text-rose-500" />
+            <span>Offboard Staff</span>
+          </button>
+
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
             <input
@@ -89,7 +102,7 @@ export const WorkforcePage: React.FC = () => {
               placeholder="Search staff ID or name..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="nr-input !h-[42px] !pl-9 !text-xs w-36 sm:w-48"
+              className="nr-input !h-[38px] !pl-9 !text-xs w-36 sm:w-48"
             />
           </div>
         </div>
@@ -194,13 +207,21 @@ export const WorkforcePage: React.FC = () => {
               <div className="pt-3 border-t border-[var(--border)] flex gap-2">
                 <a
                   href={`tel:${person.phone}`}
-                  className="btn-secondary flex-1 !text-xs !py-1 !min-h-[42px]"
+                  className="btn-secondary flex-1 !text-xs !py-1 !min-h-[38px] flex items-center justify-center gap-1"
                 >
-                  Call
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call</span>
                 </a>
                 <button
+                  onClick={() => { setOffboardTargetId(person.id); setIsOffboardOpen(true); }}
+                  className="p-2 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition"
+                  title="Offboard staff member"
+                >
+                  <UserX className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => alert(`Full staff file for ${person.name}: Training badges, route pairings, and audit history.`)}
-                  className="btn-primary flex-1 !text-xs !py-1 !min-h-[42px]"
+                  className="btn-primary flex-1 !text-xs !py-1 !min-h-[38px]"
                 >
                   Full Profile
                 </button>
@@ -210,6 +231,13 @@ export const WorkforcePage: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Offboarding Modal */}
+      <OffboardingModal
+        isOpen={isOffboardOpen}
+        onClose={() => setIsOffboardOpen(false)}
+        preSelectedStaffId={offboardTargetId}
+      />
 
     </div>
   );

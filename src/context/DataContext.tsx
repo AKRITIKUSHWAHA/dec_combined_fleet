@@ -20,7 +20,21 @@ import {
   SchoolRoute,
   Pupil,
   AccountInvoice,
-  DriverSettlement
+  DriverSettlement,
+  SafeguardingCase,
+  SafeguardingStatus,
+  SafeguardingDecision,
+  SafeguardingDisclosure,
+  SafeguardingAttachment,
+  SystemAuditLogEntry,
+  DocumentItem,
+  PolicyAcknowledgement,
+  ExpiringShareLink,
+  SubCompanyExtended,
+  IntegrationService,
+  UserAccountItem,
+  OffboardingRecord,
+  UserRole
 } from '../types';
 import { 
   initialVehicles, 
@@ -37,6 +51,20 @@ import {
   initialInvoices,
   initialDriverSettlements
 } from '../data/mockData';
+
+import {
+  initialSafeguardingCases,
+  initialAuditLogs,
+  initialDocuments,
+  initialPolicyAcknowledgements,
+  initialSubCompaniesExtended,
+  initialIntegrations,
+  initialUserAccounts,
+  initialRolePermissionsMatrix,
+  RoleMatrixPermission
+} from '../data/mockPhase11Data';
+
+
 
 interface DataContextType {
   vehicles: Vehicle[];
@@ -107,6 +135,43 @@ interface DataContextType {
   reassignSchoolRouteTeam: (routeId: string, driverId: string, vehicleReg: string, pa1Id: string, pa2Id?: string) => void;
   markInvoicePaid: (invoiceId: string, paymentMethod: string) => void;
   disburseDriverSettlement: (settlementId: string) => void;
+
+  // Phase 11: Safeguarding, Governance, Multi-Tenancy & Integrations
+  safeguardingCases: SafeguardingCase[];
+  addSafeguardingCase: (newCase: Omit<SafeguardingCase, 'id' | 'caseNumber' | 'reportedDate'>) => SafeguardingCase;
+  updateSafeguardingStatus: (caseId: string, status: SafeguardingStatus) => void;
+  addSafeguardingDecision: (caseId: string, decision: Omit<SafeguardingDecision, 'id' | 'date'>) => void;
+  addSafeguardingDisclosure: (caseId: string, disclosure: Omit<SafeguardingDisclosure, 'id' | 'date'>) => void;
+  addSafeguardingAttachment: (caseId: string, attachment: Omit<SafeguardingAttachment, 'id' | 'uploadedAt'>) => void;
+
+  auditLogs: SystemAuditLogEntry[];
+  addAuditLogEntry: (entry: Omit<SystemAuditLogEntry, 'id' | 'timestamp'>) => void;
+
+  documents: DocumentItem[];
+  policyAcknowledgements: PolicyAcknowledgement[];
+  addDocumentItem: (doc: Omit<DocumentItem, 'id' | 'uploadedAt' | 'expiringLinks'>) => void;
+  updateDocumentVerification: (docId: string, status: 'verified' | 'rejected', verifiedBy: string) => void;
+  createExpiringShareLink: (docId: string, hoursValid: number, createdBy: string) => ExpiringShareLink;
+  revokeExpiringShareLink: (docId: string, linkId: string) => void;
+  signPolicyAcknowledgement: (policyId: string, staffId: string, signatureHash: string, ipAddress?: string) => void;
+
+  subCompaniesExtended: SubCompanyExtended[];
+  createSubCompanyExtended: (company: Omit<SubCompanyExtended, 'id' | 'assignmentHistory'>) => void;
+  updateSubCompanyExtended: (id: string, updated: Partial<SubCompanyExtended>) => void;
+  archiveSubCompanyExtended: (id: string) => void;
+  transferAssetCompany: (itemType: 'vehicle' | 'driver', itemRef: string, fromCompanyId: string, toCompanyId: string, reason: string) => void;
+
+  integrations: IntegrationService[];
+  testIntegrationPing: (id: string) => Promise<{ success: boolean; latencyMs: number }>;
+
+  userAccounts: UserAccountItem[];
+  revokeUserSession: (userId: string) => void;
+  toggleUserMfa: (userId: string) => void;
+  rolePermissionsMatrix: RoleMatrixPermission[];
+  updateRolePermission: (permissionKey: string, role: UserRole, allowed: boolean) => void;
+
+  offboardingRecords: OffboardingRecord[];
+  executeStaffOffboarding: (staffId: string, reason: string, recoveredAssets: OffboardingRecord['recoveredAssets'], initiatedBy: string) => OffboardingRecord;
 
   // Helper Checks
   checkVehicleAvailability: (vehicleId: string) => { isAvailable: boolean; reason?: string };
@@ -180,6 +245,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [schoolRoutes, setSchoolRoutes] = useState<SchoolRoute[]>(initialSchoolRoutes);
   const [accountInvoices, setAccountInvoices] = useState<AccountInvoice[]>(initialInvoices);
   const [driverSettlements, setDriverSettlements] = useState<DriverSettlement[]>(initialDriverSettlements);
+
+  // Phase 11 Governance, Safeguarding & Multi-Tenancy states
+  const [safeguardingCases, setSafeguardingCases] = useState<SafeguardingCase[]>(initialSafeguardingCases);
+  const [auditLogs, setAuditLogs] = useState<SystemAuditLogEntry[]>(initialAuditLogs);
+  const [documents, setDocuments] = useState<DocumentItem[]>(initialDocuments);
+  const [policyAcknowledgements, setPolicyAcknowledgements] = useState<PolicyAcknowledgement[]>(initialPolicyAcknowledgements);
+  const [subCompaniesExtended, setSubCompaniesExtended] = useState<SubCompanyExtended[]>(initialSubCompaniesExtended);
+  const [integrations, setIntegrations] = useState<IntegrationService[]>(initialIntegrations);
+  const [userAccounts, setUserAccounts] = useState<UserAccountItem[]>(initialUserAccounts);
+  const [rolePermissionsMatrix, setRolePermissionsMatrix] = useState<RoleMatrixPermission[]>(initialRolePermissionsMatrix);
+  const [offboardingRecords, setOffboardingRecords] = useState<OffboardingRecord[]>([]);
 
   const checkVehicleAvailability = (vehicleId: string): { isAvailable: boolean; reason?: string } => {
     const veh = vehicles.find(v => v.id === vehicleId);
@@ -1125,6 +1201,404 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   };
 
+  // Phase 11: Safeguarding Actions
+  const addSafeguardingCase = (newCase: Omit<SafeguardingCase, 'id' | 'caseNumber' | 'reportedDate'>): SafeguardingCase => {
+    const num = safeguardingCases.length + 82;
+    const caseNumber = `SG-2026-0${num}`;
+    const fullCase: SafeguardingCase = {
+      ...newCase,
+      id: `sg-case-${Date.now()}`,
+      caseNumber,
+      reportedDate: new Date().toISOString()
+    };
+    setSafeguardingCases(prev => [fullCase, ...prev]);
+
+    addAuditLogEntry({
+      actorId: 'current-user',
+      actorName: 'Safeguarding Lead',
+      actorRole: 'hr_vetting',
+      action: 'CREATE',
+      entityType: 'Safeguarding',
+      entityId: fullCase.id,
+      entityName: caseNumber,
+      isSensitive: true,
+      sensitiveTag: 'Section 47 Alert Logged',
+      ipAddress: '194.73.112.50',
+      details: `Created new safeguarding case ${caseNumber}: ${fullCase.title}`
+    });
+
+    return fullCase;
+  };
+
+  const updateSafeguardingStatus = (caseId: string, status: SafeguardingStatus) => {
+    setSafeguardingCases(prev => prev.map(c => c.id === caseId ? { ...c, status } : c));
+  };
+
+  const addSafeguardingDecision = (caseId: string, decision: Omit<SafeguardingDecision, 'id' | 'date'>) => {
+    const dec: SafeguardingDecision = {
+      ...decision,
+      id: `dec-${Date.now()}`,
+      date: new Date().toISOString()
+    };
+    setSafeguardingCases(prev => prev.map(c => {
+      if (c.id === caseId) {
+        return { ...c, decisions: [dec, ...c.decisions] };
+      }
+      return c;
+    }));
+  };
+
+  const addSafeguardingDisclosure = (caseId: string, disclosure: Omit<SafeguardingDisclosure, 'id' | 'date'>) => {
+    const disc: SafeguardingDisclosure = {
+      ...disclosure,
+      id: `disc-${Date.now()}`,
+      date: new Date().toISOString()
+    };
+    setSafeguardingCases(prev => prev.map(c => {
+      if (c.id === caseId) {
+        return { ...c, disclosures: [disc, ...c.disclosures] };
+      }
+      return c;
+    }));
+  };
+
+  const addSafeguardingAttachment = (caseId: string, attachment: Omit<SafeguardingAttachment, 'id' | 'uploadedAt'>) => {
+    const att: SafeguardingAttachment = {
+      ...attachment,
+      id: `att-${Date.now()}`,
+      uploadedAt: new Date().toISOString()
+    };
+    setSafeguardingCases(prev => prev.map(c => {
+      if (c.id === caseId) {
+        return { ...c, attachments: [...c.attachments, att] };
+      }
+      return c;
+    }));
+  };
+
+  // Phase 11: Audit Logs Actions
+  const addAuditLogEntry = (entry: Omit<SystemAuditLogEntry, 'id' | 'timestamp'>) => {
+    const newEntry: SystemAuditLogEntry = {
+      ...entry,
+      id: `aud-${Date.now()}`,
+      timestamp: new Date().toISOString()
+    };
+    setAuditLogs(prev => [newEntry, ...prev]);
+  };
+
+  // Phase 11: Document & Policy Actions
+  const addDocumentItem = (doc: Omit<DocumentItem, 'id' | 'uploadedAt' | 'expiringLinks'>) => {
+    const newDoc: DocumentItem = {
+      ...doc,
+      id: `doc-${Date.now()}`,
+      uploadedAt: new Date().toISOString(),
+      expiringLinks: []
+    };
+    setDocuments(prev => [newDoc, ...prev]);
+  };
+
+  const updateDocumentVerification = (docId: string, status: 'verified' | 'rejected', verifiedBy: string) => {
+    setDocuments(prev => prev.map(d => {
+      if (d.id === docId) {
+        return {
+          ...d,
+          verifiedStatus: status,
+          verifiedBy
+        };
+      }
+      return d;
+    }));
+  };
+
+  const createExpiringShareLink = (docId: string, hoursValid: number, createdBy: string): ExpiringShareLink => {
+    const token = `exp_tkn_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const expiresAt = new Date(Date.now() + hoursValid * 60 * 60 * 1000).toISOString();
+    const link: ExpiringShareLink = {
+      id: `link-${Date.now()}`,
+      token,
+      url: `https://vault.dec-fleet.co.uk/secure/doc-vault/${docId}?token=${token}`,
+      createdAt: new Date().toISOString(),
+      expiresAt,
+      createdBy,
+      isRevoked: false
+    };
+
+    setDocuments(prev => prev.map(d => {
+      if (d.id === docId) {
+        return { ...d, expiringLinks: [link, ...d.expiringLinks] };
+      }
+      return d;
+    }));
+
+    addAuditLogEntry({
+      actorId: 'current-user',
+      actorName: createdBy,
+      actorRole: 'owner_admin',
+      action: 'CREATE',
+      entityType: 'Document',
+      entityId: docId,
+      isSensitive: true,
+      sensitiveTag: 'Generated Pre-signed Expiring URL',
+      ipAddress: '194.73.112.45',
+      details: `Generated ${hoursValid}h temporary expiring access link for document ${docId}`
+    });
+
+    return link;
+  };
+
+  const revokeExpiringShareLink = (docId: string, linkId: string) => {
+    setDocuments(prev => prev.map(d => {
+      if (d.id === docId) {
+        return {
+          ...d,
+          expiringLinks: d.expiringLinks.map(l => l.id === linkId ? { ...l, isRevoked: true } : l)
+        };
+      }
+      return d;
+    }));
+  };
+
+  const signPolicyAcknowledgement = (policyId: string, staffId: string, signatureHash: string, ipAddress = '194.73.112.45') => {
+    setPolicyAcknowledgements(prev => prev.map(p => {
+      if (p.id === policyId && p.staffId === staffId) {
+        return {
+          ...p,
+          status: 'acknowledged',
+          acknowledgedAt: new Date().toISOString(),
+          signatureHash,
+          ipAddress
+        };
+      }
+      return p;
+    }));
+  };
+
+  // Phase 11: Sub-Company Actions
+  const createSubCompanyExtended = (company: Omit<SubCompanyExtended, 'id' | 'assignmentHistory'>) => {
+    const newComp: SubCompanyExtended = {
+      ...company,
+      id: `sub-comp-${Date.now()}`,
+      assignmentHistory: [
+        {
+          id: `as-${Date.now()}`,
+          date: new Date().toISOString().split('T')[0],
+          itemType: 'vehicle',
+          itemRef: 'Initial Formation',
+          action: 'assigned',
+          details: 'Company established with registered operator licence'
+        }
+      ]
+    };
+    setSubCompaniesExtended(prev => [...prev, newComp]);
+  };
+
+  const updateSubCompanyExtended = (id: string, updated: Partial<SubCompanyExtended>) => {
+    setSubCompaniesExtended(prev => prev.map(c => c.id === id ? { ...c, ...updated } : c));
+  };
+
+  const archiveSubCompanyExtended = (id: string) => {
+    setSubCompaniesExtended(prev => prev.map(c => c.id === id ? { ...c, isArchived: true } : c));
+  };
+
+  const transferAssetCompany = (itemType: 'vehicle' | 'driver', itemRef: string, fromCompanyId: string, toCompanyId: string, reason: string) => {
+    const fromComp = subCompaniesExtended.find(c => c.id === fromCompanyId)?.name || 'Source Company';
+    const toComp = subCompaniesExtended.find(c => c.id === toCompanyId)?.name || 'Destination Company';
+    const historyItem = {
+      id: `as-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      itemType,
+      itemRef,
+      action: 'transferred' as const,
+      details: `Transferred from ${fromComp} to ${toComp}: ${reason}`
+    };
+
+    setSubCompaniesExtended(prev => prev.map(c => {
+      if (c.id === toCompanyId || c.id === fromCompanyId) {
+        return {
+          ...c,
+          assignmentHistory: [historyItem, ...c.assignmentHistory]
+        };
+      }
+      return c;
+    }));
+  };
+
+  // Phase 11: Integrations Actions
+  const testIntegrationPing = async (id: string): Promise<{ success: boolean; latencyMs: number }> => {
+    const latency = Math.floor(40 + Math.random() * 120);
+    setIntegrations(prev => prev.map(i => {
+      if (i.id === id) {
+        return {
+          ...i,
+          lastSuccessIso: new Date().toISOString(),
+          latencyMs: latency,
+          lastPingStatus: 'success'
+        };
+      }
+      return i;
+    }));
+    return { success: true, latencyMs: latency };
+  };
+
+  // Phase 11: User Management Actions
+  const revokeUserSession = (userId: string) => {
+    setUserAccounts(prev => prev.map(u => {
+      if (u.id === userId) {
+        return {
+          ...u,
+          activeSessionsCount: 0
+        };
+      }
+      return u;
+    }));
+
+    addAuditLogEntry({
+      actorId: 'usr-admin-01',
+      actorName: 'Arthur Pendelton',
+      actorRole: 'owner_admin',
+      action: 'REVOKE_SESSION',
+      entityType: 'Session',
+      entityId: userId,
+      isSensitive: true,
+      sensitiveTag: 'Immediate Session Termination',
+      ipAddress: '194.73.112.45',
+      details: `Terminated all active tokens and sessions for user account ${userId}`
+    });
+  };
+
+  const toggleUserMfa = (userId: string) => {
+    setUserAccounts(prev => prev.map(u => {
+      if (u.id === userId) {
+        const nextMfa = u.mfaStatus === 'enforced' ? 'disabled' : 'enforced';
+        return { ...u, mfaStatus: nextMfa };
+      }
+      return u;
+    }));
+  };
+
+  const updateRolePermission = (permissionKey: string, role: UserRole, allowed: boolean) => {
+    setRolePermissionsMatrix(prev => prev.map(p => {
+      if (p.key === permissionKey) {
+        return {
+          ...p,
+          allowedRoles: {
+            ...p.allowedRoles,
+            [role]: allowed
+          }
+        };
+      }
+      return p;
+    }));
+  };
+
+  // Phase 11: Offboarding Action
+  const executeStaffOffboarding = (
+    staffId: string, 
+    reason: string, 
+    recoveredAssets: OffboardingRecord['recoveredAssets'], 
+    initiatedBy: string
+  ): OffboardingRecord => {
+    const staffMember = staff.find(s => s.id === staffId);
+    const staffName = staffMember?.name || 'Staff Member';
+    const staffRole = staffMember?.role || 'driver';
+
+    setStaff(prev => prev.map(s => {
+      if (s.id === staffId) {
+        return {
+          ...s,
+          onDuty: false,
+          dutyStatus: 'off_duty',
+          operationalClearance: 'restricted',
+          clearanceReason: `Offboarded: ${reason}`,
+          personalDetails: s.personalDetails ? {
+            ...s.personalDetails,
+            employmentStatus: 'inactive'
+          } : undefined
+        };
+      }
+      return s;
+    }));
+
+    let cancelledCount = 0;
+    setBookings(prev => prev.map(b => {
+      if (b.assignedDriverId === staffId && (b.status === 'allocated' || b.status === 'unallocated')) {
+        cancelledCount++;
+        return {
+          ...b,
+          status: 'unallocated',
+          assignedDriverId: undefined,
+          assignedDriverName: undefined,
+          internalNotes: `Auto-unassigned due to staff offboarding (${staffName})`
+        };
+      }
+      return b;
+    }));
+
+    setSchoolRoutes(prev => prev.map(r => {
+      if (r.assignedDriverId === staffId) {
+        return {
+          ...r,
+          assignedDriverId: 'unassigned',
+          assignedDriverName: 'UNASSIGNED - NEEDS REPLACEMENT'
+        };
+      }
+      if (r.assignedPA1Id === staffId) {
+        return {
+          ...r,
+          assignedPA1Id: 'unassigned',
+          assignedPA1Name: 'UNASSIGNED - NEEDS REPLACEMENT'
+        };
+      }
+      return r;
+    }));
+
+    setUserAccounts(prev => prev.map(u => {
+      if (u.id === staffId || u.name === staffName) {
+        return {
+          ...u,
+          status: 'offboarded',
+          activeSessionsCount: 0
+        };
+      }
+      return u;
+    }));
+
+    const offboardRef = `OFF-${Date.now()}`;
+    const certRef = `CERT-OFF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+    const record: OffboardingRecord = {
+      id: offboardRef,
+      staffId,
+      staffName,
+      staffRole,
+      offboardedAt: new Date().toISOString(),
+      initiatedBy,
+      reason,
+      immediateAccessRevoked: true,
+      cancelledBookingsCount: cancelledCount,
+      recoveredAssets,
+      auditCertificateRef: certRef
+    };
+
+    setOffboardingRecords(prev => [record, ...prev]);
+
+    addAuditLogEntry({
+      actorId: 'usr-admin-01',
+      actorName: initiatedBy,
+      actorRole: 'owner_admin',
+      action: 'OFFBOARD',
+      entityType: staffRole === 'pa' ? 'PA' : 'Driver',
+      entityId: staffId,
+      entityName: staffName,
+      isSensitive: true,
+      sensitiveTag: 'Staff Offboarding & Access Revocation',
+      ipAddress: '194.73.112.45',
+      details: `Completed staff offboarding for ${staffName} (${staffRole}). Revoked all mobile & office access, auto-unassigned ${cancelledCount} future bookings, verified asset handover checklist. Cert: ${certRef}`
+    });
+
+    return record;
+  };
+
   const disburseDriverSettlement = (settlementId: string) => {
     const timestamp = new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     setDriverSettlements(prev => prev.map(s => {
@@ -1208,7 +1682,44 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       countersignPASweep,
       reassignSchoolRouteTeam,
       markInvoicePaid,
-      disburseDriverSettlement
+      disburseDriverSettlement,
+
+      // Phase 11 Governance, Safeguarding & Multi-Tenancy
+      safeguardingCases,
+      addSafeguardingCase,
+      updateSafeguardingStatus,
+      addSafeguardingDecision,
+      addSafeguardingDisclosure,
+      addSafeguardingAttachment,
+
+      auditLogs,
+      addAuditLogEntry,
+
+      documents,
+      policyAcknowledgements,
+      addDocumentItem,
+      updateDocumentVerification,
+      createExpiringShareLink,
+      revokeExpiringShareLink,
+      signPolicyAcknowledgement,
+
+      subCompaniesExtended,
+      createSubCompanyExtended,
+      updateSubCompanyExtended,
+      archiveSubCompanyExtended,
+      transferAssetCompany,
+
+      integrations,
+      testIntegrationPing,
+
+      userAccounts,
+      revokeUserSession,
+      toggleUserMfa,
+      rolePermissionsMatrix,
+      updateRolePermission,
+
+      offboardingRecords,
+      executeStaffOffboarding
     }}>
       {children}
     </DataContext.Provider>

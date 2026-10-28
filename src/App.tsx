@@ -34,6 +34,12 @@ import { OfficeExtrasPage } from './pages/OfficeExtrasPage';
 import { AutoDispatchSettingsPage } from './pages/AutoDispatchSettingsPage';
 import { ExpensesIncidentsPage } from './pages/ExpensesIncidentsPage';
 import { ReminderCentrePage } from './pages/ReminderCentrePage';
+import { SafeguardingPage } from './pages/SafeguardingPage';
+import { AuditLogPage } from './pages/AuditLogPage';
+import { DocumentLibraryPage } from './pages/DocumentLibraryPage';
+import { SubCompaniesPage } from './pages/SubCompaniesPage';
+import { IntegrationsPage } from './pages/IntegrationsPage';
+import { RolesAndUsersPage } from './pages/RolesAndUsersPage';
 import { DriverCockpitPage, PACockpitPage } from './pages/StaffCockpitPages';
 import { DesignSystemPage } from './pages/DesignSystemPage';
 import { NotFoundPage, AccessDeniedPage } from './pages/NotFoundPage';
@@ -64,11 +70,11 @@ export function App() {
           <CompanyProvider>
             <DataProvider>
               <BrowserRouter>
-                {/* Global Logout Confirmation Modal */}
+                {/* Global Shared-Device Safe Logout Confirmation Modal */}
                 <LogoutConfirmModal />
 
                 <Routes>
-                  {/* Public Route: /login */}
+                  {/* Public-only routes: redirect to role dashboard if already signed in */}
                   <Route
                     path="/login"
                     element={
@@ -78,14 +84,13 @@ export function App() {
                     }
                   />
 
-                  {/* Root route: redirects based on auth & role */}
+                  {/* 403 Access Denied explicit route */}
+                  <Route path="/403" element={<AccessDeniedPage />} />
+
+                  {/* Root path: authenticated role home redirect */}
                   <Route path="/" element={<RootRedirect />} />
 
-                  {/* 403 & 404 Dedicated Pages */}
-                  <Route path="/403" element={<AccessDeniedPage />} />
-                  <Route path="/unauthorised" element={<AccessDeniedPage />} />
-
-                  {/* ALL Office & App Routes Wrapped in ProtectedRoute */}
+                  {/* Protected Application Routes under AppLayout Shell */}
                   <Route
                     element={
                       <ProtectedRoute>
@@ -93,7 +98,7 @@ export function App() {
                       </ProtectedRoute>
                     }
                   >
-                    {/* Office Dashboard (Admin/Controller/HR/Mechanic home) */}
+                    {/* Operational Dashboard: All roles allowed */}
                     <Route path="/office/dashboard" element={<DashboardPage />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
 
@@ -376,6 +381,117 @@ export function App() {
                       element={
                         <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'mechanic']} featureName="Automated Reminder & Escalation Centre">
                           <ReminderCentrePage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* PHASE 11: Safeguarding Cases Area (Restricted to Safeguarding Officers) */}
+                    <Route
+                      path="/office/safeguarding"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="Safeguarding Cases Portal">
+                          <SafeguardingPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/safeguarding"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="Safeguarding Cases Portal">
+                          <SafeguardingPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* PHASE 11: Audit Log Viewer (Filtered & Sensitive Highlighted) */}
+                    <Route
+                      path="/office/audit-logs"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="Security & Compliance Audit Logs">
+                          <AuditLogPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/audit-logs"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="Security & Compliance Audit Logs">
+                          <AuditLogPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* PHASE 11: Document Library & Policies (Retentions & Expiring Links) */}
+                    <Route
+                      path="/office/documents"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting', 'controller', 'mechanic']} featureName="Document Library & Policies">
+                          <DocumentLibraryPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/documents"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting', 'controller', 'mechanic']} featureName="Document Library & Policies">
+                          <DocumentLibraryPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* PHASE 11: Sub-Company Multi-Tenancy (Admin Only) */}
+                    <Route
+                      path="/office/sub-companies"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin']} featureName="Sub-Company Multi-Tenancy">
+                          <SubCompaniesPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/sub-companies"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin']} featureName="Sub-Company Multi-Tenancy">
+                          <SubCompaniesPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* PHASE 11: Integrations Register (Status, Latency, Manual Verification) */}
+                    <Route
+                      path="/office/integrations"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="Integrations & Telematics Register">
+                          <IntegrationsPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/integrations"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="Integrations & Telematics Register">
+                          <IntegrationsPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* PHASE 11: Roles Matrix & User Management (MFA & Session Revocation) */}
+                    <Route
+                      path="/office/roles-users"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="Roles Matrix & User Management">
+                          <RolesAndUsersPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/roles-users"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="Roles Matrix & User Management">
+                          <RolesAndUsersPage />
+                        </RoleGuard>
+                      }
+                    />
                         </RoleGuard>
                       }
                     />

@@ -546,6 +546,237 @@ export interface ReportFilterCriteria {
   depot: string;
 }
 
+// ============================================================================
+// PHASE 11: SAFEGUARDING, AUDIT, GOVERNANCE & MULTI-TENANCY TYPES
+// ============================================================================
+
+export type SafeguardingSeverity = 'low' | 'medium' | 'high' | 'critical_s47';
+export type SafeguardingStatus = 
+  | 'open' 
+  | 'under_investigation' 
+  | 'lado_referral' 
+  | 'escalated_police' 
+  | 'closed_substantiated' 
+  | 'closed_unsubstantiated';
+
+export interface SafeguardingAttachment {
+  id: string;
+  name: string;
+  fileType: string;
+  sizeKb: number;
+  uploadedAt: string;
+  uploadedBy: string;
+  classification: 'confidential' | 'restricted' | 'statutory_disclosure';
+}
+
+export interface SafeguardingDecision {
+  id: string;
+  date: string;
+  decidedBy: string;
+  actionTaken: string;
+  rationale: string;
+  reviewDate?: string;
+}
+
+export interface SafeguardingDisclosure {
+  id: string;
+  date: string;
+  agency: string;
+  officerName: string;
+  referenceNo: string;
+  notes: string;
+}
+
+export interface SafeguardingCase {
+  id: string;
+  caseNumber: string;
+  title: string;
+  incidentDate: string;
+  reportedDate: string;
+  reportedBy: string;
+  reporterRole: string;
+  subjectStaffId?: string;
+  subjectStaffName?: string;
+  subjectStaffRole?: 'driver' | 'pa';
+  pupilOrPassenger?: {
+    name: string;
+    school?: string;
+    vulnerabilities?: string[];
+  };
+  routeCode?: string;
+  vehicleReg?: string;
+  status: SafeguardingStatus;
+  severity: SafeguardingSeverity;
+  narrative: string;
+  deadlines: {
+    ladoSlaHours: number;
+    ladoDeadlineIso: string;
+    internalReviewIso: string;
+    isOverdue?: boolean;
+  };
+  attachments: SafeguardingAttachment[];
+  decisions: SafeguardingDecision[];
+  disclosures: SafeguardingDisclosure[];
+}
+
+export interface SystemAuditLogEntry {
+  id: string;
+  timestamp: string;
+  actorId: string;
+  actorName: string;
+  actorRole: UserRole;
+  action: 
+    | 'CREATE' 
+    | 'UPDATE' 
+    | 'DELETE' 
+    | 'VIEW_SENSITIVE' 
+    | 'REVOKE_SESSION' 
+    | 'OFFBOARD' 
+    | 'EXPORT_DATA' 
+    | 'MFA_CHANGE';
+  entityType: 'Driver' | 'PA' | 'Vehicle' | 'Safeguarding' | 'Booking' | 'SubCompany' | 'Tariff' | 'Session' | 'Document';
+  entityId: string;
+  entityName?: string;
+  isSensitive: boolean;
+  sensitiveTag?: string;
+  ipAddress: string;
+  details: string;
+}
+
+export type DocumentCategory = 
+  | 'dbs_certificate' 
+  | 'driving_licence' 
+  | 'insurance' 
+  | 'mot_vt20' 
+  | 'council_badge' 
+  | 'training_cert' 
+  | 'policy_signoff' 
+  | 'compliance_audit';
+
+export interface ExpiringShareLink {
+  id: string;
+  token: string;
+  url: string;
+  createdAt: string;
+  expiresAt: string;
+  createdBy: string;
+  isRevoked: boolean;
+}
+
+export interface DocumentItem {
+  id: string;
+  title: string;
+  category: DocumentCategory;
+  linkedType: 'driver' | 'pa' | 'vehicle' | 'sub_company';
+  linkedEntityId: string;
+  linkedEntityName: string;
+  version: string;
+  ownerName: string;
+  uploadedAt: string;
+  verifiedStatus: 'verified' | 'pending_verification' | 'rejected' | 'expired';
+  verifiedBy?: string;
+  retentionDate: string;
+  fileFormat: string;
+  fileSizeBytes: number;
+  expiringLinks: ExpiringShareLink[];
+}
+
+export interface PolicyAcknowledgement {
+  id: string;
+  policyTitle: string;
+  policyVersion: string;
+  requiredFor: 'driver' | 'pa' | 'all_staff';
+  staffId: string;
+  staffName: string;
+  staffRole: string;
+  acknowledgedAt?: string;
+  status: 'acknowledged' | 'pending_signature' | 'overdue';
+  ipAddress?: string;
+  signatureHash?: string;
+}
+
+export interface SubCompanyExtended extends SubCompany {
+  tradingName: string;
+  registeredEntity: string;
+  companiesHouseNumber: string;
+  branding: {
+    primaryColorHex: string;
+    secondaryColorHex: string;
+    logoUrl?: string;
+  };
+  dispatchPhone: string;
+  depots: Array<{
+    id: string;
+    name: string;
+    address: string;
+    capacity: number;
+  }>;
+  assignedTariffScheme: string;
+  isArchived: boolean;
+  sharingRules: {
+    allowFleetSharing: boolean;
+    allowDriverSharing: boolean;
+    depotLock: boolean;
+  };
+  assignmentHistory: Array<{
+    id: string;
+    date: string;
+    itemType: 'vehicle' | 'driver';
+    itemRef: string;
+    action: 'assigned' | 'transferred' | 'archived';
+    details: string;
+  }>;
+}
+
+export interface IntegrationService {
+  id: string;
+  name: string;
+  category: 'government' | 'telematics' | 'vetting' | 'telecom' | 'finance' | 'aviation';
+  purpose: string;
+  status: 'operational' | 'degraded' | 'mock_sandbox' | 'offline';
+  isManualVerification: boolean;
+  manualVerificationLabel?: string;
+  lastSuccessIso: string;
+  latencyMs: number;
+  costModel: string;
+  endpointUrl?: string;
+  lastPingStatus?: 'success' | 'failed' | 'testing';
+}
+
+export interface UserAccountItem {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  department: string;
+  mfaStatus: 'enforced' | 'enabled' | 'disabled';
+  activeSessionsCount: number;
+  lastLoginIso: string;
+  status: 'active' | 'suspended' | 'offboarded';
+  assignedDepot: string;
+}
+
+export interface OffboardingRecord {
+  id: string;
+  staffId: string;
+  staffName: string;
+  staffRole: string;
+  offboardedAt: string;
+  initiatedBy: string;
+  reason: string;
+  immediateAccessRevoked: boolean;
+  cancelledBookingsCount: number;
+  recoveredAssets: {
+    vehicleReturned: boolean;
+    councilIdBadge: boolean;
+    fuelCardReturned: boolean;
+    dashcamReturned: boolean;
+    mobileDeviceReturned: boolean;
+    uniformReturned: boolean;
+  };
+  auditCertificateRef: string;
+}
+
 export * from './auth';
 export * from './phase9';
 export * from './phase10';

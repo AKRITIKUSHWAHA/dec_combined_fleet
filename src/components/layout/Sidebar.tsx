@@ -28,7 +28,12 @@ import {
   Zap,
   Sparkles,
   Receipt,
-  Bell
+  Bell,
+  Building2,
+  Cpu,
+  Key,
+  FileCheck,
+  Clock
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -198,9 +203,53 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed: controlledCollapsed
     },
     {
       to: '/reports',
+      fullLabel: 'Reports & Audits',
       label: 'Reports & Audits',
       icon: FileSpreadsheet,
       roles: ['owner_admin', 'controller', 'hr_vetting', 'mechanic']
+    },
+    {
+      to: '/safeguarding',
+      label: 'Safeguarding S47',
+      fullLabel: 'Safeguarding Cases Portal',
+      icon: ShieldAlert,
+      isRestrictedForController: true,
+      roles: ['owner_admin', 'hr_vetting']
+    },
+    {
+      to: '/audit-logs',
+      label: 'Audit Trail',
+      fullLabel: 'Security Audit Trail',
+      icon: Clock,
+      roles: ['owner_admin', 'hr_vetting']
+    },
+    {
+      to: '/documents',
+      label: 'Document Library',
+      fullLabel: 'Document Library & Policies',
+      icon: FileCheck,
+      roles: ['owner_admin', 'hr_vetting', 'controller', 'mechanic']
+    },
+    {
+      to: '/sub-companies',
+      label: 'Sub-Companies',
+      fullLabel: 'Sub-Company Multi-Tenancy',
+      icon: Building2,
+      roles: ['owner_admin']
+    },
+    {
+      to: '/integrations',
+      label: 'Integrations',
+      fullLabel: 'External Integrations Register',
+      icon: Cpu,
+      roles: ['owner_admin', 'controller', 'hr_vetting']
+    },
+    {
+      to: '/roles-users',
+      label: 'Roles & Users',
+      fullLabel: 'Roles Matrix & User Management',
+      icon: Key,
+      roles: ['owner_admin', 'hr_vetting']
     },
     {
       to: '/design-system',
