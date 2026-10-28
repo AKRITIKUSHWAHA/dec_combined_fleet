@@ -1,430 +1,461 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
-import { AccountInvoice, DriverSettlement } from '../types';
+import { useCompany } from '../context/CompanyContext';
+import { 
+  mockCorporateAccounts, 
+  mockInvoices, 
+  mockDriverSettlements 
+} from '../data/mockDataPhase9';
+import { 
+  CorporateAccount, 
+  InvoiceRecord, 
+  DriverWeeklySettlement, 
+  PaymentStatus 
+} from '../types/phase9';
 import { 
   PoundSterling, 
-  CreditCard, 
-  Banknote, 
   FileText, 
+  Download, 
+  CreditCard, 
   CheckCircle2, 
   Clock, 
-  AlertTriangle, 
-  Download, 
-  Printer, 
-  Send, 
-  Search, 
-  Filter, 
-  Plus, 
-  Calendar, 
-  Building2, 
   ArrowUpRight, 
-  Users, 
-  ChevronRight,
-  TrendingUp,
-  Receipt
+  Building2,
+  AlertTriangle,
+  RotateCcw,
+  Check,
+  FileSpreadsheet,
+  Plus,
+  X
 } from 'lucide-react';
 
-type FinanceTab = 'overview_invoices' | 'driver_settlements';
-
 export const FinancePage: React.FC = () => {
-  const { 
-    accountInvoices, 
-    driverSettlements, 
-    bookings, 
-    markInvoicePaid, 
-    disburseDriverSettlement 
-  } = useData();
+  const { bookings } = useData();
+  const { selectedCompany } = useCompany();
 
-  const [activeTab, setActiveTab] = useState<FinanceTab>('overview_invoices');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [clientTypeFilter, setClientTypeFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState<'invoices' | 'corporate_accounts' | 'driver_settlements'>('invoices');
+  
+  // Invoices & Accounts State
+  const [invoices, setInvoices] = useState<InvoiceRecord[]>(mockInvoices);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRecord | null>(mockInvoices[0]);
+  const [accounts, setAccounts] = useState<CorporateAccount[]>(mockCorporateAccounts);
+  const [settlements, setSettlements] = useState<DriverWeeklySettlement[]>(mockDriverSettlements);
 
-  // Modal States
-  const [selectedInvoice, setSelectedInvoice] = useState<AccountInvoice | null>(null);
-  const [isPayInvoiceModalOpen, setIsPayInvoiceModalOpen] = useState(false);
-  const [paymentMethodChoice, setPaymentMethodChoice] = useState('BACS Electronic Bank Transfer');
+  // Partial Refund Dialog State
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundBookingRef, setRefundBookingRef] = useState('DEC-LTN-2026-904');
+  const [refundOriginalFare, setRefundOriginalFare] = useState<number>(145.00);
+  const [refundAmount, setRefundAmount] = useState<number>(30.00);
+  const [refundReason, setRefundReason] = useState<string>('Flight delay inconvenience goodwill voucher');
+  const [refundSuccessMsg, setRefundSuccessMsg] = useState<string | null>(null);
 
-  const [selectedSettlement, setSelectedSettlement] = useState<DriverSettlement | null>(null);
-  const [isDisburseModalOpen, setIsDisburseModalOpen] = useState(false);
-
-  // Financial Calculations
-  const totalBilled = accountInvoices.reduce((acc, inv) => acc + inv.totalGbp, 0);
-  const totalPaid = accountInvoices.filter(i => i.status === 'paid').reduce((acc, i) => acc + i.totalGbp, 0);
-  const totalOverdue = accountInvoices.filter(i => i.status === 'overdue').reduce((acc, i) => acc + i.totalGbp, 0);
-  const totalPendingSettlements = driverSettlements.filter(s => s.status === 'pending_settlement').reduce((acc, s) => acc + s.netPayoutGbp, 0);
-
-  // Filtered Invoices
-  const filteredInvoices = accountInvoices.filter(inv => {
-    if (clientTypeFilter !== 'all' && inv.clientType !== clientTypeFilter) return false;
-    if (statusFilter !== 'all' && inv.status !== statusFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchRef = inv.invoiceRef.toLowerCase().includes(q);
-      const matchClient = inv.clientName.toLowerCase().includes(q);
-      const matchCouncil = inv.councilOrCompany.toLowerCase().includes(q);
-      if (!matchRef && !matchClient && !matchCouncil) return false;
-    }
-    return true;
-  });
-
-  const handleOpenPayModal = (inv: AccountInvoice) => {
-    setSelectedInvoice(inv);
-    setIsPayInvoiceModalOpen(true);
-  };
-
-  const handleConfirmPayInvoice = () => {
-    if (!selectedInvoice) return;
-    markInvoicePaid(selectedInvoice.id, paymentMethodChoice);
-    setIsPayInvoiceModalOpen(false);
-    setSelectedInvoice(null);
-  };
-
-  const handleOpenDisburseModal = (set: DriverSettlement) => {
-    setSelectedSettlement(set);
-    setIsDisburseModalOpen(true);
-  };
-
-  const handleConfirmDisburse = () => {
-    if (!selectedSettlement) return;
-    disburseDriverSettlement(selectedSettlement.id);
-    setIsDisburseModalOpen(false);
-    setSelectedSettlement(null);
+  const handleProcessRefund = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRefundSuccessMsg(`£${refundAmount.toFixed(2)} refunded successfully against ${refundBookingRef}. Payment status updated to PART-PAID. Credit note CN-2026-014 logged.`);
+    setShowRefundModal(false);
+    setTimeout(() => setRefundSuccessMsg(null), 4000);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              Finance, Invoices & Settlement
-            </h1>
-            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-              Phase 7
+          <h1 className="text-lg sm:text-xl font-heading font-bold text-[var(--text)] flex items-center gap-2">
+            <PoundSterling className="w-5 h-5 text-[#B6F23C]" />
+            <span>Payments, Accounts &amp; Driver Settlements</span>
+            <span className="chip-ready px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">
+              UK Accounting Ledger
             </span>
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Council SEN frameworks billing, corporate account invoices, payment status tracking, and weekly driver commission settlements.
+          </h1>
+          <p className="text-xs text-[var(--text-muted)]">
+            Separate payment &amp; journey statuses, partial refund dialog, corporate accounts with PO/Cost Centres, itemised invoices, and weekly driver settlement statements.
           </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center bg-slate-200/80 dark:bg-slate-800/80 p-1 rounded-xl">
+        {/* Tab Controls */}
+        <div className="flex bg-[var(--surface-2)] p-1 rounded-[12px] border border-[var(--border)] shrink-0">
           <button
-            onClick={() => setActiveTab('overview_invoices')}
-            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-              activeTab === 'overview_invoices'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400'
+            onClick={() => setActiveTab('invoices')}
+            className={`px-3 py-1.5 rounded-[10px] text-xs font-heading font-bold transition ${
+              activeTab === 'invoices' ? 'bg-[var(--surface)] text-[var(--text)] shadow-xs' : 'text-[var(--text-muted)]'
             }`}
           >
-            <FileText className="w-4 h-4 text-blue-600" />
-            Invoices & Council Billing
+            Invoices &amp; Ledger
+          </button>
+          <button
+            onClick={() => setActiveTab('corporate_accounts')}
+            className={`px-3 py-1.5 rounded-[10px] text-xs font-heading font-bold transition ${
+              activeTab === 'corporate_accounts' ? 'bg-[var(--surface)] text-[var(--text)] shadow-xs' : 'text-[var(--text-muted)]'
+            }`}
+          >
+            Corporate Accounts
           </button>
           <button
             onClick={() => setActiveTab('driver_settlements')}
-            className={`px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 ${
-              activeTab === 'driver_settlements'
-                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400'
+            className={`px-3 py-1.5 rounded-[10px] text-xs font-heading font-bold transition ${
+              activeTab === 'driver_settlements' ? 'bg-[var(--surface)] text-[#B6F23C] shadow-xs' : 'text-[var(--text-muted)]'
             }`}
           >
-            <PoundSterling className="w-4 h-4 text-emerald-600" />
-            Driver Earnings & Settlement
-            {driverSettlements.filter(s => s.status === 'pending_settlement').length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-500 text-white font-bold">
-                {driverSettlements.filter(s => s.status === 'pending_settlement').length}
-              </span>
-            )}
+            Driver Settlements
           </button>
         </div>
       </div>
 
-      {/* KPI Financial Overview Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Total Invoiced (MTD)</p>
-            <p className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
-              ┬ú{totalBilled.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center">
-            <TrendingUp className="w-5 h-5" />
-          </div>
+      {refundSuccessMsg && (
+        <div className="p-3.5 rounded-[14px] bg-[#34D399]/15 border border-[#34D399]/40 text-xs text-[#065F46] dark:text-[#34D399] flex items-center gap-2 font-medium">
+          <CheckCircle2 className="w-4 h-4 text-[#34D399]" />
+          <span>{refundSuccessMsg}</span>
+        </div>
+      )}
+
+      {/* Summary KPI Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div className="nr-card p-4 space-y-1">
+          <span className="text-[var(--text-muted)] font-heading font-semibold block text-[11px]">Outstanding Corporate Invoices</span>
+          <p className="text-xl font-heading font-bold text-[#FFC24B] font-mono tabular-nums">£2,220.00 GBP</p>
+          <span className="text-[10px] font-mono text-[var(--text-muted)]">AstraZeneca UK • Due in 28 days</span>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Collected Revenue</p>
-            <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
-              ┬ú{totalPaid.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
+        <div className="nr-card p-4 space-y-1">
+          <span className="text-[var(--text-muted)] font-heading font-semibold block text-[11px]">Settled Card &amp; Bank Payments</span>
+          <p className="text-xl font-heading font-bold text-[#34D399] font-mono tabular-nums">£4,840.00 GBP</p>
+          <span className="text-[10px] font-mono text-[#34D399]">100% Cleared via Gateway</span>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Overdue Invoices</p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <p className="text-xl font-black text-rose-600 dark:text-rose-400">
-                ┬ú{totalOverdue.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5" />
-          </div>
+        <div className="nr-card p-4 space-y-1">
+          <span className="text-[var(--text-muted)] font-heading font-semibold block text-[11px]">Driver Payouts Authorized</span>
+          <p className="text-xl font-heading font-bold text-[#3FE0C5] font-mono tabular-nums">£1,652.40 GBP</p>
+          <span className="text-[10px] font-mono text-[var(--text-muted)]">2 Weekly Driver Statements</span>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Driver Payouts Due</p>
-            <p className="text-xl font-black text-purple-600 dark:text-purple-400 mt-0.5">
-              ┬ú{totalPendingSettlements.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 flex items-center justify-center">
-            <PoundSterling className="w-5 h-5" />
-          </div>
+        <div className="nr-card p-4 space-y-1">
+          <span className="text-[var(--text-muted)] font-heading font-semibold block text-[11px]">HMRC VAT Collected (20%)</span>
+          <p className="text-xl font-heading font-bold text-[var(--text)] font-mono tabular-nums">£605.00 GBP</p>
+          <span className="text-[10px] font-mono text-[var(--text-muted)]">Quarter Q4 Provision</span>
         </div>
       </div>
 
-      {/* ======================================================================
-          TAB 1: INVOICES & COUNCIL BILLING
-          ====================================================================== */}
-      {activeTab === 'overview_invoices' && (
-        <div className="space-y-4">
+      {/* TAB 1: INVOICES & REVENUE LEDGER */}
+      {activeTab === 'invoices' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           
-          {/* Filters Bar */}
-          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex-1 relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search invoice ref, council authority, or corporate account..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-              />
+          {/* Invoices List (5 Cols) */}
+          <div className="lg:col-span-5 space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-heading font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                Corporate Invoices ({invoices.length})
+              </span>
+              <button
+                onClick={() => {
+                  setRefundBookingRef('DEC-LTN-2026-904');
+                  setRefundOriginalFare(145.00);
+                  setRefundAmount(30.00);
+                  setShowRefundModal(true);
+                }}
+                className="text-[11px] font-heading font-bold text-[#FF9F6B] hover:underline flex items-center gap-1"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Issue Partial Refund</span>
+              </button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={clientTypeFilter}
-                onChange={e => setClientTypeFilter(e.target.value)}
-                className="px-2.5 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-              >
-                <option value="all">All Client Categories</option>
-                <option value="council_contract">Council SEN Contracts</option>
-                <option value="corporate_account">Corporate Accounts</option>
-                <option value="private_customer">Private Customers</option>
-              </select>
+            {invoices.map((inv) => {
+              const isSelected = selectedInvoice?.id === inv.id;
+              return (
+                <div
+                  key={inv.id}
+                  onClick={() => setSelectedInvoice(inv)}
+                  className={`nr-card p-4 cursor-pointer transition-all duration-180 border ${
+                    isSelected
+                      ? 'border-[#B6F23C] shadow-lime-glow bg-[var(--surface-2)]/80'
+                      : 'hover:border-[var(--border)]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="font-heading font-bold text-sm text-[var(--text)]">
+                        {inv.invoiceNumber}
+                      </span>
+                      <p className="text-xs font-semibold text-[var(--text)] mt-0.5">
+                        {inv.accountName}
+                      </p>
+                    </div>
 
-              <select
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-                className="px-2.5 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-              >
-                <option value="all">All Statuses</option>
-                <option value="sent">Sent / Awaiting Payment</option>
-                <option value="paid">Paid & Reconciled</option>
-                <option value="overdue">Overdue</option>
-                <option value="draft">Draft</option>
-              </select>
-            </div>
+                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase ${
+                      inv.paymentStatus === 'paid'
+                        ? 'bg-[#34D399]/20 text-[#34D399]'
+                        : 'bg-[#FFC24B]/20 text-[#FFC24B]'
+                    }`}>
+                      {inv.paymentStatus}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs font-mono pt-2 mt-2 border-t border-[var(--border)]">
+                    <span className="text-[var(--text-muted)]">{inv.billingPeriod}</span>
+                    <span className="font-bold text-[#B6F23C] text-sm">£{inv.totalDueGbp.toFixed(2)}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Invoices Table */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-                <thead className="bg-slate-50/80 dark:bg-slate-800/80 uppercase tracking-wider text-[11px] font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                  <tr>
-                    <th className="py-3 px-4">Invoice Ref</th>
-                    <th className="py-3 px-4">Client / Authority</th>
-                    <th className="py-3 px-4">Category</th>
-                    <th className="py-3 px-4">Issue Date</th>
-                    <th className="py-3 px-4">Due Date</th>
-                    <th className="py-3 px-4">Total Amount (┬ú)</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {filteredInvoices.map(inv => {
-                    return (
-                      <tr key={inv.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
-                          {inv.invoiceRef}
-                        </td>
-                        <td className="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200 max-w-xs truncate">
-                          {inv.clientName}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                            inv.clientType === 'council_contract'
-                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
-                              : 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                          }`}>
-                            {inv.clientType.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 font-mono">{inv.issueDate}</td>
-                        <td className="py-3.5 px-4 font-mono">{inv.dueDate}</td>
-                        <td className="py-3.5 px-4 font-mono font-black text-slate-900 dark:text-white">
-                          ┬ú{inv.totalGbp.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          {inv.status === 'paid' && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300">
-                              Paid ({inv.paidAt || 'Reconciled'})
-                            </span>
-                          )}
-                          {inv.status === 'sent' && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300">
-                              Sent
-                            </span>
-                          )}
-                          {inv.status === 'overdue' && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 animate-pulse">
-                              Overdue
-                            </span>
-                          )}
-                          {inv.status === 'draft' && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600">
-                              Draft
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => setSelectedInvoice(inv)}
-                              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
-                            >
-                              View / Print
-                            </button>
-                            {inv.status !== 'paid' && (
-                              <button
-                                onClick={() => handleOpenPayModal(inv)}
-                                className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition"
-                              >
-                                Mark Paid
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+          {/* Invoice Detail Dossier (7 Cols) */}
+          <div className="lg:col-span-7">
+            {selectedInvoice ? (
+              <div className="nr-card p-6 space-y-4">
+                <div className="flex items-start justify-between pb-3 border-b border-[var(--border)]">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)] font-bold">
+                      INVOICE DETAIL • {selectedInvoice.billingPeriod}
+                    </span>
+                    <h2 className="text-xl font-heading font-bold text-[var(--text)] mt-0.5">
+                      {selectedInvoice.invoiceNumber}
+                    </h2>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      Billed to: <strong className="text-[var(--text)]">{selectedInvoice.accountName}</strong> ({selectedInvoice.accountCode})
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => alert(`Exporting ${selectedInvoice.invoiceNumber} itemised PDF breakdown...`)}
+                      className="btn-secondary !text-xs !py-1 !px-3 !min-h-[36px]"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Export PDF</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Itemised Journey Table */}
+                <div className="space-y-2">
+                  <h4 className="font-heading font-bold text-xs text-[var(--text)]">
+                    Itemised Journeys &amp; Cost Centre Allocation:
+                  </h4>
+                  <div className="overflow-x-auto border border-[var(--border)] rounded-[14px]">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-[var(--surface-2)] text-[var(--text-muted)] font-mono uppercase text-[10px]">
+                        <tr>
+                          <th className="p-2.5">Date</th>
+                          <th className="p-2.5">Ref / Passenger</th>
+                          <th className="p-2.5">Cost Centre / PO</th>
+                          <th className="p-2.5 text-right">Net</th>
+                          <th className="p-2.5 text-right">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--border)] font-mono text-[11px]">
+                        {selectedInvoice.items.map((it) => (
+                          <tr key={it.id}>
+                            <td className="p-2.5 text-[var(--text-muted)]">{it.journeyDate}</td>
+                            <td className="p-2.5">
+                              <span className="font-bold text-[var(--text)]">{it.bookingRef}</span>
+                              <span className="block text-[10px] text-[var(--text-muted)]">{it.passengerName}</span>
+                            </td>
+                            <td className="p-2.5">
+                              <span className="px-1.5 py-0.5 rounded bg-[var(--surface-2)] text-[var(--text)] text-[10px]">
+                                {it.costCentre || 'N/A'}
+                              </span>
+                              <span className="block text-[10px] text-[var(--text-muted)]">{it.poNumber}</span>
+                            </td>
+                            <td className="p-2.5 text-right text-[var(--text-muted)]">£{it.fareGbp.toFixed(2)}</td>
+                            <td className="p-2.5 text-right font-bold text-[#B6F23C]">£{it.totalGbp.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Credit Notes if any */}
+                {selectedInvoice.creditNotes && selectedInvoice.creditNotes.length > 0 && (
+                  <div className="p-3.5 rounded-[14px] bg-[#FF9F6B]/10 border border-[#FF9F6B]/30 text-xs space-y-1 font-mono">
+                    <span className="font-heading font-bold text-[#FF9F6B]">Applied Credit Notes:</span>
+                    {selectedInvoice.creditNotes.map(cn => (
+                      <div key={cn.creditNoteRef} className="flex justify-between text-[11px]">
+                        <span>{cn.creditNoteRef} - {cn.reason} ({cn.issueDate})</span>
+                        <span className="font-bold text-[#FF9F6B]">-£{cn.amountGbp.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Subtotals & VAT */}
+                <div className="p-4 rounded-[14px] bg-[var(--surface-2)] text-xs font-mono space-y-1.5">
+                  <div className="flex justify-between text-[var(--text-muted)]">
+                    <span>Subtotal Excl. VAT:</span>
+                    <span>£{selectedInvoice.subtotalGbp.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-[var(--text-muted)]">
+                    <span>UK VAT @ 20.0%:</span>
+                    <span>£{selectedInvoice.vatAmountGbp.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-bold text-[var(--text)] pt-1 border-t border-[var(--border)]">
+                    <span>Total Due (GBP £):</span>
+                    <span className="text-[#B6F23C]">£{selectedInvoice.totalDueGbp.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="nr-card p-8 text-center text-xs text-[var(--text-muted)]">
+                Select an invoice on the left to view itemised journey receipts.
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
+
+      {/* TAB 2: CORPORATE ACCOUNTS WITH PO / COST CENTRES */}
+      {activeTab === 'corporate_accounts' && (
+        <div className="nr-card overflow-hidden">
+          <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
+            <div>
+              <h3 className="font-heading font-bold text-sm text-[var(--text)]">
+                Corporate Account Ledger &amp; Credit Limits
+              </h3>
+              <p className="text-xs text-[var(--text-muted)]">
+                Manage credit ceilings, mandatory PO requirements, and department cost centre codes.
+              </p>
             </div>
+
+            <button
+              onClick={() => alert('New Corporate Account onboarding wizard initiated.')}
+              className="btn-primary !text-xs !py-1 !px-3.5 !min-h-[36px]"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Corporate Account</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[var(--surface-2)] text-[var(--text-muted)] font-mono uppercase text-[10px]">
+                <tr>
+                  <th className="p-3">Corporate Client</th>
+                  <th className="p-3">Account Code</th>
+                  <th className="p-3">Credit Limit</th>
+                  <th className="p-3">Current Balance</th>
+                  <th className="p-3">PO Mandate</th>
+                  <th className="p-3">Registered Cost Centres</th>
+                  <th className="p-3">Payment Terms</th>
+                  <th className="p-3 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)] font-mono text-[11px]">
+                {accounts.map(acc => {
+                  const usagePercent = Math.round((acc.currentBalanceGbp / acc.creditLimitGbp) * 100);
+                  return (
+                    <tr key={acc.id} className="hover:bg-[var(--surface-2)] transition">
+                      <td className="p-3 font-heading font-bold text-[var(--text)]">
+                        {acc.accountName}
+                        <span className="block text-[10px] text-[var(--text-muted)] font-normal">{acc.contactPerson}</span>
+                      </td>
+                      <td className="p-3 text-[#3FE0C5] font-bold">{acc.accountCode}</td>
+                      <td className="p-3 text-[var(--text)]">£{acc.creditLimitGbp.toLocaleString()}.00</td>
+                      <td className="p-3">
+                        <span className="font-bold text-[#FFC24B]">£{acc.currentBalanceGbp.toFixed(2)}</span>
+                        <span className="text-[10px] text-[var(--text-muted)] block">({usagePercent}% used)</span>
+                      </td>
+                      <td className="p-3">
+                        {acc.poNumberMandatory ? (
+                          <span className="px-2 py-0.5 rounded-full bg-[#34D399]/20 text-[#34D399] font-bold text-[10px]">
+                            Required
+                          </span>
+                        ) : (
+                          <span className="text-[var(--text-muted)]">Optional</span>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {acc.costCentres.map(cc => (
+                            <span key={cc} className="px-1.5 py-0.2 rounded bg-[var(--surface-2)] border border-[var(--border)] text-[9px]">
+                              {cc}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-3 text-[var(--text-muted)]">{acc.paymentTermsDays} Days Net</td>
+                      <td className="p-3 text-right">
+                        <span className="px-2 py-0.5 rounded-full bg-[#34D399]/20 text-[#34D399] uppercase font-bold text-[10px]">
+                          {acc.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* ======================================================================
-          TAB 2: DRIVER EARNINGS & SETTLEMENTS
-          ====================================================================== */}
+      {/* TAB 3: DRIVER WEEKLY SETTLEMENT STATEMENTS */}
       {activeTab === 'driver_settlements' && (
         <div className="space-y-4">
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="nr-card overflow-hidden">
+            <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
               <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <PoundSterling className="w-5 h-5 text-emerald-600" />
-                  Weekly Driver Commission & Earnings Settlement
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Calculates gross fares, 20% DEC operator commission, toll reimbursements, and net disbursement balance.
+                <h3 className="font-heading font-bold text-sm text-[var(--text)]">
+                  Weekly Driver Financial Settlements &amp; Remittances
+                </h3>
+                <p className="text-xs text-[var(--text-muted)]">
+                  Gross fares, operator commission deduction, vehicle lease rent, and cash collections offset (Requirement 3).
                 </p>
               </div>
-              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                Standard Operator Cut: 20%
-              </span>
+
+              <button
+                onClick={() => alert('Batch BACS payout file generated for Barclays Corporate Banking.')}
+                className="btn-primary !text-xs !py-1 !px-3.5 !min-h-[36px]"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Authorize BACS Payout Batch</span>
+              </button>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600 dark:text-slate-400">
-                <thead className="bg-slate-50/80 dark:bg-slate-800/80 uppercase tracking-wider text-[11px] font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[var(--surface-2)] text-[var(--text-muted)] font-mono uppercase text-[10px]">
                   <tr>
-                    <th className="py-3 px-4">Settlement Ref</th>
-                    <th className="py-3 px-4">Driver & Vehicle</th>
-                    <th className="py-3 px-4">Period</th>
-                    <th className="py-3 px-4">Completed Jobs</th>
-                    <th className="py-3 px-4">Gross Fares</th>
-                    <th className="py-3 px-4">Operator Comm (20%)</th>
-                    <th className="py-3 px-4">Tolls & Fuel Allowance</th>
-                    <th className="py-3 px-4">Net Driver Payout</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                    <th className="p-3">Driver Staff Member</th>
+                    <th className="p-3">Assigned Vehicle</th>
+                    <th className="p-3">Week Ending</th>
+                    <th className="p-3 text-right">Gross Fares</th>
+                    <th className="p-3 text-right">DEC Commission (20%)</th>
+                    <th className="p-3 text-right">Vehicle Rent</th>
+                    <th className="p-3 text-right">Cash in Hand Offset</th>
+                    <th className="p-3 text-right font-bold text-[#B6F23C]">Net Bank Transfer</th>
+                    <th className="p-3 text-right">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {driverSettlements.map(set => {
-                    return (
-                      <tr key={set.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
-                          {set.referenceNumber}
-                        </td>
-                        <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
-                          {set.driverName}
-                          <span className="block font-mono text-[10px] text-slate-400 font-normal">
-                            Reg: {set.vehicleReg}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4">{set.period}</td>
-                        <td className="py-3.5 px-4 font-bold text-slate-800 dark:text-slate-200">
-                          {set.completedJobsCount} trips
-                        </td>
-                        <td className="py-3.5 px-4 font-mono">
-                          ┬ú{set.grossFaresGbp.toFixed(2)}
-                        </td>
-                        <td className="py-3.5 px-4 font-mono text-rose-600 dark:text-rose-400">
-                          -┬ú{set.operatorCommissionGbp.toFixed(2)}
-                        </td>
-                        <td className="py-3.5 px-4 font-mono text-emerald-600 dark:text-emerald-400">
-                          +┬ú{(set.airportTollReimbursementsGbp + set.fuelAllowanceGbp).toFixed(2)}
-                        </td>
-                        <td className="py-3.5 px-4 font-mono font-black text-sm text-slate-900 dark:text-white">
-                          ┬ú{set.netPayoutGbp.toFixed(2)}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          {set.status === 'paid_disbursed' ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300">
-                              Disbursed ({set.disbursedAt})
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300">
-                              Pending Payout
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          {set.status === 'pending_settlement' ? (
-                            <button
-                              onClick={() => handleOpenDisburseModal(set)}
-                              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"
-                            >
-                              Disburse Payout
-                            </button>
-                          ) : (
-                            <span className="text-xs text-emerald-600 font-bold flex items-center justify-end gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Reconciled
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                <tbody className="divide-y divide-[var(--border)] font-mono text-[11px]">
+                  {settlements.map(st => (
+                    <tr key={st.driverId} className="hover:bg-[var(--surface-2)] transition">
+                      <td className="p-3 font-heading font-bold text-[var(--text)]">
+                        {st.driverName}
+                        <span className="block text-[10px] text-[var(--text-muted)] font-mono font-normal">{st.staffId} • {st.completedJobsCount} trips</span>
+                      </td>
+                      <td className="p-3 text-[var(--text-muted)]">{st.vehicleReg}</td>
+                      <td className="p-3 text-[var(--text-muted)]">{st.weekEndingDate}</td>
+                      <td className="p-3 text-right font-bold text-[var(--text)]">£{st.grossFaresGbp.toFixed(2)}</td>
+                      <td className="p-3 text-right text-[#FF5D6C]">-£{st.operatorCommissionGbp.toFixed(2)}</td>
+                      <td className="p-3 text-right text-[var(--text-muted)]">-£{st.vehicleRentWeeklyGbp.toFixed(2)}</td>
+                      <td className="p-3 text-right text-[#FF9F6B]">-£{st.cashFaresCollectedByDriverGbp.toFixed(2)}</td>
+                      <td className="p-3 text-right font-bold text-[#B6F23C] text-sm">
+                        £{st.netBankTransferPayoutGbp.toFixed(2)}
+                      </td>
+                      <td className="p-3 text-right">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          st.paymentStatus === 'settled'
+                            ? 'bg-[#34D399]/20 text-[#34D399]'
+                            : 'bg-[#3FE0C5]/20 text-[#3FE0C5]'
+                        }`}>
+                          {st.paymentStatus.replace('_', ' ')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -432,212 +463,86 @@ export const FinancePage: React.FC = () => {
         </div>
       )}
 
-      {/* ======================================================================
-          MODAL 1: VIEW / PRINT INVOICE
-          ====================================================================== */}
-      {selectedInvoice && !isPayInvoiceModalOpen && (
-        <div className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
-            
-            {/* Invoice Top */}
-            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">TAX INVOICE</span>
-                <h3 className="text-xl font-black text-slate-900 dark:text-white">
-                  {selectedInvoice.invoiceRef}
-                </h3>
-                <p className="text-xs text-slate-500">{selectedInvoice.clientName}</p>
+      {/* PARTIAL REFUND DIALOG MODAL (Requirement 3) */}
+      {showRefundModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="nr-card p-6 max-w-md w-full space-y-4 shadow-2xl border border-[var(--border)]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-[12px] bg-[#FF9F6B]/20 text-[#FF9F6B] flex items-center justify-center">
+                  <RotateCcw className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-bold text-base text-[var(--text)]">
+                    Issue Partial Client Refund
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] font-mono">
+                    Ref: {refundBookingRef} (Original: £{refundOriginalFare.toFixed(2)})
+                  </p>
+                </div>
               </div>
-              <div className="text-right text-xs">
-                <span className="text-slate-400 block">Issued: {selectedInvoice.issueDate}</span>
-                <span className="text-slate-400 block">Due Date: {selectedInvoice.dueDate}</span>
-                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase mt-1 ${
-                  selectedInvoice.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
-                }`}>
-                  {selectedInvoice.status}
+
+              <button
+                onClick={() => setShowRefundModal(false)}
+                className="p-1 rounded-[8px] text-[var(--text-muted)] hover:text-[var(--text)]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleProcessRefund} className="space-y-3 text-xs">
+              <div>
+                <label className="text-[var(--text-muted)] font-semibold block mb-1">
+                  Refund Amount to Return (£ GBP)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono font-bold text-[var(--text)]">£</span>
+                  <input
+                    type="number"
+                    step="1"
+                    min="1"
+                    max={refundOriginalFare}
+                    required
+                    value={refundAmount}
+                    onChange={(e) => setRefundAmount(Number(e.target.value))}
+                    className="nr-input !h-[42px] pl-8 font-mono font-bold text-sm"
+                  />
+                </div>
+                <span className="text-[10px] text-[var(--text-muted)] mt-0.5 block">
+                  Remaining journey balance retained: £{(refundOriginalFare - refundAmount).toFixed(2)} (Status: PART-PAID)
                 </span>
               </div>
-            </div>
 
-            {/* Line Items */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Service Line Items</h4>
-              <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 dark:bg-slate-800 text-[10px] font-bold uppercase text-slate-500 border-b border-slate-200 dark:border-slate-700">
-                    <tr>
-                      <th className="p-2.5">Description</th>
-                      <th className="p-2.5 text-center">Qty</th>
-                      <th className="p-2.5 text-right">Unit (┬ú)</th>
-                      <th className="p-2.5 text-right">Total (┬ú)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {selectedInvoice.items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="p-2.5 font-medium text-slate-800 dark:text-slate-200">{item.description}</td>
-                        <td className="p-2.5 text-center font-mono">{item.quantity}</td>
-                        <td className="p-2.5 text-right font-mono">┬ú{item.unitPriceGbp.toFixed(2)}</td>
-                        <td className="p-2.5 text-right font-mono font-bold">┬ú{item.totalGbp.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div>
+                <label className="text-[var(--text-muted)] font-semibold block mb-1">
+                  Mandatory Audit Reason for Refund
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  className="nr-input !h-auto p-2.5 text-xs"
+                />
               </div>
-            </div>
 
-            {/* Totals Breakdown */}
-            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1 text-xs">
-              <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>Subtotal (Net)</span>
-                <span className="font-mono">┬ú{selectedInvoice.subtotalGbp.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>VAT (Zero-Rated / 20%)</span>
-                <span className="font-mono">┬ú{selectedInvoice.vatGbp.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm font-black text-slate-900 dark:text-white pt-1 border-t border-slate-200 dark:border-slate-700">
-                <span>Total Due</span>
-                <span className="font-mono">┬ú{selectedInvoice.totalGbp.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <button
-                type="button"
-                onClick={() => alert(`Simulating PDF download for invoice ${selectedInvoice.invoiceRef}`)}
-                className="px-3 py-2 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 hover:bg-slate-50"
-              >
-                <Download className="w-4 h-4" />
-                Export PDF
-              </button>
-
-              <div className="flex items-center gap-2">
+              <div className="flex gap-2 pt-2 border-t border-[var(--border)]">
                 <button
                   type="button"
-                  onClick={() => setSelectedInvoice(null)}
-                  className="px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100"
+                  onClick={() => setShowRefundModal(false)}
+                  className="btn-ghost flex-1 !text-xs !min-h-[44px]"
                 >
-                  Close
+                  Cancel
                 </button>
-                {selectedInvoice.status !== 'paid' && (
-                  <button
-                    type="button"
-                    onClick={() => setIsPayInvoiceModalOpen(true)}
-                    className="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
-                  >
-                    Record Payment
-                  </button>
-                )}
+                <button
+                  type="submit"
+                  className="btn-primary flex-1 !text-xs !min-h-[44px]"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Authorize £{refundAmount.toFixed(2)} Refund</span>
+                </button>
               </div>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* ======================================================================
-          MODAL 2: RECORD PAYMENT ON INVOICE
-          ====================================================================== */}
-      {isPayInvoiceModalOpen && selectedInvoice && (
-        <div className="fixed inset-0 z-70 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
-            <h3 className="text-base font-black text-slate-900 dark:text-white">
-              Record Payment: {selectedInvoice.invoiceRef}
-            </h3>
-            <p className="text-xs text-slate-500">
-              Total Amount: <strong className="text-slate-900 dark:text-white">┬ú{selectedInvoice.totalGbp.toFixed(2)}</strong>
-            </p>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Settlement Method
-              </label>
-              <select
-                value={paymentMethodChoice}
-                onChange={e => setPaymentMethodChoice(e.target.value)}
-                className="w-full p-2.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-              >
-                <option value="BACS Electronic Bank Transfer">BACS Electronic Bank Transfer</option>
-                <option value="Direct Council Remittance">Direct Council Remittance</option>
-                <option value="Corporate Debit/Credit Card">Corporate Debit/Credit Card</option>
-                <option value="Direct Debit Reconciled">Direct Debit</option>
-              </select>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsPayInvoiceModalOpen(false)}
-                className="px-4 py-2 rounded-lg text-xs font-bold text-slate-600"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmPayInvoice}
-                className="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700"
-              >
-                Confirm Payment & Reconcile
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ======================================================================
-          MODAL 3: DISBURSE DRIVER SETTLEMENT
-          ====================================================================== */}
-      {isDisburseModalOpen && selectedSettlement && (
-        <div className="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
-            <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <PoundSterling className="w-5 h-5 text-emerald-600" />
-              Disburse Settlement: {selectedSettlement.driverName}
-            </h3>
-            <p className="text-xs text-slate-500">
-              Period: {selectedSettlement.period} ΓÇó Completed Jobs: {selectedSettlement.completedJobsCount}
-            </p>
-
-            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5 text-xs">
-              <div className="flex justify-between">
-                <span>Gross Customer Fares</span>
-                <span className="font-mono font-bold">┬ú{selectedSettlement.grossFaresGbp.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-rose-600">
-                <span>DEC Operator Commission (20%)</span>
-                <span className="font-mono font-bold">-┬ú{selectedSettlement.operatorCommissionGbp.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-emerald-600">
-                <span>Toll & Fuel Reimbursements</span>
-                <span className="font-mono font-bold">+┬ú{(selectedSettlement.airportTollReimbursementsGbp + selectedSettlement.fuelAllowanceGbp).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm font-black text-slate-900 dark:text-white pt-1.5 border-t border-slate-200 dark:border-slate-700">
-                <span>Net BACS Payout</span>
-                <span className="font-mono">┬ú{selectedSettlement.netPayoutGbp.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Confirming disbursement will generate payout remittance ref <strong>{selectedSettlement.referenceNumber}</strong> and transmit the settlement statement to the driver's mobile staff app.
-            </p>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsDisburseModalOpen(false)}
-                className="px-4 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDisburse}
-                className="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-              >
-                Authorize BACS Transfer
-              </button>
-            </div>
+            </form>
           </div>
         </div>
       )}
@@ -645,3 +550,5 @@ export const FinancePage: React.FC = () => {
     </div>
   );
 };
+
+export default FinancePage;

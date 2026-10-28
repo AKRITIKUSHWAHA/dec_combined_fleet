@@ -21,7 +21,10 @@ import {
   Building2,
   Palette,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Plane,
+  Zap,
+  Sparkles
 } from 'lucide-react';
 
 interface MobileDrawerProps {
@@ -52,6 +55,8 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
       badgeColor: 'bg-[#FF5D6C] text-white',
       roles: ['owner_admin', 'controller'] 
     },
+    { to: '/airport', label: 'Airport & Chauffeur', icon: Plane, roles: ['owner_admin', 'controller'] },
+    { to: '/office/auto-dispatch', label: 'Auto-Dispatch Rules', icon: Zap, roles: ['owner_admin', 'controller'] },
     { to: '/schools', label: 'School Transport & SEN', icon: GraduationCap, roles: ['owner_admin', 'controller', 'hr_vetting'] },
     { 
       to: '/fleet', 
@@ -72,6 +77,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
     },
     { to: '/workforce', label: 'Staff (Drivers & PAs)', icon: Users, roles: ['owner_admin', 'controller', 'hr_vetting'] },
     { to: '/compliance', label: 'Compliance & DBS', icon: ShieldAlert, roles: ['owner_admin', 'hr_vetting', 'controller'] },
+    { to: '/office/operations', label: 'Office Operations (Chat/Lost)', icon: Sparkles, roles: ['owner_admin', 'controller', 'hr_vetting'] },
     { to: '/tariffs', label: 'Tariff Engine', icon: Tag, roles: ['owner_admin'] },
     { to: '/finance', label: 'Finance & Invoices', icon: PoundSterling, roles: ['owner_admin', 'controller'] },
     { to: '/design-system', label: 'Design System', icon: Palette, roles: ['owner_admin', 'controller', 'hr_vetting', 'mechanic', 'driver', 'pa'] }

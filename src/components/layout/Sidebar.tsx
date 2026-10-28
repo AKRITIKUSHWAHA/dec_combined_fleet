@@ -23,7 +23,10 @@ import {
   FileSpreadsheet,
   LogOut,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Plane,
+  Zap,
+  Sparkles
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -94,6 +97,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed: controlledCollapsed
       roles: ['owner_admin', 'controller']
     },
     {
+      to: '/airport',
+      label: 'Airport & Exec',
+      fullLabel: 'Airport & Executive Chauffeur',
+      icon: Plane,
+      roles: ['owner_admin', 'controller']
+    },
+    {
+      to: '/office/auto-dispatch',
+      label: 'Auto-Dispatch',
+      fullLabel: 'Auto-Dispatch Rules & Zones',
+      icon: Zap,
+      roles: ['owner_admin', 'controller']
+    },
+    {
       to: '/schools',
       label: 'School Transport',
       fullLabel: 'School Transport & SEN',
@@ -141,6 +158,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed: controlledCollapsed
       icon: ShieldAlert,
       isRestrictedForController: !canViewDBS,
       roles: ['owner_admin', 'hr_vetting', 'controller']
+    },
+    {
+      to: '/office/operations',
+      label: 'Office Operations',
+      fullLabel: 'Operations (Lost, Complaints, Chat)',
+      icon: Sparkles,
+      roles: ['owner_admin', 'controller', 'hr_vetting']
     },
     {
       to: '/tariffs',

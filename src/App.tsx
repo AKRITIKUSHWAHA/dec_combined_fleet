@@ -24,6 +24,9 @@ import { SchoolTransportPage } from './pages/SchoolTransportPage';
 import { TariffsPage } from './pages/TariffsPage';
 import { FinancePage } from './pages/FinancePage';
 import { ReportsPage } from './pages/ReportsPage';
+import { AirportExecutivePage } from './pages/AirportExecutivePage';
+import { OfficeExtrasPage } from './pages/OfficeExtrasPage';
+import { AutoDispatchSettingsPage } from './pages/AutoDispatchSettingsPage';
 import { DriverCockpitPage, PACockpitPage } from './pages/StaffCockpitPages';
 import { DesignSystemPage } from './pages/DesignSystemPage';
 import { NotFoundPage, AccessDeniedPage } from './pages/NotFoundPage';
@@ -122,6 +125,24 @@ export function App() {
                       element={
                         <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Bookings & Dispatch Board">
                           <BookingsPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* Phase 9.1: Airport & Executive Chauffeur Dispatch */}
+                    <Route
+                      path="/office/airport"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Airport & Executive Dispatch">
+                          <AirportExecutivePage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/airport"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Airport & Executive Dispatch">
+                          <AirportExecutivePage />
                         </RoleGuard>
                       }
                     />
@@ -234,7 +255,17 @@ export function App() {
                       }
                     />
 
-                    {/* Tariffs & Pricing Engine: DEC Owner/Admin ONLY */}
+                    {/* Phase 9.5: Auto-Dispatch Settings */}
+                    <Route
+                      path="/office/auto-dispatch"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Auto-Dispatch Engine & Settings">
+                          <AutoDispatchSettingsPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* Phase 9.2: Tariffs & Pricing Engine: DEC Owner/Admin ONLY */}
                     <Route
                       path="/office/tariffs"
                       element={
@@ -252,7 +283,7 @@ export function App() {
                       }
                     />
 
-                    {/* Finance, Invoicing & Settlements: Owner & Controller */}
+                    {/* Phase 9.3: Finance, Invoicing & Settlements: Owner & Controller */}
                     <Route
                       path="/office/finance"
                       element={
@@ -284,6 +315,27 @@ export function App() {
                       element={
                         <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'mechanic']} featureName="Reports & Compliance Audits">
                           <ReportsPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* Phase 9.4: Office Extras & Operations (Templates, Lost Property, Complaints, Chat) */}
+                    <Route
+                      path="/office/operations"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="Office Operations & Support">
+                          <OfficeExtrasPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/office/extras"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="Office Operations & Support">
+                          <OfficeExtrasPage />
+                        </RoleGuard>
+                      }
+                    />
                         </RoleGuard>
                       }
                     />
