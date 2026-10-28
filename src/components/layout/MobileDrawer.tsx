@@ -24,7 +24,9 @@ import {
   ChevronRight,
   Plane,
   Zap,
-  Sparkles
+  Sparkles,
+  Receipt,
+  Bell
 } from 'lucide-react';
 
 interface MobileDrawerProps {
@@ -80,6 +82,8 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
     { to: '/office/operations', label: 'Office Operations (Chat/Lost)', icon: Sparkles, roles: ['owner_admin', 'controller', 'hr_vetting'] },
     { to: '/tariffs', label: 'Tariff Engine', icon: Tag, roles: ['owner_admin'] },
     { to: '/finance', label: 'Finance & Invoices', icon: PoundSterling, roles: ['owner_admin', 'controller'] },
+    { to: '/office/expenses-incidents', label: 'Expenses & Incidents', icon: Receipt, roles: ['owner_admin', 'controller', 'hr_vetting'] },
+    { to: '/office/reminders', label: 'Reminder & Escalation Centre', icon: Bell, roles: ['owner_admin', 'controller', 'hr_vetting', 'mechanic'] },
     { to: '/design-system', label: 'Design System', icon: Palette, roles: ['owner_admin', 'controller', 'hr_vetting', 'mechanic', 'driver', 'pa'] }
   ];
 

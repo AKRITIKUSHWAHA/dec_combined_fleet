@@ -27,6 +27,8 @@ import { ReportsPage } from './pages/ReportsPage';
 import { AirportExecutivePage } from './pages/AirportExecutivePage';
 import { OfficeExtrasPage } from './pages/OfficeExtrasPage';
 import { AutoDispatchSettingsPage } from './pages/AutoDispatchSettingsPage';
+import { ExpensesIncidentsPage } from './pages/ExpensesIncidentsPage';
+import { ReminderCentrePage } from './pages/ReminderCentrePage';
 import { DriverCockpitPage, PACockpitPage } from './pages/StaffCockpitPages';
 import { DesignSystemPage } from './pages/DesignSystemPage';
 import { NotFoundPage, AccessDeniedPage } from './pages/NotFoundPage';
@@ -333,6 +335,42 @@ export function App() {
                       element={
                         <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="Office Operations & Support">
                           <OfficeExtrasPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* Phase 10: Expenses, Accidents & Grey Fleet */}
+                    <Route
+                      path="/office/expenses-incidents"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="Staff Expenses & Incidents">
+                          <ExpensesIncidentsPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/office/expenses"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="Staff Expenses & Incidents">
+                          <ExpensesIncidentsPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* Phase 10: Reminder & Escalation Centre */}
+                    <Route
+                      path="/office/reminders"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'mechanic']} featureName="Automated Reminder & Escalation Centre">
+                          <ReminderCentrePage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/reminders"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'mechanic']} featureName="Automated Reminder & Escalation Centre">
+                          <ReminderCentrePage />
                         </RoleGuard>
                       }
                     />

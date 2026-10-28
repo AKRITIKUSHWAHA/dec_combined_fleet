@@ -26,7 +26,9 @@ import {
   PanelLeftOpen,
   Plane,
   Zap,
-  Sparkles
+  Sparkles,
+  Receipt,
+  Bell
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -179,6 +181,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed: controlledCollapsed
       fullLabel: 'Finance & Driver Payouts',
       icon: PoundSterling,
       roles: ['owner_admin', 'controller']
+    },
+    {
+      to: '/office/expenses-incidents',
+      label: 'Expenses & Crashes',
+      fullLabel: 'Expenses, Collisions & Grey Fleet',
+      icon: Receipt,
+      roles: ['owner_admin', 'controller', 'hr_vetting']
+    },
+    {
+      to: '/office/reminders',
+      label: 'Reminder Centre',
+      fullLabel: 'Automated Reminder & Escalation Centre',
+      icon: Bell,
+      roles: ['owner_admin', 'controller', 'hr_vetting', 'mechanic']
     },
     {
       to: '/reports',

@@ -17,7 +17,13 @@ import {
   Check,
   ArrowRight,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Fuel,
+  Camera,
+  Receipt,
+  Car,
+  Plus,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -27,6 +33,42 @@ export const DriverCockpitPage: React.FC = () => {
   const [isSimulatedOffline, setIsSimulatedOffline] = useState(false);
   const [emergencyAlertSent, setEmergencyAlertSent] = useState(false);
   const [showClearConfirmModal, setShowClearConfirmModal] = useState(false);
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [showIncidentModal, setShowIncidentModal] = useState(false);
+  const [driverToast, setDriverToast] = useState<string | null>(null);
+
+  // Mobile expense form state
+  const [expCategory, setExpCategory] = useState<'fuel_diesel' | 'fuel_petrol' | 'ev_charging' | 'adblue' | 'parking_tolls'>('fuel_diesel');
+  const [expAmount, setExpAmount] = useState('52.40');
+  const [expLitres, setExpLitres] = useState('36.2');
+  const [expReg, setExpReg] = useState('BD24 TYU');
+  const [expReceiptAttached, setExpReceiptAttached] = useState(true);
+
+  // Mobile incident form state
+  const [incLocation, setIncLocation] = useState('A505 Roundabout Dunstable');
+  const [incDrivable, setIncDrivable] = useState<'drivable' | 'vor_towed'>('drivable');
+  const [incPoliceCad, setIncPoliceCad] = useState('CAD-8812-28OCT');
+  const [incTpReg, setIncTpReg] = useState('FE19 KPL');
+  const [incTpDriver, setIncTpDriver] = useState('John Davies');
+  const [incTpPhone, setIncTpPhone] = useState('07700 900421');
+  const [incTpInsurer, setIncTpInsurer] = useState('Direct Line Insurance');
+  const [incHasInjuries, setIncHasInjuries] = useState(false);
+  const [incInjuryNotes, setIncInjuryNotes] = useState('No injuries. Roadside paramedic clearance.');
+  const [incPhotoAttached, setIncPhotoAttached] = useState(true);
+
+  const handleMobileSubmitExpense = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowExpenseModal(false);
+    setDriverToast('Expense receipt successfully submitted! Sent to office controller for approval.');
+    setTimeout(() => setDriverToast(null), 4000);
+  };
+
+  const handleMobileSubmitIncident = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowIncidentModal(false);
+    setDriverToast('INCIDENT REPORT FILED: CAD ref & photos sent to Controller & Aviva Fleet Claims hotline.');
+    setTimeout(() => setDriverToast(null), 5000);
+  };
   
   // Find an active or assigned booking for testing
   const activeJob = bookings.find(b => b.status === 'en_route' || b.status === 'arrived' || b.status === 'pob') || bookings[0];
@@ -244,6 +286,48 @@ export const DriverCockpitPage: React.FC = () => {
           </button>
         </div>
 
+      </div>
+
+      {/* Toast Notification */}
+      {driverToast && (
+        <div className="bg-[#B6F23C] text-[#08201C] p-3.5 rounded-[16px] text-xs font-heading font-bold shadow-lime-glow flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{driverToast}</span>
+          </div>
+          <button onClick={() => setDriverToast(null)} className="text-xs p-1 font-mono">✕</button>
+        </div>
+      )}
+
+      {/* Driver Mobile On-Duty Quick Tools (Requirements 5 & 6) */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={() => setShowExpenseModal(true)}
+          className="nr-card p-3 flex items-center gap-2.5 text-left hover:border-[#B6F23C] transition border border-[var(--border)]"
+        >
+          <div className="w-10 h-10 rounded-[12px] bg-[#B6F23C]/20 text-[#08201C] dark:text-[#B6F23C] flex items-center justify-center shrink-0">
+            <Fuel className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="font-heading font-bold text-xs text-[var(--text)] block">Log Expense</span>
+            <span className="text-[10px] text-[var(--text-muted)] block">Fuel / EV / AdBlue</span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowIncidentModal(true)}
+          className="nr-card p-3 flex items-center gap-2.5 text-left hover:border-[#FF5D6C] transition border border-[var(--border)]"
+        >
+          <div className="w-10 h-10 rounded-[12px] bg-[#FF5D6C]/20 text-[#FF5D6C] flex items-center justify-center shrink-0">
+            <ShieldAlert className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="font-heading font-bold text-xs text-[var(--text)] block">Report Accident</span>
+            <span className="text-[10px] text-[var(--text-muted)] block">Collision & Photos</span>
+          </div>
+        </button>
       </div>
 
       {/* Driver Profile & Sign Out (Profile/More Tab Section) */}
