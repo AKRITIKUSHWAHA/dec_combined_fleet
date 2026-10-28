@@ -41,6 +41,8 @@ import { SubCompaniesPage } from './pages/SubCompaniesPage';
 import { IntegrationsPage } from './pages/IntegrationsPage';
 import { RolesAndUsersPage } from './pages/RolesAndUsersPage';
 import { DriverCockpitPage, PACockpitPage } from './pages/StaffCockpitPages';
+import { EnhancementsHubPage } from './pages/EnhancementsHubPage';
+import { DriverCarPlayCockpitPage } from './pages/DriverCarPlayCockpitPage';
 import { DesignSystemPage } from './pages/DesignSystemPage';
 import { NotFoundPage, AccessDeniedPage } from './pages/NotFoundPage';
 
@@ -489,6 +491,40 @@ export function App() {
                       element={
                         <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="Roles Matrix & User Management">
                           <RolesAndUsersPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* Phase 13: Enhancements Hub (Bidding, Destination Mode, CarPlay, Split Payment, Passenger Privacy) */}
+                    <Route
+                      path="/office/enhancements"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'mechanic', 'driver', 'pa']} featureName="Phase 13 Enhancements Suite">
+                          <EnhancementsHubPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/enhancements"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'mechanic', 'driver', 'pa']} featureName="Phase 13 Enhancements Suite">
+                          <EnhancementsHubPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/carplay-cockpit"
+                      element={
+                        <RoleGuard allowedRoles={['driver', 'owner_admin', 'controller']} featureName="CarPlay Large Control Cockpit">
+                          <DriverCarPlayCockpitPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/driver/carplay"
+                      element={
+                        <RoleGuard allowedRoles={['driver', 'owner_admin', 'controller']} featureName="CarPlay Large Control Cockpit">
+                          <DriverCarPlayCockpitPage />
                         </RoleGuard>
                       }
                     />

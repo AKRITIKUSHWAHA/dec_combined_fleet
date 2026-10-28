@@ -12,7 +12,10 @@ import {
   ArrowLeft, 
   RotateCcw,
   User,
-  ShieldX
+  ShieldX,
+  Eye,
+  EyeOff,
+  Sparkles
 } from 'lucide-react';
 import { 
   mockCustomerTrackingData, 
@@ -27,6 +30,17 @@ export const CustomerTrackingPage: React.FC = () => {
   const [isExpiredSimulation, setIsExpiredSimulation] = useState<boolean>(() => {
     return bookingRef?.toLowerCase().includes('expired') || false;
   });
+
+  // Enhancement: Passenger Live GPS Location Sharing vs Non-Sharing Privacy Setting
+  const [isGpsSharingActive, setIsGpsSharingActive] = useState<boolean>(true);
+  const [sharingToast, setSharingToast] = useState<string | null>(null);
+
+  const toggleGpsSharing = () => {
+    const next = !isGpsSharingActive;
+    setIsGpsSharingActive(next);
+    setSharingToast(next ? 'Live GPS telemetry sharing with driver Tariq is now ON' : 'Privacy Mode: Live GPS sharing disabled. Driver will navigate to booked pin.');
+    setTimeout(() => setSharingToast(null), 3500);
+  };
 
   const tracking: CustomerTrackingData = isExpiredSimulation 
     ? mockExpiredTrackingData 
@@ -235,6 +249,46 @@ export const CustomerTrackingPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Toast notice for location sharing toggle */}
+            {sharingToast && (
+              <div className="p-3 rounded-[12px] bg-[#34D399]/20 border border-[#34D399] text-[#34D399] font-mono text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{sharingToast}</span>
+              </div>
+            )}
+
+            {/* Enhancement: Passenger Live GPS Location Sharing vs Non-Sharing Option */}
+            <div className="p-4 rounded-[16px] bg-[var(--surface-2)] border border-[var(--border)] space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#B6F23C]/20 text-[#08201C] dark:text-[#B6F23C] border border-[#B6F23C]/40 uppercase">
+                    Enhancement
+                  </span>
+                  <span className="font-heading font-bold text-xs text-[var(--text)]">
+                    Passenger Kerbside Location Sharing
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleGpsSharing}
+                  className={`px-3 py-1 rounded-full font-mono text-xs font-bold transition flex items-center gap-1.5 ${
+                    isGpsSharingActive
+                      ? 'bg-[#34D399] text-[#08201C]'
+                      : 'bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--border)]'
+                  }`}
+                >
+                  {isGpsSharingActive ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  <span>{isGpsSharingActive ? 'SHARING LIVE GPS (5m)' : 'PRIVACY MODE (PIN ONLY)'}</span>
+                </button>
+              </div>
+
+              <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                {isGpsSharingActive
+                  ? 'Your live GPS location is being streamed to driver Tariq to help them identify your exact kerbside position at pickup. This stream auto-expires when you board.'
+                  : 'Privacy mode active: Driver Tariq will only see your booked street address pin. Your phone’s live device location will not be broadcast.'}
+              </p>
+            </div>
+
             {/* Route Points */}
             <div className="space-y-2 text-xs pt-1">
               <div className="flex items-start gap-2">
@@ -269,3 +323,4 @@ export const CustomerTrackingPage: React.FC = () => {
     </div>
   );
 };
+

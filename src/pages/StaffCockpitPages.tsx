@@ -23,7 +23,10 @@ import {
   Receipt,
   Car,
   Plus,
-  X
+  X,
+  Sparkles,
+  CreditCard,
+  Compass
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -112,18 +115,32 @@ export const DriverCockpitPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Offline Stored Mode Warning Banner (Requirement CHK-07 & APP-04) */}
-      {isSimulatedOffline && (
-        <div className="bg-[#FF5D6C]/15 border border-[#FF5D6C]/40 rounded-[18px] p-4 flex items-start gap-3 text-xs text-[#FF5D6C]">
-          <WifiOff className="w-5 h-5 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-heading font-bold text-sm">Offline Stored Queue Active</p>
-            <p className="text-[12px] mt-0.5 opacity-90">
-              Status changes are safely stored in encrypted local cache. Events will automatically sync with verified timestamps upon reconnection.
-            </p>
-          </div>
+      {/* Phase 13 Enhancements Quick Bar */}
+      <div className="bg-[var(--surface-2)] border border-[var(--border)] rounded-[18px] p-3 space-y-2">
+        <div className="flex items-center justify-between text-[11px] font-mono">
+          <span className="flex items-center gap-1.5 font-bold text-[#B6F23C]">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>ENHANCEMENTS ACTIVE</span>
+          </span>
+          <span className="text-[var(--text-muted)]">Phase 13 Tools</span>
         </div>
-      )}
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <Link
+            to="/carplay-cockpit"
+            className="flex items-center justify-center gap-1.5 p-2 rounded-[12px] bg-[var(--surface)] hover:bg-[#B6F23C] hover:text-[#08201C] border border-[var(--border)] font-heading font-bold transition text-[var(--text)] text-center"
+          >
+            <Navigation className="w-4 h-4 text-[#3FE0C5]" />
+            <span>CarPlay Cockpit</span>
+          </Link>
+          <Link
+            to="/office/enhancements"
+            className="flex items-center justify-center gap-1.5 p-2 rounded-[12px] bg-[var(--surface)] hover:bg-[#3FE0C5] hover:text-[#08201C] border border-[var(--border)] font-heading font-bold transition text-[var(--text)] text-center"
+          >
+            <Compass className="w-4 h-4 text-[#FF9F6B]" />
+            <span>Bidding &amp; Destination</span>
+          </Link>
+        </div>
+      </div>
 
       {emergencyAlertSent && (
         <div className="bg-[#FF5D6C] text-white p-4 rounded-[18px] shadow-coral-glow flex items-center justify-between text-xs font-heading font-bold animate-pulse">

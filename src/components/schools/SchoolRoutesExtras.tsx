@@ -434,3 +434,4 @@ export const SchoolRoutesExtras: React.FC<SchoolRoutesExtrasProps> = ({ currentT
     </div>
   );
 };
+

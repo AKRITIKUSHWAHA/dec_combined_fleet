@@ -19,7 +19,9 @@ import {
   Phone,
   Mail,
   User,
-  Check
+  Check,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { mockCustomerBookings } from '../../data/mockDataPhase12';
 import { 
@@ -67,6 +69,7 @@ export const CustomerBookingPage: React.FC = () => {
   const [customerName, setCustomerName] = useState('Dr. Alistair Finch');
   const [customerEmail, setCustomerEmail] = useState('a.finch@biotech-innovations.co.uk');
   const [customerPhone, setCustomerPhone] = useState('07700 900543');
+  const [locationSharingMode, setLocationSharingMode] = useState<'precise_live_gps' | 'privacy_fixed_pin'>('precise_live_gps');
   const [paymentMethod, setPaymentMethod] = useState<'card_online' | 'pay_on_completion' | 'corporate_account'>('card_online');
   const [corporatePo, setCorporatePo] = useState('');
 
@@ -578,10 +581,80 @@ export const CustomerBookingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Step 5: Contact & Payment Step */}
+            {/* Step 5: Passenger Live Location Sharing vs Privacy (Enhancement) */}
+            <div className="nr-card p-5 sm:p-6 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-base font-heading font-bold text-[var(--text)] flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[#B6F23C] text-[#08201C] font-mono font-bold text-xs flex items-center justify-center">5</span>
+                  <span>Pickup Telemetry &amp; Location Privacy</span>
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#B6F23C]/20 text-[#08201C] dark:text-[#B6F23C] border border-[#B6F23C]/40 uppercase">
+                  Enhancement
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setLocationSharingMode('precise_live_gps')}
+                  className={`p-4 rounded-[16px] text-left border transition flex flex-col justify-between space-y-2 ${
+                    locationSharingMode === 'precise_live_gps'
+                      ? 'border-[#B6F23C] bg-[var(--surface-2)] ring-2 ring-[#B6F23C]/30 shadow-lime-glow'
+                      : 'border-[var(--border)] bg-[var(--surface)] hover:border-[var(--text-muted)]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-heading font-bold text-xs text-[var(--text)] flex items-center gap-1.5">
+                      <Eye className="w-4 h-4 text-[#3FE0C5]" />
+                      <span>Share Precise Live GPS</span>
+                    </span>
+                    <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      locationSharingMode === 'precise_live_gps' ? 'border-[#B6F23C] bg-[#B6F23C] text-[#08201C]' : 'border-[var(--border)]'
+                    }`}>
+                      {locationSharingMode === 'precise_live_gps' && <Check className="w-3 h-3 stroke-[3]" />}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                    Broadcasts high-accuracy walking telemetry to driver during pickup window. Perfect for busy airport drop-offs and train stations.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLocationSharingMode('privacy_fixed_pin')}
+                  className={`p-4 rounded-[16px] text-left border transition flex flex-col justify-between space-y-2 ${
+                    locationSharingMode === 'privacy_fixed_pin'
+                      ? 'border-[#FF9F6B] bg-[var(--surface-2)] ring-2 ring-[#FF9F6B]/30'
+                      : 'border-[var(--border)] bg-[var(--surface)] hover:border-[var(--text-muted)]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-heading font-bold text-xs text-[var(--text)] flex items-center gap-1.5">
+                      <EyeOff className="w-4 h-4 text-[#FF9F6B]" />
+                      <span>Privacy Mode (Fixed Pin Only)</span>
+                    </span>
+                    <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      locationSharingMode === 'privacy_fixed_pin' ? 'border-[#FF9F6B] bg-[#FF9F6B] text-[#08201C]' : 'border-[var(--border)]'
+                    }`}>
+                      {locationSharingMode === 'privacy_fixed_pin' && <Check className="w-3 h-3 stroke-[3]" />}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+                    Driver navigates strictly to your booked address/postcode pin. Zero device GPS telemetry transmitted.
+                  </p>
+                </button>
+              </div>
+
+              <div className="text-[10px] font-mono text-[var(--text-muted)] bg-[var(--surface-2)] p-2.5 rounded-[10px] flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#34D399] shrink-0" />
+                <span>GDPR Safe: Telemetry expires instantly when job completes. No third-party data tracking.</span>
+              </div>
+            </div>
+
+            {/* Step 6: Contact & Payment Step */}
             <div className="nr-card p-5 sm:p-6 space-y-4">
               <h2 className="text-base font-heading font-bold text-[var(--text)] flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-[#B6F23C] text-[#08201C] font-mono font-bold text-xs flex items-center justify-center">5</span>
+                <span className="w-6 h-6 rounded-full bg-[#B6F23C] text-[#08201C] font-mono font-bold text-xs flex items-center justify-center">6</span>
                 <span>Passenger Contact &amp; Payment Step</span>
               </h2>
 
@@ -810,3 +883,4 @@ export const CustomerBookingPage: React.FC = () => {
     </div>
   );
 };
+

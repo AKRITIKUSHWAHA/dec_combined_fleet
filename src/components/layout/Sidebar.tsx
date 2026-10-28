@@ -33,7 +33,8 @@ import {
   Cpu,
   Key,
   FileCheck,
-  Clock
+  Clock,
+  Navigation
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -252,6 +253,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed: controlledCollapsed
       roles: ['owner_admin', 'hr_vetting']
     },
     {
+      to: '/office/enhancements',
+      label: 'Enhancements',
+      fullLabel: 'Phase 13 Enhancements Suite',
+      icon: Sparkles,
+      badge: 'Enhancement',
+      badgeTitle: 'Phase 13: Bidding, Destination, CarPlay, Split Pay, Privacy',
+      badgeColor: 'bg-[#B6F23C] text-[#08201C]',
+      highlight: true,
+      roles: ['owner_admin', 'controller', 'hr_vetting', 'mechanic', 'driver', 'pa']
+    },
+    {
       to: '/design-system',
       label: 'Design System',
       fullLabel: 'Night Road Design System',
@@ -268,6 +280,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed: controlledCollapsed
       label: 'Driver Cockpit',
       fullLabel: 'Driver Mobile Cockpit',
       icon: Smartphone,
+      highlight: true
+    },
+    {
+      to: '/carplay-cockpit',
+      label: 'CarPlay Cockpit',
+      fullLabel: 'CarPlay Large-Control Cockpit (Enhancement)',
+      icon: Navigation,
+      badge: '80px',
+      badgeColor: 'bg-[#3FE0C5] text-[#08201C]',
       highlight: true
     },
     {
@@ -420,7 +441,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed: controlledCollapsed
                 <Icon className="w-4 h-4 shrink-0" />
                 {!isCollapsed && <span className="font-heading text-[12px] truncate">{item.label}</span>}
               </div>
-              {!isCollapsed && <ChevronRight className="w-3.5 h-3.5 opacity-60 shrink-0" />}
+              {!isCollapsed && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {item.badge && (
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full ${item.badgeColor || 'bg-[#B6F23C] text-[#08201C]'}`}>
+                      {item.badge}
+                    </span>
+                  )}
+                  <ChevronRight className="w-3.5 h-3.5 opacity-60 shrink-0" />
+                </div>
+              )}
             </NavLink>
           );
         })}

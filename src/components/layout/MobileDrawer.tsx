@@ -84,6 +84,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
     { to: '/finance', label: 'Finance & Invoices', icon: PoundSterling, roles: ['owner_admin', 'controller'] },
     { to: '/office/expenses-incidents', label: 'Expenses & Incidents', icon: Receipt, roles: ['owner_admin', 'controller', 'hr_vetting'] },
     { to: '/office/reminders', label: 'Reminder & Escalation Centre', icon: Bell, roles: ['owner_admin', 'controller', 'hr_vetting', 'mechanic'] },
+    { to: '/office/enhancements', label: 'Enhancements Hub', icon: Sparkles, roles: ['owner_admin', 'controller', 'hr_vetting', 'mechanic', 'driver', 'pa'] },
     { to: '/design-system', label: 'Design System', icon: Palette, roles: ['owner_admin', 'controller', 'hr_vetting', 'mechanic', 'driver', 'pa'] }
   ];
 
@@ -196,6 +197,19 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
                 <span>Driver Mobile Cockpit</span>
               </div>
               <ChevronRight className="w-4 h-4 opacity-70" />
+            </NavLink>
+            <NavLink
+              to="/carplay-cockpit"
+              onClick={onClose}
+              className="flex items-center justify-between px-3.5 py-2.5 rounded-[12px] text-xs font-heading font-bold text-[#3FE0C5] bg-[#3FE0C5]/10 hover:bg-[#3FE0C5]/20 mb-2 min-h-[44px]"
+            >
+              <div className="flex items-center gap-3">
+                <Smartphone className="w-4 h-4 text-[#3FE0C5]" />
+                <span>CarPlay Landscape Cockpit</span>
+              </div>
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-[#B6F23C] text-[#08201C]">
+                80px
+              </span>
             </NavLink>
             <NavLink
               to="/pa-cockpit"

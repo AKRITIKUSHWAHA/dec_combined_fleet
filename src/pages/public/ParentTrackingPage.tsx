@@ -147,3 +147,4 @@ export const ParentTrackingPage: React.FC = () => {
     </div>
   );
 };
+
