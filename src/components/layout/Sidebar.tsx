@@ -20,7 +20,8 @@ import {
   Lock, 
   LogOut, 
   Clock, 
-  AlertTriangle 
+  AlertTriangle,
+  FileSpreadsheet
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -141,6 +142,12 @@ export const Sidebar: React.FC<SidebarProps> = () => {
           label: 'Finance & Payouts',
           icon: PoundSterling,
           roles: ['owner_admin', 'controller']
+        },
+        {
+          to: '/office/reports',
+          label: 'Reports & Audits',
+          icon: FileSpreadsheet,
+          roles: ['owner_admin', 'controller', 'hr_vetting', 'mechanic']
         }
       ]
     }

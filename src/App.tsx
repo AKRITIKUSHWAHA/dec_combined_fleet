@@ -29,11 +29,12 @@ import { FleetPage } from './pages/FleetPage';
 import { ChecksPage } from './pages/ChecksPage';
 import { MaintenancePage } from './pages/MaintenancePage';
 import { WorkforcePage } from './pages/WorkforcePage';
+import { SchoolTransportPage } from './pages/SchoolTransportPage';
+import { FinancePage } from './pages/FinancePage';
+import { ReportsPage } from './pages/ReportsPage';
 import { 
   CompliancePage, 
-  SchoolTransportPage, 
-  TariffsPage, 
-  FinancePage 
+  TariffsPage 
 } from './pages/PlaceholderPages';
 import { DriverCockpitPage, PACockpitPage } from './pages/StaffCockpitPages';
 
@@ -165,6 +166,14 @@ export function App() {
                       element={
                         <ProtectedRoute allowedRoles={['owner_admin', 'controller']}>
                           <FinancePage />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/office/reports" 
+                      element={
+                        <ProtectedRoute allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'mechanic']}>
+                          <ReportsPage />
                         </ProtectedRoute>
                       } 
                     />

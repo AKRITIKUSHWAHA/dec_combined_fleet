@@ -16,7 +16,11 @@ import {
   WorkshopSlot,
   RequirementTemplate,
   ComplianceReminder,
-  OperationalClearance
+  OperationalClearance,
+  SchoolRoute,
+  Pupil,
+  AccountInvoice,
+  DriverSettlement
 } from '../types';
 import { 
   initialVehicles, 
@@ -28,7 +32,10 @@ import {
   initialChecklistVersions,
   initialWorkshopSlots,
   initialRequirementTemplates,
-  initialComplianceReminders
+  initialComplianceReminders,
+  initialSchoolRoutes,
+  initialInvoices,
+  initialDriverSettlements
 } from '../data/mockData';
 
 interface DataContextType {
@@ -89,6 +96,17 @@ interface DataContextType {
   toggleStaffActiveStatus: (staffId: string) => void;
   updateRequirementTemplate: (templateId: string, updated: Partial<RequirementTemplate>) => void;
   updateStaffProfile: (staffId: string, updated: Partial<DriverPAProfile>) => void;
+
+  // Phase 7 School Routes, Basic Accounts & Finance
+  schoolRoutes: SchoolRoute[];
+  accountInvoices: AccountInvoice[];
+  driverSettlements: DriverSettlement[];
+  updatePupilAttendance: (routeId: string, pupilId: string, status: 'scheduled' | 'boarded' | 'handed_over' | 'absent', reason?: string, handoverPerson?: string) => void;
+  completeDriverSweep: (routeId: string, driverNotes?: string) => void;
+  countersignPASweep: (routeId: string, paName: string) => void;
+  reassignSchoolRouteTeam: (routeId: string, driverId: string, vehicleReg: string, pa1Id: string, pa2Id?: string) => void;
+  markInvoicePaid: (invoiceId: string, paymentMethod: string) => void;
+  disburseDriverSettlement: (settlementId: string) => void;
 
   // Helper Checks
   checkVehicleAvailability: (vehicleId: string) => { isAvailable: boolean; reason?: string };
@@ -157,6 +175,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Phase 6 Workforce & Compliance states
   const [requirementTemplates, setRequirementTemplates] = useState<RequirementTemplate[]>(initialRequirementTemplates);
   const [complianceReminders, setComplianceReminders] = useState<ComplianceReminder[]>(initialComplianceReminders);
+
+  // Phase 7 School Routes, Basic Accounts & Settlements states
+  const [schoolRoutes, setSchoolRoutes] = useState<SchoolRoute[]>(initialSchoolRoutes);
+  const [accountInvoices, setAccountInvoices] = useState<AccountInvoice[]>(initialInvoices);
+  const [driverSettlements, setDriverSettlements] = useState<DriverSettlement[]>(initialDriverSettlements);
 
   const checkVehicleAvailability = (vehicleId: string): { isAvailable: boolean; reason?: string } => {
     const veh = vehicles.find(v => v.id === vehicleId);
@@ -916,6 +939,206 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setStaff(prev => prev.map(s => s.id === staffId ? { ...s, ...updated } : s));
   };
 
+  // Phase 7 School Routes, Basic Accounts & Finance Handlers
+  const updatePupilAttendance = (
+    routeId: string, 
+    pupilId: string, 
+    status: 'scheduled' | 'boarded' | 'handed_over' | 'absent', 
+    reason?: string, 
+    handoverPerson?: string
+  ) => {
+    const timestamp = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    setSchoolRoutes(prev => prev.map(route => {
+      if (route.id === routeId) {
+        const updatedPupils = route.pupils.map(p => {
+          if (p.id === pupilId) {
+            return {
+              ...p,
+              attendanceStatus: status,
+              absenceReason: status === 'absent' ? (reason || 'Absent recorded by PA') : undefined,
+              pickupTimestamp: status === 'boarded' ? timestamp : p.pickupTimestamp,
+              dropoffTimestamp: status === 'handed_over' ? timestamp : p.dropoffTimestamp,
+              handoverPerson: handoverPerson || p.handoverPerson
+            };
+          }
+          return p;
+        });
+
+        // Calculate route progress state
+        const allDroppedOrAbsent = updatedPupils.every(p => p.attendanceStatus === 'handed_over' || p.attendanceStatus === 'absent');
+        let newRouteStatus = route.status;
+        if (allDroppedOrAbsent) {
+          if (route.sweepDetails?.paCountersigned) {
+            newRouteStatus = 'completed';
+          } else if (route.sweepDetails?.driverCompleted) {
+            newRouteStatus = 'sweep_pending_pa';
+          } else {
+            newRouteStatus = 'pupils_dropped';
+          }
+        } else {
+          newRouteStatus = 'in_progress';
+        }
+
+        return {
+          ...route,
+          pupils: updatedPupils,
+          status: newRouteStatus
+        };
+      }
+      return route;
+    }));
+  };
+
+  const completeDriverSweep = (routeId: string, driverNotes?: string) => {
+    const timestamp = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    setSchoolRoutes(prev => prev.map(route => {
+      if (route.id === routeId) {
+        return {
+          ...route,
+          status: 'sweep_pending_pa',
+          sweepDetails: {
+            driverCompleted: true,
+            driverTimestamp: timestamp,
+            paCountersigned: false,
+            sweepNotes: driverNotes || 'Driver physical sweep completed: all seats, floor, and wheelchair clamps inspected.',
+            driverFreedForDuties: false // DRIVER CANNOT BE ALLOCATED UNTIL PA COUNTERSIGNS!
+          }
+        };
+      }
+      return route;
+    }));
+
+    const route = schoolRoutes.find(r => r.id === routeId);
+    const notif: SystemNotification = {
+      id: `notif-${Date.now()}`,
+      type: 'flight_delay_clash',
+      title: `PA Countersignature Required: Route ${route?.routeCode || 'School Run'}`,
+      description: 'Driver has submitted physical sweep. Passenger Assistant countersignature required before driver/vehicle can be freed.',
+      timestamp: 'Just now',
+      severity: 'warning',
+      read: false,
+      entityLink: '/office/schools'
+    };
+    setNotifications(prev => [notif, ...prev]);
+  };
+
+  const countersignPASweep = (routeId: string, paName: string) => {
+    const timestamp = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    let driverIdToFree = '';
+    let vehicleRegToFree = '';
+
+    setSchoolRoutes(prev => prev.map(route => {
+      if (route.id === routeId) {
+        driverIdToFree = route.assignedDriverId;
+        vehicleRegToFree = route.assignedVehicleReg;
+        return {
+          ...route,
+          status: 'completed',
+          sweepDetails: {
+            ...route.sweepDetails,
+            driverCompleted: true,
+            paCountersigned: true,
+            paSignatureName: paName,
+            paTimestamp: timestamp,
+            driverFreedForDuties: true // FREED FOR GENERAL DISPATCH!
+          }
+        };
+      }
+      return route;
+    }));
+
+    // Unlock driver and vehicle for general dispatch!
+    if (driverIdToFree) {
+      setStaff(prev => prev.map(s => {
+        if (s.id === driverIdToFree) {
+          return {
+            ...s,
+            dutyStatus: 'available',
+            onDuty: true
+          };
+        }
+        return s;
+      }));
+    }
+    if (vehicleRegToFree) {
+      setVehicles(prev => prev.map(v => {
+        if (v.registration === vehicleRegToFree && v.status !== 'blocked_off_road') {
+          return { ...v, status: 'available' };
+        }
+        return v;
+      }));
+    }
+
+    const notif: SystemNotification = {
+      id: `notif-${Date.now()}`,
+      type: 'flight_delay_clash',
+      title: `School Sweep Countersigned by ${paName}`,
+      description: `Child safety sweep verified. Driver and vehicle ${vehicleRegToFree} are now AVAILABLE for dispatch duties.`,
+      timestamp: 'Just now',
+      severity: 'info',
+      read: false,
+      entityLink: '/office/schools'
+    };
+    setNotifications(prev => [notif, ...prev]);
+  };
+
+  const reassignSchoolRouteTeam = (
+    routeId: string, 
+    driverId: string, 
+    vehicleReg: string, 
+    pa1Id: string, 
+    pa2Id?: string
+  ) => {
+    const driverObj = staff.find(s => s.id === driverId);
+    const pa1Obj = staff.find(s => s.id === pa1Id);
+    const pa2Obj = pa2Id ? staff.find(s => s.id === pa2Id) : undefined;
+
+    setSchoolRoutes(prev => prev.map(route => {
+      if (route.id === routeId) {
+        return {
+          ...route,
+          assignedDriverId: driverId,
+          assignedDriverName: driverObj?.name || 'Assigned Driver',
+          assignedVehicleReg: vehicleReg,
+          assignedPA1Id: pa1Id,
+          assignedPA1Name: pa1Obj?.name || 'Lead PA',
+          assignedPA2Id: pa2Id,
+          assignedPA2Name: pa2Obj?.name
+        };
+      }
+      return route;
+    }));
+  };
+
+  const markInvoicePaid = (invoiceId: string, paymentMethod: string) => {
+    const timestamp = new Date().toLocaleDateString('en-GB');
+    setAccountInvoices(prev => prev.map(inv => {
+      if (inv.id === invoiceId) {
+        return {
+          ...inv,
+          status: 'paid',
+          paymentMethod,
+          paidAt: timestamp
+        };
+      }
+      return inv;
+    }));
+  };
+
+  const disburseDriverSettlement = (settlementId: string) => {
+    const timestamp = new Date().toLocaleDateString('en-GB') + ' ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    setDriverSettlements(prev => prev.map(s => {
+      if (s.id === settlementId) {
+        return {
+          ...s,
+          status: 'paid_disbursed',
+          disbursedAt: timestamp
+        };
+      }
+      return s;
+    }));
+  };
+
   return (
     <DataContext.Provider value={{
       vehicles,
@@ -974,7 +1197,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sendComplianceReminder,
       toggleStaffActiveStatus,
       updateRequirementTemplate,
-      updateStaffProfile
+      updateStaffProfile,
+
+      // Phase 7 School Routes, Basic Accounts & Finance
+      schoolRoutes,
+      accountInvoices,
+      driverSettlements,
+      updatePupilAttendance,
+      completeDriverSweep,
+      countersignPASweep,
+      reassignSchoolRouteTeam,
+      markInvoicePaid,
+      disburseDriverSettlement
     }}>
       {children}
     </DataContext.Provider>

@@ -440,6 +440,112 @@ export interface DispatchMessage {
 
 export type DriverDutyState = 'on_duty' | 'on_break' | 'off_duty';
 
+// ============================================================================
+// PHASE 7: SCHOOL ROUTES, ACCOUNTS & REPORTS
+// ============================================================================
+
+export interface Pupil {
+  id: string;
+  name: string;
+  age: number;
+  pickupAddress: string;
+  dropoffAddress: string;
+  specialNeeds: string;
+  emergencyContact: { name: string; relation: string; phone: string };
+  wheelchairUser: boolean;
+  medicalAlert?: string;
+  attendanceStatus: 'scheduled' | 'boarded' | 'handed_over' | 'absent';
+  absenceReason?: string;
+  pickupTimestamp?: string;
+  dropoffTimestamp?: string;
+  handoverPerson?: string;
+}
+
+export interface SchoolRoute {
+  id: string;
+  routeCode: string; // e.g. "CBC-SCH-01"
+  contractRef: string; // e.g. "CBC-SEN-2025-44B"
+  contractCouncil: 'Central Bedfordshire' | 'Luton' | 'Hertfordshire';
+  schoolName: string;
+  amOrPm: 'AM' | 'PM';
+  scheduledStartTime: string; // "07:45"
+  scheduledEndTime: string; // "09:00"
+  
+  // Team Allocation: Driver + Vehicle + up to 2 PAs!
+  assignedDriverId: string;
+  assignedDriverName: string;
+  assignedVehicleReg: string;
+  assignedPA1Id: string;
+  assignedPA1Name: string;
+  assignedPA2Id?: string; // Optional 2nd PA
+  assignedPA2Name?: string;
+
+  pupils: Pupil[];
+  status: 'scheduled' | 'in_progress' | 'pupils_dropped' | 'sweep_pending_pa' | 'completed';
+  
+  // End of run sweep and PA countersignature
+  sweepDetails?: {
+    driverCompleted: boolean;
+    driverTimestamp?: string;
+    paCountersigned: boolean;
+    paSignatureName?: string;
+    paTimestamp?: string;
+    sweepNotes?: string;
+    driverFreedForDuties: boolean; // Driver cannot become available until this is true!
+  };
+}
+
+export interface InvoiceLineItem {
+  description: string;
+  quantity: number;
+  unitPriceGbp: number;
+  totalGbp: number;
+}
+
+export interface AccountInvoice {
+  id: string;
+  invoiceRef: string; // e.g. "INV-2026-1049"
+  clientName: string;
+  clientType: 'council_contract' | 'corporate_account' | 'private_customer';
+  councilOrCompany: string;
+  issueDate: string;
+  dueDate: string;
+  status: 'draft' | 'sent' | 'paid' | 'overdue';
+  items: InvoiceLineItem[];
+  subtotalGbp: number;
+  vatGbp: number;
+  totalGbp: number;
+  paymentMethod?: string;
+  paidAt?: string;
+}
+
+export interface DriverSettlement {
+  id: string;
+  driverId: string;
+  driverName: string;
+  vehicleReg: string;
+  period: string; // "20 Oct 2026 - 27 Oct 2026"
+  completedJobsCount: number;
+  grossFaresGbp: number;
+  commissionRatePercent: number; // e.g. 20%
+  operatorCommissionGbp: number;
+  airportTollReimbursementsGbp: number;
+  fuelAllowanceGbp: number;
+  netPayoutGbp: number;
+  status: 'pending_settlement' | 'paid_disbursed';
+  disbursedAt?: string;
+  referenceNumber: string;
+}
+
+export interface ReportFilterCriteria {
+  reportType: 'fleet_compliance' | 'workforce_audit' | 'school_transport' | 'dispatch_sla' | 'finance_summary';
+  dateRange: 'today' | 'last_7_days' | 'month_to_date' | 'custom';
+  startDate?: string;
+  endDate?: string;
+  companyId: string;
+  depot: string;
+}
+
 export * from './auth';
 
 

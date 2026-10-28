@@ -9,7 +9,11 @@ import {
   ChecklistVersion,
   WorkshopSlot,
   RequirementTemplate,
-  ComplianceReminder
+  ComplianceReminder,
+  SchoolRoute,
+  Pupil,
+  AccountInvoice,
+  DriverSettlement
 } from '../types';
 
 export const initialSubCompanies: SubCompany[] = [
@@ -1360,6 +1364,310 @@ export const initialComplianceReminders: ComplianceReminder[] = [
     notificationSent: false
   }
 ];
+
+export const initialSchoolRoutes: SchoolRoute[] = [
+  {
+    id: 'sch-rt-01',
+    routeCode: 'CBC-SCH-01',
+    contractRef: 'CBC-SEN-2025-44B',
+    contractCouncil: 'Central Bedfordshire',
+    schoolName: 'The Chiltern School, Kingsland Campus, Dunstable',
+    amOrPm: 'AM',
+    scheduledStartTime: '07:45',
+    scheduledEndTime: '08:50',
+    assignedDriverId: 'drv-02',
+    assignedDriverName: 'Marcus Bell',
+    assignedVehicleReg: 'KX69 HVT', // Compliant WAV Minibus substitute
+    assignedPA1Id: 'pa-01',
+    assignedPA1Name: 'Sarah Jenkins (Lead PA)',
+    assignedPA2Id: 'pa-02', // Mandated 2nd PA for dual wheelchair safety!
+    assignedPA2Name: 'Fatima Al-Mansoor (SEN Assistant)',
+    status: 'in_progress',
+    pupils: [
+      {
+        id: 'pupil-1',
+        name: 'Liam K.',
+        age: 11,
+        pickupAddress: '14 High Street South, Dunstable, LU6 3HS',
+        dropoffAddress: 'The Chiltern School, Kingsland Campus, Park Road',
+        specialNeeds: 'Non-verbal, Wheelchair tie-down & 4-point occupant clamp required',
+        wheelchairUser: true,
+        medicalAlert: 'Carries emergency rescue medication (stored in PA bag)',
+        emergencyContact: { name: 'Helen K. (Mother)', relation: 'Mother', phone: '+44 7700 900221' },
+        attendanceStatus: 'boarded',
+        pickupTimestamp: '08:02',
+        handoverPerson: 'Helen K. (Mother signed)'
+      },
+      {
+        id: 'pupil-2',
+        name: 'Mia T.',
+        age: 9,
+        pickupAddress: '28 Chiltern Green, Luton, LU1 3TS',
+        dropoffAddress: 'The Chiltern School, Kingsland Campus, Park Road',
+        specialNeeds: 'Sensory sensitivity, noise-cancelling headphones, rear seat',
+        wheelchairUser: false,
+        emergencyContact: { name: 'Darren T. (Father)', relation: 'Father', phone: '+44 7700 900222' },
+        attendanceStatus: 'boarded',
+        pickupTimestamp: '08:15',
+        handoverPerson: 'Darren T. (Father)'
+      },
+      {
+        id: 'pupil-3',
+        name: 'Oliver B.',
+        age: 14,
+        pickupAddress: '9 West Street, Dunstable, LU6 1SL',
+        dropoffAddress: 'The Chiltern School, Kingsland Campus, Park Road',
+        specialNeeds: 'Verbal reassurance required, front row seat',
+        wheelchairUser: false,
+        emergencyContact: { name: 'Sarah B. (Mother)', relation: 'Mother', phone: '+44 7700 900223' },
+        attendanceStatus: 'scheduled'
+      },
+      {
+        id: 'pupil-4',
+        name: 'Sophia R.',
+        age: 8,
+        pickupAddress: '5 Sundon Road, Houghton Regis, LU5 5NL',
+        dropoffAddress: 'The Chiltern School, Kingsland Campus, Park Road',
+        specialNeeds: 'Mobility assistance, requires 5-point harness',
+        wheelchairUser: false,
+        emergencyContact: { name: 'Maria R. (Mother)', relation: 'Mother', phone: '+44 7700 900224' },
+        attendanceStatus: 'absent',
+        absenceReason: 'Parent notified: medical appointment at Luton & Dunstable Hospital'
+      }
+    ],
+    sweepDetails: {
+      driverCompleted: false,
+      paCountersigned: false,
+      driverFreedForDuties: false
+    }
+  },
+  {
+    id: 'sch-rt-02',
+    routeCode: 'CBC-SCH-08',
+    contractRef: 'CBC-SEN-2025-108A',
+    contractCouncil: 'Central Bedfordshire',
+    schoolName: 'Weatherfield Academy SEN, Dunstable',
+    amOrPm: 'AM',
+    scheduledStartTime: '08:00',
+    scheduledEndTime: '09:05',
+    assignedDriverId: 'drv-01',
+    assignedDriverName: 'Tariq Mahmood',
+    assignedVehicleReg: 'LT73 XKL',
+    assignedPA1Id: 'pa-01',
+    assignedPA1Name: 'Sarah Jenkins',
+    status: 'sweep_pending_pa', // DEMONSTRATING THE SAFETY GATE: Driver finished run, waiting for PA countersignature!
+    pupils: [
+      {
+        id: 'pupil-5',
+        name: 'Ethan P.',
+        age: 13,
+        pickupAddress: '12 Ashton Road, Dunstable, LU6 1NP',
+        dropoffAddress: 'Weatherfield Academy, Brewers Hill Road',
+        specialNeeds: 'ADHD / Sensory support',
+        wheelchairUser: false,
+        emergencyContact: { name: 'Claire P.', relation: 'Mother', phone: '+44 7700 900225' },
+        attendanceStatus: 'handed_over',
+        pickupTimestamp: '08:12',
+        dropoffTimestamp: '08:55',
+        handoverPerson: 'Mrs. Higgins (SENCO Teacher)'
+      },
+      {
+        id: 'pupil-6',
+        name: 'Chloe M.',
+        age: 10,
+        pickupAddress: '88 Lowther Road, Dunstable, LU6 3NW',
+        dropoffAddress: 'Weatherfield Academy, Brewers Hill Road',
+        specialNeeds: 'Epilepsy alert, booster cushion',
+        wheelchairUser: false,
+        medicalAlert: 'Emergency protocol: Call 999 if seizure exceeds 3 mins',
+        emergencyContact: { name: 'Gavin M.', relation: 'Father', phone: '+44 7700 900226' },
+        attendanceStatus: 'handed_over',
+        pickupTimestamp: '08:25',
+        dropoffTimestamp: '08:55',
+        handoverPerson: 'Mrs. Higgins (SENCO Teacher)'
+      }
+    ],
+    sweepDetails: {
+      driverCompleted: true,
+      driverTimestamp: '09:00',
+      paCountersigned: false, // PA COUNTERSIGNATURE PENDING!
+      driverFreedForDuties: false // DRIVER IS CURRENTLY BLOCKED FROM GENERAL DISPATCH!
+    }
+  },
+  {
+    id: 'sch-rt-03',
+    routeCode: 'LBC-SCH-04',
+    contractRef: 'LBC-PHV-2024-411',
+    contractCouncil: 'Luton',
+    schoolName: 'Oak Bank SEN Academy, Sandy Lane, Luton',
+    amOrPm: 'PM',
+    scheduledStartTime: '14:45',
+    scheduledEndTime: '16:00',
+    assignedDriverId: 'drv-03',
+    assignedDriverName: "David O'Connor",
+    assignedVehicleReg: 'BD24 TYU',
+    assignedPA1Id: 'pa-02',
+    assignedPA1Name: 'Fatima Al-Mansoor',
+    status: 'scheduled',
+    pupils: [
+      {
+        id: 'pupil-7',
+        name: 'Jayden S.',
+        age: 12,
+        pickupAddress: 'Oak Bank SEN Academy, Sandy Lane',
+        dropoffAddress: '42 Bramingham Road, Luton, LU3 2SR',
+        specialNeeds: 'Independent traveller in training, seatbelt supervision',
+        wheelchairUser: false,
+        emergencyContact: { name: 'Kavita S.', relation: 'Mother', phone: '+44 7700 900227' },
+        attendanceStatus: 'scheduled'
+      },
+      {
+        id: 'pupil-8',
+        name: 'Amelia W.',
+        age: 7,
+        pickupAddress: 'Oak Bank SEN Academy, Sandy Lane',
+        dropoffAddress: '15 Leagrave High Street, Luton, LU4 9JY',
+        specialNeeds: 'Visual impairment, guide dog support',
+        wheelchairUser: false,
+        emergencyContact: { name: 'Tom W.', relation: 'Father', phone: '+44 7700 900228' },
+        attendanceStatus: 'scheduled'
+      }
+    ],
+    sweepDetails: {
+      driverCompleted: false,
+      paCountersigned: false,
+      driverFreedForDuties: false
+    }
+  }
+];
+
+export const initialInvoices: AccountInvoice[] = [
+  {
+    id: 'inv-01',
+    invoiceRef: 'INV-2026-8801',
+    clientName: 'Central Bedfordshire Council - Children & Families Services',
+    clientType: 'council_contract',
+    councilOrCompany: 'Central Bedfordshire Council',
+    issueDate: '01/10/2026',
+    dueDate: '31/10/2026',
+    status: 'sent',
+    items: [
+      { description: 'CBC SEN School Transport Framework - Route CBC-SCH-01 (Chiltern School)', quantity: 22, unitPriceGbp: 420.00, totalGbp: 9240.00 },
+      { description: 'CBC SEN School Transport Framework - Route CBC-SCH-08 (Weatherfield Academy)', quantity: 22, unitPriceGbp: 380.00, totalGbp: 8360.00 },
+      { description: 'Dedicated Second Passenger Assistant (WAV complex care surcharge)', quantity: 22, unitPriceGbp: 38.64, totalGbp: 850.00 }
+    ],
+    subtotalGbp: 18450.00,
+    vatGbp: 0.00, // Statutory local authority education transport is zero-rated/exempt
+    totalGbp: 18450.00
+  },
+  {
+    id: 'inv-02',
+    invoiceRef: 'INV-2026-8802',
+    clientName: 'Luton Borough Council - Passenger Transport Unit',
+    clientType: 'council_contract',
+    councilOrCompany: 'Luton Borough Council',
+    issueDate: '15/09/2026',
+    dueDate: '15/10/2026',
+    status: 'paid',
+    paidAt: '12/10/2026',
+    paymentMethod: 'BACS Electronic Council Settlement',
+    items: [
+      { description: 'LBC Special Educational Needs Regular Transit - Oak Bank Route 04', quantity: 20, unitPriceGbp: 390.00, totalGbp: 7800.00 },
+      { description: 'LBC High-Need Pupil Emergency WAV Minibus Runs', quantity: 10, unitPriceGbp: 440.00, totalGbp: 4400.00 }
+    ],
+    subtotalGbp: 12200.00,
+    vatGbp: 0.00,
+    totalGbp: 12200.00
+  },
+  {
+    id: 'inv-03',
+    invoiceRef: 'INV-2026-8803',
+    clientName: 'Vauxhall UK Commercial Headquarters (Corporate Account)',
+    clientType: 'corporate_account',
+    councilOrCompany: 'Stellantis Vauxhall UK',
+    issueDate: '25/09/2026',
+    dueDate: '25/10/2026',
+    status: 'overdue',
+    items: [
+      { description: 'Executive Chauffeur Transfers: Luton Airport to London Mayfair', quantity: 18, unitPriceGbp: 185.00, totalGbp: 3330.00 },
+      { description: 'London Congestion & ULEZ Surcharge Reimbursements', quantity: 18, unitPriceGbp: 25.00, totalGbp: 450.00 },
+      { description: 'Luton Airport Terminal Drop-off Surcharge', quantity: 18, unitPriceGbp: 5.00, totalGbp: 90.00 }
+    ],
+    subtotalGbp: 3870.00,
+    vatGbp: 774.00, // 20% standard VAT for corporate executive passenger transit
+    totalGbp: 4644.00
+  },
+  {
+    id: 'inv-04',
+    invoiceRef: 'INV-2026-8804',
+    clientName: 'TUI Aviation Crew Operations - London Luton Airport',
+    clientType: 'corporate_account',
+    councilOrCompany: 'TUI Airways UK Ltd',
+    issueDate: '24/10/2026',
+    dueDate: '24/11/2026',
+    status: 'draft',
+    items: [
+      { description: 'Aircrew Overnight Standby Transfers (Hotel to Operations Base)', quantity: 24, unitPriceGbp: 100.00, totalGbp: 2400.00 },
+      { description: 'Night Flight Delay Waiting Time Surcharges', quantity: 12, unitPriceGbp: 40.83, totalGbp: 490.00 }
+    ],
+    subtotalGbp: 2890.00,
+    vatGbp: 578.00,
+    totalGbp: 3468.00
+  }
+];
+
+export const initialDriverSettlements: DriverSettlement[] = [
+  {
+    id: 'set-01',
+    driverId: 'drv-01',
+    driverName: 'Tariq Mahmood',
+    vehicleReg: 'LT73 XKL',
+    period: '20 Oct 2026 - 27 Oct 2026',
+    completedJobsCount: 28,
+    grossFaresGbp: 1920.00,
+    commissionRatePercent: 20,
+    operatorCommissionGbp: 384.00,
+    airportTollReimbursementsGbp: 65.00,
+    fuelAllowanceGbp: 40.00,
+    netPayoutGbp: 1641.00,
+    status: 'pending_settlement',
+    referenceNumber: 'DEC-PAY-2026-4401'
+  },
+  {
+    id: 'set-02',
+    driverId: 'drv-03',
+    driverName: "David O'Connor",
+    vehicleReg: 'BD24 TYU',
+    period: '20 Oct 2026 - 27 Oct 2026',
+    completedJobsCount: 34,
+    grossFaresGbp: 2150.00,
+    commissionRatePercent: 20,
+    operatorCommissionGbp: 430.00,
+    airportTollReimbursementsGbp: 90.00,
+    fuelAllowanceGbp: 55.00,
+    netPayoutGbp: 1865.00,
+    status: 'paid_disbursed',
+    disbursedAt: '28/10/2026 11:30',
+    referenceNumber: 'DEC-PAY-2026-4402'
+  },
+  {
+    id: 'set-03',
+    driverId: 'drv-04',
+    driverName: 'Kamran Haque',
+    vehicleReg: 'VA73 STU',
+    period: '20 Oct 2026 - 27 Oct 2026',
+    completedJobsCount: 22,
+    grossFaresGbp: 1450.00,
+    commissionRatePercent: 20,
+    operatorCommissionGbp: 290.00,
+    airportTollReimbursementsGbp: 40.00,
+    fuelAllowanceGbp: 25.00,
+    netPayoutGbp: 1225.00,
+    status: 'pending_settlement',
+    referenceNumber: 'DEC-PAY-2026-4403'
+  }
+];
+
 
 
 

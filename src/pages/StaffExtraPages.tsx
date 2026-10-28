@@ -431,25 +431,28 @@ export const StaffDefectsPage: React.FC = () => {
 /* =========================================================================
    3. Staff Pupils SEN Page (/app/pupils)
    ========================================================================= */
+/* =========================================================================
+   3. Staff Pupils SEN Page (/app/pupils)
+   ========================================================================= */
 export const StaffPupilsPage: React.FC = () => {
-  const [pupils, setPupils] = useState([
-    { id: 1, name: 'Liam K.', age: 11, needs: 'Wheelchair restraint required', status: 'Boarded' },
-    { id: 2, name: 'Mia T.', age: 9, needs: 'Booster seat & 5-point harness', status: 'Boarded' },
-    { id: 3, name: 'Oliver B.', age: 14, needs: 'Verbal reassurance, front seat priority', status: 'Scheduled' },
-    { id: 4, name: 'Sophia R.', age: 8, needs: 'Non-verbal, sensory headphones equipped', status: 'Scheduled' }
-  ]);
+  const { schoolRoutes, updatePupilAttendance } = useData();
+  const currentRoute = schoolRoutes[0];
 
-  const toggleStatus = (id: number) => {
-    setPupils(pupils.map(p => {
-      if (p.id === id) {
-        return {
-          ...p,
-          status: p.status === 'Boarded' ? 'Delivered' : (p.status === 'Delivered' ? 'Absent' : 'Boarded')
-        };
-      }
-      return p;
-    }));
+  const handleToggleStatus = (pupilId: string, currentStatus: string) => {
+    if (!currentRoute) return;
+    const nextStatus = currentStatus === 'scheduled' 
+      ? 'boarded' 
+      : (currentStatus === 'boarded' ? 'handed_over' : (currentStatus === 'handed_over' ? 'absent' : 'scheduled'));
+    
+    updatePupilAttendance(currentRoute.id, pupilId, nextStatus, nextStatus === 'absent' ? 'Parent notified: unwell' : undefined, 'SEN Reception Staff');
   };
+
+  if (!currentRoute) {
+    return <div className="p-4 text-center text-xs text-slate-500">No active SEN school route assigned today.</div>;
+  }
+
+  const boardedCount = currentRoute.pupils.filter(p => p.attendanceStatus === 'boarded').length;
+  const deliveredCount = currentRoute.pupils.filter(p => p.attendanceStatus === 'handed_over').length;
 
   return (
     <div className="space-y-4 max-w-md mx-auto">
@@ -457,49 +460,77 @@ export const StaffPupilsPage: React.FC = () => {
         
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
               SEN Transport Passenger Manifest
             </span>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            <h2 className="text-lg font-black text-slate-900 dark:text-white">
               Pupil Attendance Roll
             </h2>
             <p className="text-xs text-slate-500">
-              Route: <strong className="text-slate-800 dark:text-slate-200">CBC-SEN-ROUTE-01</strong> (The Chiltern School)
+              Route: <strong className="text-slate-800 dark:text-slate-200">{currentRoute.routeCode}</strong> ({currentRoute.schoolName})
             </p>
           </div>
           <span className="text-xs font-bold px-2 py-1 rounded-xl bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300">
-            {pupils.length} Students
+            {currentRoute.pupils.length} Students
           </span>
         </div>
 
+        {/* Live Counters */}
+        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <span className="text-slate-400 block text-[10px]">Boarded</span>
+            <span className="font-bold text-amber-600">{boardedCount}</span>
+          </div>
+          <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <span className="text-slate-400 block text-[10px]">Delivered</span>
+            <span className="font-bold text-emerald-600">{deliveredCount}</span>
+          </div>
+          <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <span className="text-slate-400 block text-[10px]">Total</span>
+            <span className="font-bold text-slate-900 dark:text-white">{currentRoute.pupils.length}</span>
+          </div>
+        </div>
+
         <div className="space-y-2.5">
-          {pupils.map((p) => (
+          {currentRoute.pupils.map((p) => (
             <div
               key={p.id}
               className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-2">
                 <div>
                   <h4 className="text-xs font-bold text-slate-900 dark:text-white">
                     {p.name} <span className="text-slate-400 font-normal">({p.age} yrs)</span>
                   </h4>
-                  <p className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">
-                    {p.needs}
+                  <p className="text-[11px] text-blue-600 dark:text-blue-400 font-medium mt-0.5">
+                    {p.specialNeeds}
                   </p>
+                  {p.wheelchairUser && (
+                    <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 mt-1">
+                      Wheelchair Clamp
+                    </span>
+                  )}
+                  {p.medicalAlert && (
+                    <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 ml-1">
+                      {p.medicalAlert}
+                    </span>
+                  )}
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => toggleStatus(p.id)}
-                  className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full transition shadow-sm ${
-                    p.status === 'Boarded'
-                      ? 'bg-emerald-500 text-white'
-                      : (p.status === 'Delivered'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300')
+                  onClick={() => handleToggleStatus(p.id, p.attendanceStatus)}
+                  className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-1.5 rounded-full transition shadow-xs ${
+                    p.attendanceStatus === 'boarded'
+                      ? 'bg-amber-500 text-slate-950 font-black'
+                      : p.attendanceStatus === 'handed_over'
+                      ? 'bg-emerald-600 text-white font-bold'
+                      : p.attendanceStatus === 'absent'
+                      ? 'bg-rose-600 text-white font-bold'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  {p.status}
+                  {p.attendanceStatus.replace('_', ' ')}
                 </button>
               </div>
             </div>
@@ -515,7 +546,16 @@ export const StaffPupilsPage: React.FC = () => {
    4. Staff Vehicle Safety Sweep Page (/app/sweep)
    ========================================================================= */
 export const StaffSweepPage: React.FC = () => {
-  const [signed, setSigned] = useState(false);
+  const { schoolRoutes, completeDriverSweep, countersignPASweep } = useData();
+  const currentRoute = schoolRoutes[1] || schoolRoutes[0]; // route CBC-SCH-08 has pending sweep to demonstrate
+  const [driverSweepNotes, setDriverSweepNotes] = useState('');
+
+  if (!currentRoute) {
+    return <div className="p-4 text-center text-xs text-slate-500">No active route found.</div>;
+  }
+
+  const isDriverDone = !!currentRoute.sweepDetails?.driverCompleted;
+  const isPACountersigned = !!currentRoute.sweepDetails?.paCountersigned;
 
   return (
     <div className="space-y-4 max-w-md mx-auto">
@@ -523,45 +563,116 @@ export const StaffSweepPage: React.FC = () => {
         
         <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
           <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-            Child Safeguarding Compliance
+            Child Safeguarding Compliance Gate
           </span>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+          <h2 className="text-lg font-black text-slate-900 dark:text-white">
             Mandatory Vehicle Sweep
           </h2>
           <p className="text-xs text-slate-500">
-            Required by UK Council licensing at the end of every school route.
+            Route: <strong className="text-slate-800 dark:text-slate-200">{currentRoute.routeCode}</strong> ({currentRoute.assignedVehicleReg})
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 space-y-2 text-xs text-amber-900 dark:text-amber-200">
+        {/* Safety Gate Warning Notice */}
+        <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 space-y-1.5 text-xs text-amber-900 dark:text-amber-200">
           <h4 className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
             <ShieldCheck className="w-4 h-4" />
-            <span>Passenger Assistant Certification</span>
+            <span>Two-Step Verification Enforced</span>
           </h4>
-          <p className="leading-relaxed">
-            I hereby certify that I have physically walked to the rear of vehicle <strong>LT73 XKL</strong>, checked every seating row and footwell, and verified that no child or personal belonging remains on board.
+          <p className="leading-relaxed text-[11px]">
+            The driver must physically inspect every seat, footwell, and restraint. The driver <strong className="font-black">CANNOT become available</strong> for subsequent dispatch bookings until the Passenger Assistant countersigns this sweep!
           </p>
         </div>
 
-        {signed ? (
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 rounded-2xl text-center space-y-1">
-            <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto" />
-            <h4 className="text-xs font-bold text-emerald-800 dark:text-emerald-200">
-              Sweep Legally Signed & Verified
-            </h4>
-            <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
-              Timestamp: {new Date().toLocaleTimeString('en-GB')} • Stored in compliance archive
-            </p>
+        {/* Step 1: Driver Physical Sweep */}
+        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Step 1: Driver Physical Inspection
+            </span>
+            {isDriverDone ? (
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                Completed ({currentRoute.sweepDetails?.driverTimestamp})
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">
+                Pending Driver
+              </span>
+            )}
           </div>
-        ) : (
-          <button
-            onClick={() => setSigned(true)}
-            className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-bold text-xs shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 transition"
-          >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Sign & Certify Sweep Complete</span>
-          </button>
-        )}
+
+          {!isDriverDone ? (
+            <div className="space-y-2 pt-1">
+              <input
+                type="text"
+                placeholder="Driver sweep notes (e.g. all clear, no items left)..."
+                value={driverSweepNotes}
+                onChange={e => setDriverSweepNotes(e.target.value)}
+                className="w-full text-xs p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+              />
+              <button
+                type="button"
+                onClick={() => completeDriverSweep(currentRoute.id, driverSweepNotes)}
+                className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Certify Driver Physical Sweep
+              </button>
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-500">
+              Physical sweep confirmed: All seats and floor areas inspected clear.
+            </p>
+          )}
+        </div>
+
+        {/* Step 2: Passenger Assistant Countersignature */}
+        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Step 2: PA Countersignature (Unlocks Driver)
+            </span>
+            {isPACountersigned ? (
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                Countersigned ({currentRoute.sweepDetails?.paTimestamp})
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 animate-pulse">
+                Awaiting PA Signature
+              </span>
+            )}
+          </div>
+
+          {isDriverDone && !isPACountersigned ? (
+            <div className="space-y-2 pt-1">
+              <p className="text-[11px] text-purple-700 dark:text-purple-300 font-medium">
+                Passenger Assistant {currentRoute.assignedPA1Name}: sign below to confirm all students are in school and release vehicle {currentRoute.assignedVehicleReg}.
+              </p>
+              <button
+                type="button"
+                onClick={() => countersignPASweep(currentRoute.id, currentRoute.assignedPA1Name)}
+                className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-xs shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 transition"
+              >
+                <PenTool className="w-4 h-4" />
+                PA Countersign & Release Driver to Available
+              </button>
+            </div>
+          ) : isPACountersigned ? (
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 rounded-xl text-center space-y-0.5">
+              <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" />
+              <p className="text-xs font-black text-emerald-800 dark:text-emerald-200">
+                Driver & Vehicle Legally Released
+              </p>
+              <p className="text-[10px] text-emerald-600">
+                Countersigned by {currentRoute.sweepDetails?.paSignatureName} at {currentRoute.sweepDetails?.paTimestamp}. Driver duty status set to AVAILABLE.
+              </p>
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-400 italic">
+              Step 2 will unlock once driver completes Step 1.
+            </p>
+          )}
+        </div>
 
       </div>
     </div>
