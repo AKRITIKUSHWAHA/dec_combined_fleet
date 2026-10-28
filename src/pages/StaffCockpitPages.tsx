@@ -11,7 +11,10 @@ import {
   Wifi,
   WifiOff,
   Clock,
-  ShieldAlert
+  ShieldAlert,
+  Flame,
+  Check,
+  ArrowRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -19,107 +22,116 @@ export const DriverCockpitPage: React.FC = () => {
   const { bookings, updateJobStatus } = useData();
   const [isSimulatedOffline, setIsSimulatedOffline] = useState(false);
   const [emergencyAlertSent, setEmergencyAlertSent] = useState(false);
+  const [showClearConfirmModal, setShowClearConfirmModal] = useState(false);
   
   // Find an active or assigned booking for testing
   const activeJob = bookings.find(b => b.status === 'en_route' || b.status === 'arrived' || b.status === 'pob') || bookings[0];
 
+  const handleJobClearConfirm = () => {
+    updateJobStatus(activeJob.id, 'completed');
+    setShowClearConfirmModal(false);
+  };
+
   return (
-    <div className="space-y-4 max-w-md mx-auto pb-10">
+    <div className="space-y-4 max-w-md mx-auto pb-12 text-[16px]">
       
       {/* Top Mobile App Navigation Bar */}
-      <div className="flex items-center justify-between bg-slate-900 text-white p-3.5 rounded-2xl shadow-xl">
+      <div 
+        style={{ background: 'var(--hero-bg)' }}
+        className="flex items-center justify-between text-white p-4 rounded-[20px] shadow-2xl border border-[var(--border)]"
+      >
         <Link 
           to="/" 
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white p-1 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg"
+          className="flex items-center gap-1.5 text-xs font-heading font-semibold text-[#8FB5AA] hover:text-white p-2 focus:outline-none nr-focus rounded-[12px]"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Exit Cockpit</span>
         </Link>
 
-        <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+        <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#34D399] flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#34D399] animate-pulse" />
           Driver On Duty
         </span>
 
         {/* Offline Simulator Switch */}
         <button
           onClick={() => setIsSimulatedOffline(!isSimulatedOffline)}
-          className={`px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 transition ${
-            isSimulatedOffline ? 'bg-rose-600 text-white animate-pulse' : 'bg-slate-800 text-slate-300'
+          className={`px-3 py-1.5 rounded-[12px] text-xs font-mono font-bold flex items-center gap-1.5 transition ${
+            isSimulatedOffline ? 'bg-[#FF5D6C] text-white animate-pulse' : 'bg-[#0F2F29] text-[#8FB5AA] border border-[#24574D]'
           }`}
           title="Toggle network offline mode"
         >
-          {isSimulatedOffline ? <WifiOff className="w-3 h-3" /> : <Wifi className="w-3 h-3" />}
+          {isSimulatedOffline ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
           <span>{isSimulatedOffline ? 'OFFLINE' : 'ONLINE'}</span>
         </button>
       </div>
 
       {/* Offline Stored Mode Warning Banner (Requirement CHK-07 & APP-04) */}
       {isSimulatedOffline && (
-        <div className="bg-rose-50 dark:bg-rose-950/70 border border-rose-300 dark:border-rose-800 rounded-xl p-3 flex items-start gap-2.5 text-xs text-rose-900 dark:text-rose-200">
-          <WifiOff className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+        <div className="bg-[#FF5D6C]/15 border border-[#FF5D6C]/40 rounded-[18px] p-4 flex items-start gap-3 text-xs text-[#FF5D6C]">
+          <WifiOff className="w-5 h-5 shrink-0 mt-0.5" />
           <div>
-            <p className="font-bold">Offline Stored Queue Active</p>
-            <p className="text-[11px] mt-0.5">
-              Status changes are safely stored in encrypted local storage. Events will automatically sync with verified timestamps upon reconnection.
+            <p className="font-heading font-bold text-sm">Offline Stored Queue Active</p>
+            <p className="text-[12px] mt-0.5 opacity-90">
+              Status changes are safely stored in encrypted local cache. Events will automatically sync with verified timestamps upon reconnection.
             </p>
           </div>
         </div>
       )}
 
       {emergencyAlertSent && (
-        <div className="bg-red-600 text-white p-3.5 rounded-xl shadow-lg flex items-center justify-between text-xs font-bold animate-pulse">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 shrink-0" />
-            <span>EMERGENCY DESK NOTIFIED • Priority Open</span>
+        <div className="bg-[#FF5D6C] text-white p-4 rounded-[18px] shadow-coral-glow flex items-center justify-between text-xs font-heading font-bold animate-pulse">
+          <div className="flex items-center gap-2.5">
+            <Flame className="w-5 h-5 shrink-0" />
+            <span className="text-sm">EMERGENCY DESK NOTIFIED • Controller En Route</span>
           </div>
           <button 
             onClick={() => setEmergencyAlertSent(false)}
-            className="text-[11px] underline opacity-90"
+            className="text-xs underline opacity-90 p-1"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Driver Cockpit Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
+      {/* Driver Cockpit Main Card */}
+      <div className="nr-card p-6 space-y-5">
         
         {/* Job Header */}
-        <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="flex items-start justify-between border-b border-[var(--border)] pb-4">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
-              Active Duty Assignment
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#B6F23C] block">
+              Active Assigned Trip
             </span>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+            <h2 className="text-2xl font-heading font-bold text-[var(--text)] mt-0.5">
               {activeJob?.bookingRef}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Vehicle: <strong className="text-slate-800 dark:text-slate-200 font-mono">LT73 XKL</strong> (Mercedes V-Class)
+            <p className="text-xs text-[var(--text-muted)] mt-1">
+              Assigned Vehicle: <strong className="text-[var(--text)] font-mono text-sm">LT73 XKL</strong>
             </p>
           </div>
 
           <div className="text-right">
-            <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+            <span className="text-2xl font-heading font-bold text-[#34D399] font-mono tabular-nums">
               £{activeJob?.totalGbp.toFixed(2)}
             </span>
-            <p className="text-[10px] text-slate-400 font-medium">Account Fare</p>
+            <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase">Account Fare</p>
           </div>
         </div>
 
         {/* Passenger Contact Card */}
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl flex items-center justify-between border border-slate-100 dark:border-slate-800">
+        <div className="bg-[var(--surface-2)] p-4 rounded-[18px] flex items-center justify-between border border-[var(--border)]">
           <div>
-            <p className="text-xs font-bold text-slate-900 dark:text-white">
+            <p className="text-base font-heading font-bold text-[var(--text)]">
               {activeJob?.customerName}
             </p>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
               {activeJob?.passengerCount} Passengers • {activeJob?.luggageCount} Luggage
             </p>
           </div>
           <a
             href={`tel:${activeJob?.customerPhone}`}
-            className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-12 h-12 rounded-[14px] bg-[#B6F23C] text-[#08201C] flex items-center justify-center shadow-lime-glow hover:scale-105 active:scale-95 transition-all nr-focus"
             aria-label="Call passenger"
           >
             <Phone className="w-5 h-5" />
@@ -127,49 +139,49 @@ export const DriverCockpitPage: React.FC = () => {
         </div>
 
         {/* Journey Postcodes & Route */}
-        <div className="space-y-3.5 py-1">
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5">
-              <MapPin className="w-3.5 h-3.5" />
+        <div className="space-y-4 py-1">
+          <div className="flex items-start gap-3.5">
+            <div className="w-8 h-8 rounded-full bg-[#34D399]/20 flex items-center justify-center text-[#34D399] shrink-0 mt-0.5 border border-[#34D399]/40">
+              <MapPin className="w-4 h-4" />
             </div>
-            <div className="text-xs flex-1">
-              <p className="font-semibold text-slate-500 uppercase text-[10px] tracking-wider">Pickup Location</p>
-              <p className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">{activeJob?.pickupAddress}</p>
-              <p className="font-mono text-xs text-blue-600 dark:text-blue-400 font-bold">{activeJob?.pickupPostcode}</p>
+            <div className="flex-1">
+              <p className="font-heading font-bold text-[var(--text-muted)] uppercase text-[10px] tracking-wider">Pickup Location</p>
+              <p className="font-medium text-[var(--text)] text-sm mt-0.5">{activeJob?.pickupAddress}</p>
+              <p className="font-mono text-xs text-[#3FE0C5] font-bold">{activeJob?.pickupPostcode}</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-rose-100 dark:bg-rose-950 flex items-center justify-center text-rose-600 shrink-0 mt-0.5">
-              <Navigation className="w-3.5 h-3.5" />
+          <div className="flex items-start gap-3.5">
+            <div className="w-8 h-8 rounded-full bg-[#FF5D6C]/20 flex items-center justify-center text-[#FF5D6C] shrink-0 mt-0.5 border border-[#FF5D6C]/40">
+              <Navigation className="w-4 h-4" />
             </div>
-            <div className="text-xs flex-1">
-              <p className="font-semibold text-slate-500 uppercase text-[10px] tracking-wider">Destination</p>
-              <p className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">{activeJob?.destinationAddress}</p>
-              <p className="font-mono text-xs text-blue-600 dark:text-blue-400 font-bold">{activeJob?.destinationPostcode}</p>
+            <div className="flex-1">
+              <p className="font-heading font-bold text-[var(--text-muted)] uppercase text-[10px] tracking-wider">Destination</p>
+              <p className="font-medium text-[var(--text)] text-sm mt-0.5">{activeJob?.destinationAddress}</p>
+              <p className="font-mono text-xs text-[#3FE0C5] font-bold">{activeJob?.destinationPostcode}</p>
             </div>
           </div>
         </div>
 
-        {/* Big 4 Driver Touch Workflow Buttons (JOB-NEW-01) */}
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+        {/* Big 4 Driver Touch Workflow Buttons (JOB-NEW-01) with distinct colors */}
+        <div className="pt-2 border-t border-[var(--border)] space-y-3">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">
-              Tap Action to Advance:
+            <span className="font-mono font-bold uppercase tracking-wider text-[var(--text-muted)] text-[11px]">
+              Tap to Advance Status:
             </span>
-            <span className="text-[10px] text-blue-600 font-mono font-bold">
-              Current: {activeJob.status.toUpperCase()}
+            <span className="text-[11px] font-mono font-bold text-[#B6F23C]">
+              State: {activeJob.status.toUpperCase()}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {/* Step 1: En Route */}
+            {/* Step 1: En Route (Aqua #3FE0C5) */}
             <button
               onClick={() => updateJobStatus(activeJob.id, 'en_route')}
-              className={`min-h-[52px] p-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider transition shadow-sm flex flex-col items-center justify-center gap-1 ${
+              className={`min-h-[56px] p-3 rounded-[14px] font-heading font-bold text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus ${
                 activeJob.status === 'en_route'
-                  ? 'bg-blue-600 text-white ring-4 ring-blue-200 dark:ring-blue-900 shadow-lg'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  ? 'bg-[#3FE0C5] text-[#08201C] shadow-aqua-glow ring-2 ring-white'
+                  : 'bg-[var(--surface-2)] text-[var(--text)] hover:border-[#3FE0C5] border border-[var(--border)]'
               }`}
             >
               <span>1. En Route</span>
@@ -178,13 +190,13 @@ export const DriverCockpitPage: React.FC = () => {
               )}
             </button>
 
-            {/* Step 2: Arrived */}
+            {/* Step 2: Arrived (Apricot #FF9F6B) */}
             <button
               onClick={() => updateJobStatus(activeJob.id, 'arrived')}
-              className={`min-h-[52px] p-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider transition shadow-sm flex flex-col items-center justify-center gap-1 ${
+              className={`min-h-[56px] p-3 rounded-[14px] font-heading font-bold text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus ${
                 activeJob.status === 'arrived'
-                  ? 'bg-amber-600 text-white ring-4 ring-amber-200 dark:ring-amber-900 shadow-lg'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  ? 'bg-[#FF9F6B] text-[#08201C] shadow-md ring-2 ring-white'
+                  : 'bg-[var(--surface-2)] text-[var(--text)] hover:border-[#FF9F6B] border border-[var(--border)]'
               }`}
             >
               <span>2. Arrived</span>
@@ -193,13 +205,13 @@ export const DriverCockpitPage: React.FC = () => {
               )}
             </button>
 
-            {/* Step 3: POB */}
+            {/* Step 3: POB (Mint #34D399) */}
             <button
               onClick={() => updateJobStatus(activeJob.id, 'pob')}
-              className={`min-h-[52px] p-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider transition shadow-sm flex flex-col items-center justify-center gap-1 ${
+              className={`min-h-[56px] p-3 rounded-[14px] font-heading font-bold text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus ${
                 activeJob.status === 'pob'
-                  ? 'bg-purple-600 text-white ring-4 ring-purple-200 dark:ring-purple-900 shadow-lg'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  ? 'bg-[#34D399] text-[#08201C] shadow-md ring-2 ring-white'
+                  : 'bg-[var(--surface-2)] text-[var(--text)] hover:border-[#34D399] border border-[var(--border)]'
               }`}
             >
               <span>3. POB (On Board)</span>
@@ -208,13 +220,13 @@ export const DriverCockpitPage: React.FC = () => {
               )}
             </button>
 
-            {/* Step 4: Job Clear */}
+            {/* Step 4: Job Clear (Signal Lime #B6F23C with Confirm Sheet) */}
             <button
-              onClick={() => updateJobStatus(activeJob.id, 'completed')}
-              className={`min-h-[52px] p-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider transition shadow-sm flex flex-col items-center justify-center gap-1 ${
+              onClick={() => setShowClearConfirmModal(true)}
+              className={`min-h-[56px] p-3 rounded-[14px] font-heading font-bold text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus ${
                 activeJob.status === 'completed'
-                  ? 'bg-emerald-600 text-white ring-4 ring-emerald-200 dark:ring-emerald-900 shadow-lg'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  ? 'bg-[#B6F23C] text-[#08201C] shadow-lime-glow ring-2 ring-white'
+                  : 'bg-[var(--surface-2)] text-[var(--text)] hover:border-[#B6F23C] border border-[var(--border)]'
               }`}
             >
               <span>4. Job Clear</span>
@@ -225,22 +237,71 @@ export const DriverCockpitPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Safety Panic & Support Trigger */}
-        <div className="pt-2 flex items-center justify-between text-xs border-t border-slate-100 dark:border-slate-800">
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-            <CheckCircle2 className="w-4 h-4" /> GPS 10s Frequency
+        {/* Safety Panic SOS Button */}
+        <div className="pt-2 flex items-center justify-between text-xs border-t border-[var(--border)]">
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-[#34D399] font-semibold font-mono">
+            <CheckCircle2 className="w-4 h-4" /> GPS Active (10s Polling)
           </span>
 
           <button
             onClick={() => setEmergencyAlertSent(true)}
-            className="text-rose-600 hover:text-rose-700 font-bold inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-500"
+            className="btn-danger !min-h-[44px] !py-1.5 !px-3 !text-xs relative overflow-hidden"
           >
-            <ShieldAlert className="w-4 h-4 text-rose-600" />
-            <span>Emergency / SOS</span>
+            <span className="absolute -inset-1 rounded-full bg-white/20 animate-ping pointer-events-none" />
+            <span className="relative flex items-center gap-1.5">
+              <Flame className="w-4 h-4" />
+              <span>EMERGENCY SOS</span>
+            </span>
           </button>
         </div>
 
       </div>
+
+      {/* Job Clear Confirmation Modal Sheet */}
+      {showClearConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+          <div className="nr-card p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div className="w-12 h-12 rounded-[16px] bg-[#B6F23C]/20 text-[#08201C] dark:text-[#B6F23C] flex items-center justify-center mx-auto">
+              <Check className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1">
+              <h3 className="font-heading font-bold text-lg text-[var(--text)]">
+                Confirm Journey Completion
+              </h3>
+              <p className="text-xs text-[var(--text-muted)]">
+                Passengers dropped off safely at {activeJob?.destinationPostcode}?
+              </p>
+            </div>
+
+            <div className="p-3 rounded-[12px] bg-[var(--surface-2)] text-xs space-y-1 font-mono">
+              <div className="flex justify-between">
+                <span className="text-[var(--text-muted)]">Total Fare:</span>
+                <span className="font-bold text-[var(--text)]">£{activeJob?.totalGbp.toFixed(2)} GBP</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--text-muted)]">Payment Mode:</span>
+                <span className="font-bold text-[#34D399] uppercase">{activeJob?.paymentStatus}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setShowClearConfirmModal(false)}
+                className="btn-ghost flex-1 !min-h-[44px] !text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleJobClearConfirm}
+                className="btn-primary flex-1 !min-h-[44px] !text-xs"
+              >
+                Confirm Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
@@ -267,55 +328,58 @@ export const PACockpitPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 max-w-md mx-auto pb-10">
+    <div className="space-y-4 max-w-md mx-auto pb-12 text-[16px]">
       
       {/* Top Mobile Bar */}
-      <div className="flex items-center justify-between bg-slate-900 text-white p-3.5 rounded-2xl shadow-xl">
+      <div 
+        style={{ background: 'var(--hero-bg)' }}
+        className="flex items-center justify-between text-white p-4 rounded-[20px] shadow-2xl border border-[var(--border)]"
+      >
         <Link 
           to="/" 
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white p-1 focus:outline-none focus:ring-2 focus:ring-amber-400 rounded-lg"
+          className="flex items-center gap-1.5 text-xs font-heading font-semibold text-[#8FB5AA] hover:text-white p-2 focus:outline-none nr-focus rounded-[12px]"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Exit Cockpit</span>
         </Link>
-        <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+        <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#FF9F6B] flex items-center gap-1.5">
           <GraduationCap className="w-4 h-4" />
           PA On Duty (Sarah J.)
         </span>
         <span className="text-xs font-mono font-bold">15:15 PM</span>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+      <div className="nr-card p-6 space-y-5">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#8B9CFF]">
             SEN Route Roster • PM School Run
           </span>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+          <h2 className="text-xl font-heading font-bold text-[var(--text)] mt-0.5">
             CBC-SEN-ROUTE-01
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--text-muted)] mt-1">
             The Chiltern School &rarr; Dunstable &amp; Leighton Buzzard
           </p>
         </div>
 
         {/* Student Attendance Manifest */}
         <div className="space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+          <p className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)]">
             Pupil Attendance &amp; Support Handover:
           </p>
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 text-xs">
+          <div className="divide-y divide-[var(--border)] border border-[var(--border)] rounded-[18px] p-2 text-xs">
             {students.map(st => (
-              <div key={st.id} className="py-2.5 px-2 flex items-center justify-between gap-2">
+              <div key={st.id} className="py-3 px-2 flex items-center justify-between gap-2">
                 <div>
-                  <p className="font-bold text-slate-900 dark:text-white">{st.name}</p>
-                  <p className="text-[11px] text-slate-500">{st.need}</p>
+                  <p className="font-heading font-bold text-[var(--text)]">{st.name}</p>
+                  <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{st.need}</p>
                 </div>
                 <button
                   onClick={() => toggleStudentStatus(st.id)}
-                  className={`min-h-[36px] px-3 py-1.5 rounded-xl font-bold text-[10px] uppercase transition ${
+                  className={`min-h-[40px] px-3.5 py-1.5 rounded-[12px] font-heading font-bold text-[11px] uppercase transition-all duration-180 ${
                     st.status.includes('Handed')
-                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                      : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                      ? 'bg-[#3FE0C5]/20 text-[#08201C] dark:text-[#3FE0C5] border border-[#3FE0C5]/40'
+                      : 'bg-[#34D399]/20 text-[#08201C] dark:text-[#34D399] border border-[#34D399]/40'
                   }`}
                 >
                   {st.status}
@@ -326,19 +390,19 @@ export const PACockpitPage: React.FC = () => {
         </div>
 
         {/* Mandatory Vehicle Sweep Sign-off (Requirement CHK-05 & AT-C10) */}
-        <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 space-y-2.5">
+        <div className="p-4 rounded-[18px] bg-[#FFC24B]/15 border border-[#FFC24B]/40 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wide">
+            <h3 className="text-xs font-heading font-bold text-[#D97706] dark:text-[#FFC24B] uppercase tracking-wide">
               Mandatory End-Of-Run Safety Sweep
             </h3>
             {sweepCompleted && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-600 text-white flex items-center gap-1">
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#34D399] text-[#08201C] flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" /> VERIFIED
               </span>
             )}
           </div>
           
-          <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+          <p className="text-xs text-[var(--text)] leading-relaxed">
             I certify that the entire vehicle interior and all seating rows have been physically inspected and no pupil or personal property remains on board.
           </p>
 
@@ -347,10 +411,10 @@ export const PACockpitPage: React.FC = () => {
               setSweepCompleted(!sweepCompleted);
               alert(sweepCompleted ? 'Sweep cancelled.' : 'Vehicle sweep verified and digitally signed! Driver availability unlocked.');
             }}
-            className={`min-h-[46px] w-full py-2.5 rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 ${
+            className={`min-h-[50px] w-full py-2.5 rounded-[14px] font-heading font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 ${
               sweepCompleted
-                ? 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                : 'bg-amber-600 hover:bg-amber-700 text-white'
+                ? 'bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)]'
+                : 'btn-primary'
             }`}
           >
             <CheckCircle2 className="w-4 h-4" />

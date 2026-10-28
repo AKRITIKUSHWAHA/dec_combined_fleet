@@ -9,11 +9,10 @@ export const AppLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  // If we are directly on the full-screen driver/PA cockpits, we can give max screen area
   const isDedicatedCockpit = location.pathname.includes('-cockpit');
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col transition-colors">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col transition-colors duration-180">
       
       {/* Top Header */}
       <Header 
@@ -37,7 +36,7 @@ export const AppLayout: React.FC = () => {
         />
 
         {/* Main Content Area */}
-        <main className={`flex-1 min-w-0 pb-16 lg:pb-8 p-3 sm:p-6 lg:p-8 ${isDedicatedCockpit ? 'max-w-2xl mx-auto' : ''}`}>
+        <main className={`flex-1 min-w-0 pb-20 lg:pb-10 p-3 sm:p-6 lg:p-8 ${isDedicatedCockpit ? 'max-w-2xl mx-auto' : ''}`}>
           <Outlet />
         </main>
       </div>
@@ -47,4 +46,3 @@ export const AppLayout: React.FC = () => {
     </div>
   );
 };
-

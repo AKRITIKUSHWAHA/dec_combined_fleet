@@ -73,31 +73,31 @@ export const ChecksPage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-lg sm:text-xl font-heading font-bold text-[var(--text)] flex items-center gap-2">
             <span>Daily Checks &amp; Builder</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 font-bold">
+            <span className="chip-ready px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">
               UK Walkaround Standard
             </span>
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--text-muted)]">
             No-code custom checklist authoring with mandatory photo evidence on critical failures (Requirement CHK-01 to CHK-06).
           </p>
         </div>
 
         {/* Tab switch */}
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+        <div className="flex bg-[var(--surface-2)] p-1 rounded-[12px] border border-[var(--border)]">
           <button
             onClick={() => setActiveTab('builder')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-              activeTab === 'builder' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-300' : 'text-slate-500'
+            className={`px-3 py-1.5 rounded-[10px] text-xs font-heading font-bold transition ${
+              activeTab === 'builder' ? 'bg-[var(--surface)] shadow-sm text-[#08201C] dark:text-[#B6F23C]' : 'text-[var(--text-muted)]'
             }`}
           >
             Checklist Builder
           </button>
           <button
             onClick={() => setActiveTab('submissions')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-              activeTab === 'submissions' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-300' : 'text-slate-500'
+            className={`px-3 py-1.5 rounded-[10px] text-xs font-heading font-bold transition ${
+              activeTab === 'submissions' ? 'bg-[var(--surface)] shadow-sm text-[#08201C] dark:text-[#B6F23C]' : 'text-[var(--text-muted)]'
             }`}
           >
             Submissions ({dailyChecks.length})
@@ -110,38 +110,38 @@ export const ChecksPage: React.FC = () => {
           
           {/* Left Column: Form Builder Items */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+            <div className="nr-card p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+                <h3 className="font-heading font-bold text-[var(--text)] text-sm">
                   Active Walkaround Checklist Template (v2.4)
                 </h3>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-[var(--text-muted)] font-mono">
                   {checkItems.length} inspection checkpoints
                 </span>
               </div>
 
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              <div className="divide-y divide-[var(--border)]">
                 {checkItems.map((item, idx) => (
                   <div key={item.id} className="py-3 flex items-center justify-between gap-3 text-xs">
-                    <div className="flex items-start gap-2.5">
-                      <span className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-[10px] text-slate-500 shrink-0">
+                    <div className="flex items-start gap-3">
+                      <span className="w-6 h-6 rounded-full bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center font-mono font-bold text-[11px] text-[#B6F23C] shrink-0 mt-0.5">
                         {idx + 1}
                       </span>
                       <div>
-                        <p className="font-bold text-slate-900 dark:text-white">
+                        <p className="font-heading font-bold text-[var(--text)]">
                           {item.label}
                         </p>
-                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400">
-                          <span className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                        <div className="flex items-center gap-2 mt-1 text-[11px] text-[var(--text-muted)] flex-wrap">
+                          <span className="px-2 py-0.5 rounded-[6px] bg-[var(--surface-2)] text-[var(--text)] font-medium">
                             {item.section}
                           </span>
                           {item.mandatoryPhotoOnFail && (
-                            <span className="text-blue-600 dark:text-blue-400 font-semibold inline-flex items-center gap-1">
+                            <span className="text-[#3FE0C5] font-semibold inline-flex items-center gap-1 font-mono">
                               <Camera className="w-3 h-3" /> Mandatory Photo If Failed
                             </span>
                           )}
                           {item.isSchoolSpecific && (
-                            <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
+                            <span className="text-[#FF9F6B] font-bold">
                               ★ School Contract Requirement
                             </span>
                           )}
@@ -151,7 +151,7 @@ export const ChecksPage: React.FC = () => {
 
                     <button
                       onClick={() => setCheckItems(prev => prev.filter(i => i.id !== item.id))}
-                      className="p-1.5 text-slate-400 hover:text-rose-500 transition"
+                      className="p-2 text-[var(--text-muted)] hover:text-[#FF5D6C] transition"
                       title="Remove checkpoint"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -166,29 +166,29 @@ export const ChecksPage: React.FC = () => {
           <div className="space-y-4">
             
             {/* Add Item Card */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-3">
-              <h3 className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
+            <div className="nr-card p-5 space-y-3.5">
+              <h3 className="font-heading font-bold text-[var(--text)] text-xs uppercase tracking-wider">
                 Add Inspection Item
               </h3>
 
-              <div className="space-y-2 text-xs">
+              <div className="space-y-2.5 text-xs">
                 <div>
-                  <label className="font-semibold block mb-1">Check Description</label>
+                  <label className="font-heading font-semibold block mb-1 text-[var(--text)]">Check Description</label>
                   <input
                     type="text"
                     placeholder="e.g. AdBlue level & exhaust warning"
                     value={newItemLabel}
                     onChange={e => setNewItemLabel(e.target.value)}
-                    className="w-full p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                    className="nr-input !h-[44px] !px-3"
                   />
                 </div>
 
                 <div>
-                  <label className="font-semibold block mb-1">Section Group</label>
+                  <label className="font-heading font-semibold block mb-1 text-[var(--text)]">Section Group</label>
                   <select
                     value={newItemSection}
                     onChange={e => setNewItemSection(e.target.value)}
-                    className="w-full p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                    className="nr-input !h-[44px] !px-3"
                   >
                     <option value="Exterior">Exterior</option>
                     <option value="Cab">Cab</option>
@@ -205,16 +205,16 @@ export const ChecksPage: React.FC = () => {
                     id="photoReq"
                     checked={newMandatoryPhoto}
                     onChange={e => setNewMandatoryPhoto(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded"
+                    className="w-4 h-4 rounded accent-[#B6F23C]"
                   />
-                  <label htmlFor="photoReq" className="text-slate-700 dark:text-slate-300">
+                  <label htmlFor="photoReq" className="text-[var(--text)] font-medium">
                     Require Photo on Failure
                   </label>
                 </div>
 
                 <button
                   onClick={handleAddItem}
-                  className="w-full mt-2 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
+                  className="btn-primary w-full !text-xs !py-1 !min-h-[44px]"
                 >
                   <PlusCircle className="w-4 h-4" />
                   <span>Add to Checklist</span>
@@ -223,17 +223,17 @@ export const ChecksPage: React.FC = () => {
             </div>
 
             {/* Simulation Shortcut */}
-            <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 p-4 rounded-xl space-y-2 text-xs">
-              <h4 className="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
-                <Smartphone className="w-4 h-4 text-emerald-600" />
+            <div className="bg-[#34D399]/15 border border-[#34D399]/40 p-4 rounded-[18px] space-y-2.5 text-xs">
+              <h4 className="font-heading font-bold text-[#065F46] dark:text-[#34D399] flex items-center gap-1.5">
+                <Smartphone className="w-4 h-4 text-[#34D399]" />
                 <span>Simulate Driver Submission</span>
               </h4>
-              <p className="text-emerald-800 dark:text-emerald-300 text-[11px]">
+              <p className="text-[var(--text)] text-[11px] leading-relaxed">
                 Click below to simulate driver Tariq submitting today's pass checklist for Mercedes V-Class LT73 XKL.
               </p>
               <button
                 onClick={handleSimulatePassCheck}
-                className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition"
+                className="btn-primary w-full !text-xs !py-1 !min-h-[42px]"
               >
                 Submit Passed Check
               </button>
@@ -244,51 +244,51 @@ export const ChecksPage: React.FC = () => {
         </div>
       ) : (
         /* Submissions View */
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+        <div className="nr-card overflow-hidden">
+          <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
+            <h3 className="font-heading font-bold text-[var(--text)] text-sm">
               Today's Audit Log of Walkaround Submissions
             </h3>
-            <span className="text-xs text-slate-500">Locked legal records</span>
+            <span className="text-xs text-[var(--text-muted)] font-mono">Locked legal records</span>
           </div>
 
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="divide-y divide-[var(--border)]">
             {dailyChecks.map(chk => (
               <div key={chk.id} className="p-4 flex items-center justify-between flex-wrap gap-3 text-xs">
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold ${
-                    chk.status === 'passed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                  <div className={`w-10 h-10 rounded-[12px] flex items-center justify-center font-bold ${
+                    chk.status === 'passed' ? 'bg-[#34D399]/20 text-[#34D399]' : 'bg-[#FF5D6C]/20 text-[#FF5D6C]'
                   }`}>
                     {chk.status === 'passed' ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">
+                      <span className="font-mono font-bold text-[var(--text)] text-sm">
                         {chk.vehicleReg}
                       </span>
-                      <span className="font-bold text-slate-600 dark:text-slate-300">
+                      <span className="font-heading font-bold text-[var(--text)]">
                         {chk.driverName}
                       </span>
-                      <span className="text-slate-400 font-mono text-[11px]">
+                      <span className="text-[var(--text-muted)] font-mono text-[11px]">
                         ({chk.checkRef})
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
+                    <p className="text-[11px] text-[var(--text-muted)] mt-0.5 font-mono">
                       Completed at {chk.timestamp} • Odometer: {chk.odometerReading.toLocaleString()} miles • {chk.itemsChecked} checks verified
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded font-bold uppercase text-[10px] ${
-                    chk.status === 'passed' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                  <span className={`px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] ${
+                    chk.status === 'passed' ? 'chip-ready' : 'chip-blocked'
                   }`}>
                     {chk.status} ({chk.failuresCount} failures)
                   </span>
                   <button
                     onClick={() => alert(`Inspection report details for ${chk.checkRef}: All items locked, GPS and signature verified.`)}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold"
+                    className="btn-secondary !text-xs !py-1 !px-3 !min-h-[36px]"
                   >
                     View Report
                   </button>

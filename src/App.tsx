@@ -18,6 +18,7 @@ import { SchoolTransportPage } from './pages/SchoolTransportPage';
 import { TariffsPage } from './pages/TariffsPage';
 import { FinancePage } from './pages/FinancePage';
 import { DriverCockpitPage, PACockpitPage } from './pages/StaffCockpitPages';
+import { DesignSystemPage } from './pages/DesignSystemPage';
 
 export function App() {
   return (
@@ -30,6 +31,9 @@ export function App() {
                 <Route element={<AppLayout />}>
                   {/* Dashboard: All roles allowed (data is tailored to role) */}
                   <Route path="/" element={<DashboardPage />} />
+
+                  {/* Design System Specimen (Night Road) */}
+                  <Route path="/design-system" element={<DesignSystemPage />} />
 
                   {/* Live Dispatch Map: Controller & Owner */}
                   <Route 

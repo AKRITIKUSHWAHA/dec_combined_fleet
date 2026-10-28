@@ -34,31 +34,31 @@ export const FinancePage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <h1 className="text-lg sm:text-xl font-heading font-bold text-[var(--text)] flex items-center gap-2">
             <span>Finance, Invoicing &amp; Driver Settlements</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold">
+            <span className="chip-ready px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">
               GBP (£) Accounting
             </span>
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--text-muted)]">
             Corporate invoicing, weekly driver settlement statements, commission &amp; rent reconciliations (Requirement 7 &amp; FIN-01).
           </p>
         </div>
 
         {/* Tab switch */}
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+        <div className="flex bg-[var(--surface-2)] p-1 rounded-[12px] border border-[var(--border)]">
           <button
             onClick={() => setActiveTab('invoices')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-              activeTab === 'invoices' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-300' : 'text-slate-500'
+            className={`px-3 py-1.5 rounded-[10px] text-xs font-heading font-bold transition ${
+              activeTab === 'invoices' ? 'bg-[var(--surface)] shadow-sm text-[#08201C] dark:text-[#B6F23C]' : 'text-[var(--text-muted)]'
             }`}
           >
             Corporate Invoices
           </button>
           <button
             onClick={() => setActiveTab('driver_statements')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-              activeTab === 'driver_statements' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-300' : 'text-slate-500'
+            className={`px-3 py-1.5 rounded-[10px] text-xs font-heading font-bold transition ${
+              activeTab === 'driver_statements' ? 'bg-[var(--surface)] shadow-sm text-[#08201C] dark:text-[#B6F23C]' : 'text-[var(--text-muted)]'
             }`}
           >
             Driver Settlements
@@ -70,32 +70,32 @@ export const FinancePage: React.FC = () => {
         <div className="space-y-4">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-              <span className="text-xs text-slate-500 font-medium">Pending Corporate Invoices</span>
-              <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">£337.50 GBP</p>
-              <span className="text-[10px] text-amber-600 font-semibold">2 Account Clients</span>
+            <div className="nr-card p-5 space-y-1">
+              <span className="text-xs text-[var(--text-muted)] font-heading font-medium">Pending Corporate Invoices</span>
+              <p className="text-2xl font-heading font-bold text-[var(--text)] font-mono tabular-nums">£337.50 GBP</p>
+              <span className="text-[10px] text-[#FFC24B] font-bold">2 Account Clients</span>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-              <span className="text-xs text-slate-500 font-medium">Settled This Week</span>
-              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">£1,420.00 GBP</p>
-              <span className="text-[10px] text-slate-400">Card &amp; Bank Transfer</span>
+            <div className="nr-card p-5 space-y-1">
+              <span className="text-xs text-[var(--text-muted)] font-heading font-medium">Settled This Week</span>
+              <p className="text-2xl font-heading font-bold text-[#34D399] font-mono tabular-nums">£1,420.00 GBP</p>
+              <span className="text-[10px] text-[var(--text-muted)]">Card &amp; Bank Transfer</span>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-              <span className="text-xs text-slate-500 font-medium">VAT Remittance (20%)</span>
-              <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">£284.00 GBP</p>
-              <span className="text-[10px] text-blue-600 font-semibold">HMRC Compliant</span>
+            <div className="nr-card p-5 space-y-1">
+              <span className="text-xs text-[var(--text-muted)] font-heading font-medium">VAT Remittance (20%)</span>
+              <p className="text-2xl font-heading font-bold text-[var(--text)] font-mono tabular-nums">£284.00 GBP</p>
+              <span className="text-[10px] text-[#3FE0C5] font-bold">HMRC Compliant</span>
             </div>
           </div>
 
           {/* Invoices Table */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+          <div className="nr-card overflow-hidden">
+            <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
+              <h3 className="font-heading font-bold text-[var(--text)] text-sm">
                 Itemised Corporate Bookings &amp; Accounts
               </h3>
               <button
                 onClick={() => alert('Exporting batch invoice ledger as CSV/Excel...')}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-200"
+                className="btn-secondary !text-xs !py-1 !px-3 !min-h-[36px]"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Export Ledger</span>
@@ -103,42 +103,42 @@ export const FinancePage: React.FC = () => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs divide-y divide-slate-200 dark:divide-slate-800">
-                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-semibold">
+              <table className="w-full text-left text-xs divide-y divide-[var(--border)]">
+                <thead className="bg-[var(--surface-2)] text-[var(--text-muted)] font-heading font-semibold">
                   <tr>
-                    <th className="p-3">Invoice Ref / Booking</th>
-                    <th className="p-3">Account Client</th>
-                    <th className="p-3">Journey Details</th>
-                    <th className="p-3">Fare + Extras</th>
-                    <th className="p-3">Billing Status</th>
-                    <th className="p-3 text-right">PDF Invoice</th>
+                    <th className="p-3.5">Invoice Ref / Booking</th>
+                    <th className="p-3.5">Account Client</th>
+                    <th className="p-3.5">Journey Details</th>
+                    <th className="p-3.5">Fare + Extras</th>
+                    <th className="p-3.5">Billing Status</th>
+                    <th className="p-3.5 text-right">PDF Invoice</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-[var(--border)]">
                   {corporateBookings.map(b => (
-                    <tr key={b.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="p-3">
-                        <div className="font-mono font-bold text-slate-900 dark:text-white">INV-{b.bookingRef.split('-')[2]}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">{b.bookingRef}</div>
+                    <tr key={b.id} className="hover:bg-[var(--surface-2)] transition-colors">
+                      <td className="p-3.5">
+                        <div className="font-mono font-bold text-[var(--text)]">INV-{b.bookingRef.split('-')[2]}</div>
+                        <div className="text-[10px] text-[var(--text-muted)] font-mono">{b.bookingRef}</div>
                       </td>
-                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">
+                      <td className="p-3.5 font-heading font-bold text-[var(--text)]">
                         {b.customerName}
                       </td>
-                      <td className="p-3 text-slate-600 dark:text-slate-400">
+                      <td className="p-3.5 text-[var(--text-muted)] font-mono">
                         {b.pickupPostcode} &rarr; {b.destinationPostcode}
                       </td>
-                      <td className="p-3 font-mono font-bold text-slate-900 dark:text-white">
+                      <td className="p-3.5 font-mono font-bold text-[var(--text)] tabular-nums">
                         £{b.totalGbp.toFixed(2)} GBP
                       </td>
-                      <td className="p-3">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                      <td className="p-3.5">
+                        <span className="chip-due-soon px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
                           Account Ledger
                         </span>
                       </td>
-                      <td className="p-3 text-right">
+                      <td className="p-3.5 text-right">
                         <button
                           onClick={() => alert(`Generated PDF invoice for ${b.bookingRef} - Itemised VAT, booking reference, and council contract schedule.`)}
-                          className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-semibold"
+                          className="btn-secondary !text-xs !py-1 !px-3 !min-h-[36px]"
                         >
                           Download PDF
                         </button>
@@ -152,46 +152,46 @@ export const FinancePage: React.FC = () => {
         </div>
       ) : (
         /* Driver Settlement View */
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4 max-w-2xl mx-auto">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="nr-card p-6 space-y-5 max-w-2xl mx-auto">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
             <div>
-              <span className="text-[10px] uppercase font-bold text-blue-600 tracking-wider">
+              <span className="text-[10px] font-mono uppercase font-bold text-[#3FE0C5] tracking-wider block">
                 Weekly Driver Payout Statement (Week 43)
               </span>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              <h3 className="text-lg font-heading font-bold text-[var(--text)] mt-0.5">
                 Tariq Mahmood (DEC-DRV-01)
               </h3>
-              <p className="text-xs text-slate-500">Vehicle: Mercedes-Benz V-Class (LT73 XKL)</p>
+              <p className="text-xs text-[var(--text-muted)]">Vehicle: Mercedes-Benz V-Class (LT73 XKL)</p>
             </div>
 
             <button
               onClick={() => alert('Downloading Driver Weekly Settlement Sheet (PDF)...')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold"
+              className="btn-secondary !text-xs !py-1 !px-3 !min-h-[38px]"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Statement PDF</span>
             </button>
           </div>
 
-          <div className="space-y-3 text-xs">
-            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
-              <span className="text-slate-600 dark:text-slate-400">Total Fares Logged:</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-white">£{tariqGross.toFixed(2)} GBP</span>
+          <div className="space-y-3.5 text-xs font-mono">
+            <div className="flex items-center justify-between py-2 border-b border-[var(--border)]">
+              <span className="text-[var(--text-muted)] font-sans">Total Fares Logged:</span>
+              <span className="font-bold text-[var(--text)] text-sm">£{tariqGross.toFixed(2)} GBP</span>
             </div>
 
-            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800 text-rose-600">
-              <span>Less: Operator Commission (15%):</span>
-              <span className="font-mono font-bold">-£{commissionDeduction.toFixed(2)} GBP</span>
+            <div className="flex items-center justify-between py-2 border-b border-[var(--border)] text-[#FF5D6C]">
+              <span className="font-sans">Less: Operator Commission (15%):</span>
+              <span className="font-bold">-£{commissionDeduction.toFixed(2)} GBP</span>
             </div>
 
-            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800 text-rose-600">
-              <span>Less: Weekly Vehicle Fleet Lease Rent:</span>
-              <span className="font-mono font-bold">-£{vehicleRentWeekly.toFixed(2)} GBP</span>
+            <div className="flex items-center justify-between py-2 border-b border-[var(--border)] text-[#FF5D6C]">
+              <span className="font-sans">Less: Weekly Vehicle Fleet Lease Rent:</span>
+              <span className="font-bold">-£{vehicleRentWeekly.toFixed(2)} GBP</span>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900 text-emerald-900 dark:text-emerald-100 text-sm font-bold">
-              <span>Net Driver Payout Due:</span>
-              <span className="text-base font-mono">£{netDriverPayout.toFixed(2)} GBP</span>
+            <div className="flex items-center justify-between p-4 rounded-[16px] bg-[#34D399]/15 border border-[#34D399]/40 text-[#065F46] dark:text-[#34D399] text-base font-bold font-heading">
+              <span className="text-sm font-heading">Net Driver Payout Due:</span>
+              <span className="text-lg font-mono tabular-nums">£{netDriverPayout.toFixed(2)} GBP</span>
             </div>
           </div>
         </div>

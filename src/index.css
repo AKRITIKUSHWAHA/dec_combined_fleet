@@ -4,26 +4,267 @@
 
 @layer base {
   :root {
-    --bg-primary: #f8fafc;
-    --text-primary: #0f172a;
+    /* Night Road - Light Mode (Office default) */
+    --bg: #F3F8F5;
+    --surface: #FFFFFF;
+    --surface-2: #E6F1EC;
+    --border: #CFE2DA;
+    --text: #0B2B26;
+    --text-muted: #4F6F66;
+
+    --hero-bg: linear-gradient(135deg, #08201C 0%, #0F3A32 55%, #14524A 100%);
+    --btn-primary: linear-gradient(180deg, #C9FF5A 0%, #B6F23C 100%);
+    --accent-glow: radial-gradient(circle at 20% 0%, rgba(182, 242, 60, 0.18), transparent 50%);
   }
 
   .dark {
-    --bg-primary: #0b0f19;
-    --text-primary: #f1f5f9;
+    /* Night Road - Dark Mode (Driver app default) */
+    --bg: #08201C;
+    --surface: #0F2F29;
+    --surface-2: #164038;
+    --border: #24574D;
+    --text: #EAF7F2;
+    --text-muted: #8FB5AA;
+
+    --hero-bg: linear-gradient(135deg, #08201C 0%, #0F3A32 55%, #14524A 100%);
+    --btn-primary: linear-gradient(180deg, #C9FF5A 0%, #B6F23C 100%);
+    --accent-glow: radial-gradient(circle at 20% 0%, rgba(182, 242, 60, 0.18), transparent 50%);
   }
 
-  body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    -webkit-tap-highlight-color: transparent;
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--text);
+    background-color: var(--bg);
+    transition: background-color 180ms ease-out, color 180ms ease-out;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* JetBrains Mono with tabular numbers for timestamps & mileage */
+  .tabular-nums, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Touch friendly for mobile screens */
-@media (max-width: 640px) {
-  button, input, select, textarea {
-    font-size: 16px !important; /* Prevents auto-zoom on iOS */
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Custom Night Road UI Utility Classes */
+@layer components {
+  /* Cards with hover lift */
+  .nr-card {
+    background-color: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px -2px rgba(8, 32, 28, 0.06);
+    transition: transform 180ms ease-out, box-shadow 180ms ease-out, border-color 180ms ease-out;
+  }
+  .nr-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px -4px rgba(8, 32, 28, 0.14);
+  }
+
+  /* Glassmorphism for login cards & bottom sheets */
+  .nr-glass {
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 20px 40px rgba(8, 32, 28, 0.4);
+  }
+
+  /* Primary Button (Signal Lime gradient) */
+  .btn-primary {
+    background: linear-gradient(180deg, #C9FF5A 0%, #B6F23C 100%);
+    color: #08201C;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(182, 242, 60, 0.25);
+    transition: all 180ms ease-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0 1.25rem;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(180deg, #D4FF70 0%, #C9FF5A 100%);
+    box-shadow: 0 12px 28px rgba(182, 242, 60, 0.35);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.97);
+    background: #9AD42A;
+    box-shadow: 0 4px 12px rgba(182, 242, 60, 0.2);
+  }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  /* Secondary Button (Apricot outline) */
+  .btn-secondary {
+    background: transparent;
+    color: #FF9F6B;
+    border: 1.5px solid #FF9F6B;
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    border-radius: 14px;
+    transition: all 180ms ease-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0 1.25rem;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: #FF9F6B;
+    color: #08201C;
+    box-shadow: 0 8px 20px rgba(255, 159, 107, 0.25);
+  }
+  .btn-secondary:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .btn-secondary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Ghost Button */
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    border-radius: 14px;
+    transition: all 180ms ease-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0 1rem;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    color: var(--text);
+    text-decoration: underline;
+  }
+
+  /* Danger Button (Coral Solid) */
+  .btn-danger {
+    background: #FF5D6C;
+    color: #FFFFFF;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(255, 93, 108, 0.25);
+    transition: all 180ms ease-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0 1.25rem;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: #FF4254;
+    box-shadow: 0 12px 28px rgba(255, 93, 108, 0.35);
+    transform: translateY(-1px);
+  }
+  .btn-danger:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  /* Focus ring standard for accessibility (Aqua ring with offset) */
+  .nr-focus {
+    outline: none;
+  }
+  .nr-focus:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px #3FE0C5;
+  }
+
+  /* 52px Floating Label Form Input */
+  .nr-input {
+    height: 52px;
+    background-color: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding-left: 2.75rem;
+    padding-right: 1rem;
+    font-size: 0.9375rem;
+    transition: border-color 180ms ease-out, box-shadow 180ms ease-out;
+    width: 100%;
+  }
+  .nr-input:focus {
+    outline: none;
+    border-color: #B6F23C;
+    box-shadow: 0 0 0 3px rgba(182, 242, 60, 0.25);
+  }
+  .nr-input.nr-input-error {
+    border-color: #FF5D6C;
+    box-shadow: 0 0 0 3px rgba(255, 93, 108, 0.25);
+  }
+
+  /* Status Chips (15% background tint + colored dot + text label) */
+  .chip-ready {
+    background-color: rgba(52, 211, 153, 0.15);
+    color: #10B981;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+  }
+  .dark .chip-ready {
+    color: #34D399;
+  }
+
+  .chip-due-soon {
+    background-color: rgba(255, 194, 75, 0.15);
+    color: #D97706;
+    border: 1px solid rgba(255, 194, 75, 0.3);
+  }
+  .dark .chip-due-soon {
+    color: #FFC24B;
+  }
+
+  .chip-blocked {
+    background-color: rgba(255, 93, 108, 0.15);
+    color: #E11D48;
+    border: 1px solid rgba(255, 93, 108, 0.3);
+  }
+  .dark .chip-blocked {
+    color: #FF5D6C;
+  }
+
+  .chip-pending {
+    background-color: rgba(139, 156, 255, 0.15);
+    color: #4F46E5;
+    border: 1px solid rgba(139, 156, 255, 0.3);
+  }
+  .dark .chip-pending {
+    color: #8B9CFF;
+  }
+
+  .chip-stale {
+    background-color: rgba(148, 163, 160, 0.15);
+    color: #4B5563;
+    border: 1px solid rgba(148, 163, 160, 0.3);
+  }
+  .dark .chip-stale {
+    color: #94A3A0;
   }
 }
