@@ -267,4 +267,24 @@
   .dark .chip-stale {
     color: #94A3A0;
   }
+
+  /* Sleek modern scrollbar for Night Road panels & sidebars */
+  .nr-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .nr-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .nr-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .nr-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 9999px;
+  }
+  .nr-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #3FE0C5;
+  }
 }

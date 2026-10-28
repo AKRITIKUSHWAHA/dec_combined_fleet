@@ -20,7 +20,7 @@ export const AppLayout: React.FC = () => {
         isMobileMenuOpen={isMobileMenuOpen}
       />
 
-      <div className="flex-1 flex max-w-7xl w-full mx-auto">
+      <div className="flex-1 flex max-w-[1600px] w-full mx-auto">
         
         {/* Desktop Sidebar (hidden on mobile & tablet) */}
         {!isDedicatedCockpit && (

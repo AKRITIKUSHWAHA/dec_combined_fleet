@@ -43,3 +43,4 @@ export const AccessDeniedPage: React.FC = () => {
 };
 
 export default AccessDeniedPage;
+
