@@ -12,15 +12,15 @@ import { useRole } from '../../context/RoleContext';
 export const BottomNav: React.FC = () => {
   const { currentRole } = useRole();
 
-  // On driver or PA role, direct to cockpit
-  const staffAppRoute = currentRole === 'pa' ? '/pa-cockpit' : '/driver-cockpit';
+  // On driver or PA role, direct to cockpit or staff home
+  const staffAppRoute = currentRole === 'pa' ? '/app/pa-cockpit' : '/app/driver-cockpit';
 
   const items = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/live-map', label: 'Live Map', icon: MapPin },
-    { to: '/bookings', label: 'Bookings', icon: CalendarCheck },
-    { to: '/fleet', label: 'Fleet', icon: Car },
-    { to: staffAppRoute, label: 'Staff App', icon: Smartphone, highlight: true }
+    { to: '/office/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/office/live-map', label: 'Live Map', icon: MapPin },
+    { to: '/office/bookings', label: 'Bookings', icon: CalendarCheck },
+    { to: '/office/fleet', label: 'Fleet', icon: Car },
+    { to: currentRole === 'driver' || currentRole === 'pa' ? '/app/home' : staffAppRoute, label: 'Staff App', icon: Smartphone, highlight: true }
   ];
 
   return (
@@ -32,7 +32,6 @@ export const BottomNav: React.FC = () => {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition ${
                   isActive
@@ -56,4 +55,3 @@ export const BottomNav: React.FC = () => {
     </nav>
   );
 };
-

@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 import { UserRole } from '../types';
+import { useAuth } from './AuthContext';
 
 export interface RoleConfig {
   id: UserRole;
@@ -67,7 +68,12 @@ interface RoleContextType {
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentRole, setCurrentRole] = useState<UserRole>('owner_admin');
+  const { currentUser, switchRoleQuick } = useAuth();
+  const currentRole: UserRole = currentUser?.role || 'owner_admin';
+
+  const setCurrentRole = (role: UserRole) => {
+    switchRoleQuick(role);
+  };
 
   const roleConfig = ROLE_CONFIGS[currentRole];
   const canViewDBS = currentRole === 'owner_admin' || currentRole === 'hr_vetting';
@@ -89,6 +95,7 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </RoleContext.Provider>
   );
 };
+
 
 export const useRole = () => {
   const context = useContext(RoleContext);

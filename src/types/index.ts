@@ -20,6 +20,15 @@ export interface SubCompany {
 
 export type OperationalClearance = 'cleared' | 'pending' | 'restricted';
 
+export interface WorkforceAuditEntry {
+  id: string;
+  timestamp: string;
+  action: string;
+  actor: string;
+  details: string;
+  category: 'clearance' | 'training' | 'vetting' | 'assignment' | 'app';
+}
+
 export interface DriverPAProfile {
   id: string;
   staffId: string;
@@ -44,6 +53,20 @@ export interface DriverPAProfile {
     speedMph: number;
     lastUpdateIso: string;
     isFresh: boolean; // false if older than 60s
+  };
+
+  // Personal Details
+  personalDetails?: {
+    dob: string;
+    address: string;
+    nationalInsuranceNumber: string; // Restricted / redacted for Controller!
+    emergencyContact: {
+      name: string;
+      relation: string;
+      phone: string;
+    };
+    startDate: string;
+    employmentStatus: 'active' | 'inactive' | 'suspended' | 'on_leave';
   };
 
   // Driver Specific Credentials (Only shown if role is driver/dual)
@@ -81,16 +104,96 @@ export interface DriverPAProfile {
     suitabilityDecision: 'cleared_for_unsupervised_child_work' | 'restricted_adult_only' | 'pending';
     confidentialNotes?: string;
   };
+  rightToWork?: {
+    shareCode: string;
+    status: 'verified_indefinite' | 'time_limited' | 'pending';
+    expiryDate?: string;
+    verifiedAt: string;
+  };
 
   training: {
-    safeguarding: { completed: boolean; expiryDate: string };
-    firstAid: { completed: boolean; expiryDate: string };
+    safeguarding: { completed: boolean; expiryDate: string; certNumber?: string };
+    firstAid: { completed: boolean; expiryDate: string; certNumber?: string };
     midas: { completed: boolean; expiryDate: string; certificateNo?: string };
-    pat: { completed: boolean; expiryDate: string };
-    wheelchairRestraints: { completed: boolean; expiryDate: string };
+    pat: { completed: boolean; expiryDate: string; certNumber?: string };
+    wheelchairRestraints: { completed: boolean; expiryDate: string; certNumber?: string };
   };
 
   safeguardingFlag?: boolean;
+
+  // Assignments & Availability
+  assignments?: {
+    contractedHoursWeekly: number;
+    assignedDefaultVehicleReg?: string;
+    regularSchoolRoute?: string;
+    preferredShift: 'Morning Peak (AM)' | 'Afternoon Peak (PM)' | 'Full Day Split' | 'Airport Night Shift';
+    workingDays: string[];
+  };
+
+  // App & Device Acknowledgements
+  appDetails?: {
+    deviceModel: string;
+    osVersion: string;
+    appVersion: string;
+    lastLoginTimestamp: string;
+    pushEnabled: boolean;
+    policySignoffs: Array<{
+      id: string;
+      policyName: string;
+      version: string;
+      signedAt: string;
+    }>;
+    offlineSyncStatus: {
+      lastSyncTime: string;
+      pendingDrafts: number;
+      syncHealth: 'healthy' | 'lagging' | 'offline';
+    };
+  };
+
+  // Operational Clearance Audit Details
+  clearanceDetails?: {
+    lastReviewedDate: string;
+    reviewedBy: string;
+    auditTrail: Array<{
+      id: string;
+      timestamp: string;
+      previousStatus: OperationalClearance;
+      newStatus: OperationalClearance;
+      changedBy: string;
+      reason: string;
+    }>;
+  };
+
+  // History Timeline
+  historyTimeline?: WorkforceAuditEntry[];
+}
+
+export interface RequirementTemplate {
+  id: string;
+  roleType: 'driver' | 'pa' | 'dual_driver_pa';
+  title: string;
+  councilScope: string;
+  description: string;
+  mandatoryDocuments: Array<{
+    code: string;
+    label: string;
+    renewalCycleMonths: number;
+    hardBlockOnExpiry: boolean; // if true, blocks dispatch allocation
+    category: 'licence' | 'vetting' | 'training' | 'medical';
+  }>;
+}
+
+export interface ComplianceReminder {
+  id: string;
+  staffId: string;
+  staffName: string;
+  role: 'driver' | 'pa' | 'dual_driver_pa';
+  documentType: string;
+  expiryDate: string;
+  daysRemaining: number;
+  status: 'critical_urgent' | 'due_soon' | 'expired' | 'acknowledged';
+  notificationSent: boolean;
+  lastRemindedDate?: string;
 }
 
 export interface Vehicle {
@@ -104,6 +207,7 @@ export interface Vehicle {
   wheelchairCapacity: number;
   hasRampOrLift: boolean;
   fuelType: 'Diesel' | 'Electric (EV)' | 'Hybrid' | 'Petrol';
+  vehicleCategory?: 'Saloon' | 'Executive' | 'MPV' | 'Wheelchair Accessible (WAV)' | 'Minibus';
   currentMileage: number;
   companyId: string;
   depot: string;
@@ -124,6 +228,20 @@ export interface Vehicle {
     dueDate: string; // DD/MM/YYYY
     council: string;
     designatedDepotRequired: boolean; // Central Bedfordshire 2026 rule
+    status: 'valid' | 'due_soon' | 'expired';
+  };
+
+  // Insurance & Council Plate (Phase 5)
+  insurancePolicy?: {
+    policyNumber: string;
+    provider: string;
+    expiryDate: string;
+    status: 'valid' | 'due_soon' | 'expired';
+  };
+  councilPlate?: {
+    plateNumber: string;
+    issuingCouncil: string;
+    expiryDate: string;
     status: 'valid' | 'due_soon' | 'expired';
   };
 
@@ -221,6 +339,11 @@ export interface VehicleDefect {
   description: string;
   photoUrl?: string;
   status: 'reported' | 'triaged' | 'booked_garage' | 'inspected_repaired' | 'verified_released' | 'monitored';
+  triageDecision?: 'stop_use' | 'garage_before_next_duty' | 'book_by_date' | 'monitor';
+  bookByDate?: string;
+  decisionNotes?: string;
+  acknowledgedByGarage?: boolean;
+  acknowledgedAt?: string;
   garageAction?: {
     garageName: string;
     appointmentDate: string;
@@ -232,6 +355,35 @@ export interface VehicleDefect {
     repairedBy?: string;
     verifiedBy?: string;
   };
+}
+
+export interface ChecklistTemplateItem {
+  id: string;
+  label: string;
+  category: 'exterior' | 'mechanical' | 'safety' | 'accessibility';
+  requiresPhotoOnFail: boolean;
+  wavOnly?: boolean;
+}
+
+export interface ChecklistVersion {
+  version: string;
+  status: 'active' | 'archived' | 'draft';
+  publishedAt: string;
+  publishedBy: string;
+  items: ChecklistTemplateItem[];
+}
+
+export interface WorkshopSlot {
+  id: string;
+  vehicleReg: string;
+  bayNumber: number;
+  date: string; // "YYYY-MM-DD"
+  startTime: string; // "09:00"
+  endTime: string; // "13:00"
+  repairType: string;
+  technician: string;
+  status: 'scheduled' | 'in_progress' | 'completed';
+  defectRef?: string;
 }
 
 export interface DailyCheck {
@@ -259,4 +411,35 @@ export interface SystemNotification {
   read: boolean;
   entityLink?: string;
 }
+
+export interface PendingSyncItem {
+  id: string;
+  action: string;
+  bookingRef?: string;
+  originalTime: string; // client timestamp e.g. "14:22:15"
+  receivedTime?: string; // dispatch server timestamp e.g. "14:25:30" or undefined when pending
+  status: 'pending' | 'synced';
+  details?: string;
+}
+
+export interface JobOffer {
+  id: string;
+  booking: Booking;
+  secondsRemaining: number;
+  pickupEtaMinutes: number;
+  expiresAt: number;
+}
+
+export interface DispatchMessage {
+  id: string;
+  sender: 'Controller (Luton Central)' | 'Driver' | 'System';
+  message: string;
+  timestamp: string;
+  isUrgent?: boolean;
+}
+
+export type DriverDutyState = 'on_duty' | 'on_break' | 'off_duty';
+
+export * from './auth';
+
 

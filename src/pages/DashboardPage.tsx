@@ -12,14 +12,19 @@ import {
   Calendar, 
   Plane, 
   GraduationCap, 
-  Smartphone
+  Smartphone,
+  Users,
+  CheckSquare,
+  ShieldAlert,
+  Zap,
+  Wrench
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
   const { selectedCompany } = useCompany();
   const { currentRole, roleConfig, canViewDBS } = useRole();
-  const { vehicles, bookings, defects, dailyChecks } = useData();
+  const { staff, vehicles, bookings, defects, dailyChecks } = useData();
 
   const [isLoadingMock, setIsLoadingMock] = useState(false);
 
@@ -32,21 +37,38 @@ export const DashboardPage: React.FC = () => {
     ? bookings.filter(b => b.companyId === selectedCompany.id)
     : bookings;
 
-  // KPIs
+  // Phase 3 Metrics:
+  // 1. On-Duty Drivers
+  const onDutyDrivers = staff.filter(s => s.onDuty && (s.role === 'driver' || s.role === 'dual_driver_pa'));
+  const availableDrivers = onDutyDrivers.filter(s => s.dutyStatus === 'available').length;
+  const onJobDrivers = onDutyDrivers.filter(s => s.dutyStatus === 'on_job').length;
+
+  // 2. Unallocated Jobs
+  const unallocatedBookings = filteredBookings.filter(b => b.status === 'unallocated').length;
+  const activeTrips = filteredBookings.filter(b => b.status === 'en_route' || b.status === 'pob' || b.status === 'arrived').length;
+
+  // 3. Blocked Vehicles (VOR / blocked off road due to critical defects or expiries)
+  const blockedVehicles = filteredVehicles.filter(v => v.status === 'blocked_off_road').length;
+
+  // 4. Missing Checks (Scheduled vehicles with missing or failed daily walkaround checks today)
+  const missingChecks = filteredVehicles.filter(v => v.todayCheckStatus === 'missing' || v.todayCheckStatus === 'failed').length;
+
+  // 5. Expiries Due (Annual DVSA MOTs due soon or Council 6-month checks due soon)
+  const motExpiriesDue = filteredVehicles.filter(v => v.annualDvsaMot.status === 'due_soon').length;
+  const councilExpiriesDue = filteredVehicles.filter(v => v.councilSixMonthInspection.status === 'due_soon').length;
+  const totalExpiriesDue = motExpiriesDue + councilExpiriesDue;
+
+  // Overall KPIs
   const totalVehicles = filteredVehicles.length;
-  const vorVehicles = filteredVehicles.filter(v => v.status === 'blocked_off_road').length;
   const availableVehicles = filteredVehicles.filter(v => v.status === 'available').length;
   const allocatedVehicles = filteredVehicles.filter(v => v.status === 'allocated').length;
-
-  const unallocatedBookings = filteredBookings.filter(b => b.status === 'unallocated').length;
-  const activeTrips = filteredBookings.filter(b => b.status === 'en_route' || b.status === 'pob').length;
   const completedToday = filteredBookings.filter(b => b.status === 'completed').length;
-
   const totalRevenue = filteredBookings.reduce((sum, b) => sum + b.totalGbp, 0);
 
   // Critical items
   const activeCriticalDefects = defects.filter(d => d.severity === 'critical_safety' && d.status !== 'verified_released');
   const motReminders = filteredVehicles.filter(v => v.annualDvsaMot.status === 'due_soon');
+
 
   // UK date format
   const todayUkFormatted = new Date().toLocaleDateString('en-GB', {
@@ -172,125 +194,191 @@ export const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* KPI Cards Grid */}
+      {/* 5 Phase 3 Dispatch KPI Cards */}
       {isLoadingMock ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-32 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 animate-pulse">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
           
-          {/* Card 1: Vehicles & VOR Status */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow transition">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Fleet Status
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                <Car className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                {totalVehicles}
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">vehicles</span>
-            </div>
-            <div className="mt-3 flex items-center gap-2 text-xs">
-              <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-semibold text-[11px]">
-                {availableVehicles} Free
-              </span>
-              <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 font-semibold text-[11px]">
-                {allocatedVehicles} On Duty
-              </span>
-              {vorVehicles > 0 && (
-                <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-semibold text-[11px]">
-                  {vorVehicles} VOR
+          {/* Card 1: On-Duty Drivers */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  On-Duty Drivers
                 </span>
-              )}
-            </div>
-          </div>
-
-          {/* Card 2: Dispatch Board Queue */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow transition">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Live Dispatch
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                <Clock className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <Users className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-slate-900 dark:text-white">
+                  {onDutyDrivers.length}
+                </span>
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" /> Live Beacons
+                </span>
+              </div>
+              <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-500">
+                <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-semibold">
+                  {availableDrivers} Free
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 font-semibold">
+                  {onJobDrivers} On Trip
+                </span>
               </div>
             </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                {unallocatedBookings}
-              </span>
-              <span className="text-xs font-medium text-rose-600 dark:text-rose-400">
-                Unallocated
-              </span>
-            </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>{activeTrips} Trips In Progress</span>
-              <Link to="/bookings" className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center">
-                Board <ArrowUpRight className="w-3 h-3 ml-0.5" />
+            <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[10px]">GPS Tracking</span>
+              <Link to="/office/live-map" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline inline-flex items-center gap-0.5">
+                <span>Live Map</span>
+                <ArrowUpRight className="w-3 h-3" />
               </Link>
             </div>
           </div>
 
-          {/* Card 3: School Transport Runs */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow transition">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                School Transport
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                <GraduationCap className="w-4 h-4" />
+          {/* Card 2: Unallocated Jobs */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Unallocated Jobs
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                  <Clock className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-rose-600 dark:text-rose-400">
+                  {unallocatedBookings}
+                </span>
+                <span className="text-xs text-rose-600 dark:text-rose-400 font-bold">
+                  Awaiting Driver
+                </span>
+              </div>
+              <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-500">
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-semibold">
+                  {activeTrips} Trips In Progress
+                </span>
               </div>
             </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                1
-              </span>
-              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                PM Run Pending Allocation
-              </span>
-            </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>1 PA Assigned</span>
-              <Link to="/schools" className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center">
-                Routes <ArrowUpRight className="w-3 h-3 ml-0.5" />
+            <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[10px]">Dispatch Queue</span>
+              <Link to="/office/bookings" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline inline-flex items-center gap-0.5">
+                <span>Allocate</span>
+                <ArrowUpRight className="w-3 h-3" />
               </Link>
             </div>
           </div>
 
-          {/* Card 4: Daily Revenue (GBP £) */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow transition">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Today's Bookings Value
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                <PoundSterling className="w-4 h-4" />
+          {/* Card 3: Blocked Vehicles */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Blocked Vehicles
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                  <ShieldAlert className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-slate-900 dark:text-white">
+                  {blockedVehicles}
+                </span>
+                <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
+                  VOR Off-Road
+                </span>
+              </div>
+              <div className="mt-2 text-[10px] text-slate-500 line-clamp-1">
+                {blockedVehicles > 0 ? 'CB22 WPR: Critical Brakes' : 'All fleet roadworthy'}
               </div>
             </div>
-            <div className="mt-2 flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                £{totalRevenue.toFixed(2)}
-              </span>
-              <span className="text-[11px] text-slate-500">GBP</span>
+            <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[10px]">Garage Tickets</span>
+              <Link to="/office/maintenance" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline inline-flex items-center gap-0.5">
+                <span>Workshop</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </Link>
             </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>{completedToday} Settled Jobs</span>
-              <Link to="/finance" className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center">
-                Ledger <ArrowUpRight className="w-3 h-3 ml-0.5" />
+          </div>
+
+          {/* Card 4: Missing Checks */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Missing Checks
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                  <CheckSquare className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-slate-900 dark:text-white">
+                  {missingChecks}
+                </span>
+                <span className="text-xs text-amber-600 dark:text-amber-400 font-bold">
+                  Walkarounds Pending
+                </span>
+              </div>
+              <div className="mt-2 text-[10px] text-slate-500">
+                1 failed • 0 unverified
+              </div>
+            </div>
+            <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[10px]">Daily Compliance</span>
+              <Link to="/office/checks" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline inline-flex items-center gap-0.5">
+                <span>Audits</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 5: Expiries Due */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Expiries Due
+                </span>
+                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-slate-900 dark:text-white">
+                  {totalExpiriesDue}
+                </span>
+                <span className="text-xs text-purple-600 dark:text-purple-400 font-bold">
+                  &lt; 30 Days Due
+                </span>
+              </div>
+              <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-500">
+                <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 font-semibold">
+                  {motExpiriesDue} DVSA MOT
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
+                  {councilExpiriesDue} Council
+                </span>
+              </div>
+            </div>
+            <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[10px]">Dual Deadlines</span>
+              <Link to="/office/fleet" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline inline-flex items-center gap-0.5">
+                <span>View Expiries</span>
+                <ArrowUpRight className="w-3 h-3" />
               </Link>
             </div>
           </div>
 
         </div>
       )}
+
 
       {/* Main Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import { 
   Navigation, 
   Phone, 
@@ -7,228 +8,465 @@ import {
   CheckCircle2, 
   MapPin, 
   ArrowLeft,
-  GraduationCap
+  GraduationCap,
+  Users,
+  RotateCcw,
+  UserX,
+  XCircle,
+  Wifi,
+  WifiOff,
+  PoundSterling,
+  Clock,
+  MessageSquare,
+  ShieldAlert,
+  ChevronRight,
+  Plane
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { PendingSyncChips } from '../components/driver/PendingSyncChips';
+import { 
+  JobClearConfirmModal, 
+  WrongTapModal, 
+  NoShowModal, 
+  CancelJobModal 
+} from '../components/driver/DriverActionModals';
+import { 
+  EmergencySosModal, 
+  DispatchMessagesModal 
+} from '../components/driver/DriverAuxiliaryModals';
 
 export const DriverCockpitPage: React.FC = () => {
-  const { bookings, updateJobStatus } = useData();
+  const { 
+    bookings, 
+    advanceJobFlow, 
+    revertWrongTap, 
+    cancelJobWithReason, 
+    markNoShowWithReason,
+    triggerEmergencySos 
+  } = useData();
+  const { currentUser, isOnline, toggleOnlineStatus } = useAuth();
   
-  // Find an active or assigned booking for testing
-  const activeJob = bookings.find(b => b.status === 'en_route' || b.status === 'arrived' || b.status === 'pob') || bookings[0];
+  // Modals state
+  const [isConfirmClearOpen, setIsConfirmClearOpen] = useState(false);
+  const [isWrongTapOpen, setIsWrongTapOpen] = useState(false);
+  const [isNoShowOpen, setIsNoShowOpen] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isSosOpen, setIsSosOpen] = useState(false);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+
+  // Find active job
+  const activeJob = bookings.find(b => 
+    b.status === 'allocated' || 
+    b.status === 'en_route' || 
+    b.status === 'arrived' || 
+    b.status === 'pob'
+  ) || bookings[0];
+
+  const handlePrimaryAction = () => {
+    if (!activeJob) return;
+
+    if (activeJob.status === 'pob') {
+      // Enforce confirmation modal before Job Clear
+      setIsConfirmClearOpen(true);
+      return;
+    }
+
+    advanceJobFlow(activeJob.id, isOnline);
+  };
+
+  const handleConfirmJobClear = () => {
+    if (!activeJob) return;
+    advanceJobFlow(activeJob.id, isOnline);
+    setIsConfirmClearOpen(false);
+  };
+
+  // Determine label & appearance for the SINGLE MAIN BUTTON
+  const getPrimaryButtonConfig = () => {
+    if (!activeJob) {
+      return {
+        label: 'No Active Booking Assigned',
+        icon: Navigation,
+        bgClass: 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed',
+        disabled: true
+      };
+    }
+
+    switch (activeJob.status) {
+      case 'unallocated':
+        return {
+          label: 'Accept Dispatched Job',
+          icon: CheckCircle2,
+          bgClass: 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25',
+          disabled: false
+        };
+      case 'allocated':
+        return {
+          label: '1. Start Journey & Go En Route',
+          icon: Navigation,
+          bgClass: 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/30 ring-4 ring-blue-500/20',
+          disabled: false
+        };
+      case 'en_route':
+        return {
+          label: '2. Arrived at Pickup Location',
+          icon: MapPin,
+          bgClass: 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/30 ring-4 ring-amber-500/20',
+          disabled: false
+        };
+      case 'arrived':
+        return {
+          label: '3. Passenger On Board (POB)',
+          icon: Users,
+          bgClass: 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/30 ring-4 ring-purple-500/20',
+          disabled: false
+        };
+      case 'pob':
+        return {
+          label: '4. Complete Journey (Job Clear)',
+          icon: CheckCircle2,
+          bgClass: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/30 ring-4 ring-emerald-500/20',
+          disabled: false
+        };
+      case 'completed':
+        return {
+          label: '✓ Trip Completed • Job Cleared',
+          icon: CheckCircle2,
+          bgClass: 'bg-slate-700 text-slate-300 cursor-default',
+          disabled: true
+        };
+      case 'cancelled':
+        return {
+          label: 'Booking Cancelled',
+          icon: XCircle,
+          bgClass: 'bg-slate-700 text-slate-400 cursor-default',
+          disabled: true
+        };
+      case 'no_show':
+        return {
+          label: 'Passenger No-Show Logged',
+          icon: UserX,
+          bgClass: 'bg-slate-700 text-slate-400 cursor-default',
+          disabled: true
+        };
+      default:
+        return {
+          label: 'Advance Status',
+          icon: Navigation,
+          bgClass: 'bg-blue-600 text-white',
+          disabled: false
+        };
+    }
+  };
+
+  const primaryBtn = getPrimaryButtonConfig();
+  const PrimaryIcon = primaryBtn.icon;
 
   return (
-    <div className="space-y-4 max-w-md mx-auto">
+    <div className="space-y-4 max-w-md mx-auto pb-8">
+      
       {/* Top Mobile Bar */}
-      <div className="flex items-center justify-between bg-slate-900 text-white p-3 rounded-2xl shadow-lg">
-        <Link to="/" className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white">
+      <div className="flex items-center justify-between bg-slate-900 text-white p-3 rounded-2xl shadow-lg border border-slate-800">
+        <Link to="/app/home" className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white">
           <ArrowLeft className="w-4 h-4" />
-          <span>Exit App</span>
+          <span>Exit Cockpit</span>
         </Link>
-        <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+        <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          Driver On Duty (Tariq M.)
+          Driver On Duty ({currentUser?.name?.split(' ')[0] || 'Tariq'})
         </span>
-        <span className="text-xs font-mono font-bold">13:30</span>
+        <button
+          onClick={() => setIsSosOpen(true)}
+          className="p-1 px-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-black flex items-center gap-1 shadow-md shadow-rose-600/30 animate-pulse"
+        >
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>SOS</span>
+        </button>
       </div>
 
-      {/* Driver Cockpit Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
+      {/* Offline Alert Strip if network is simulated offline */}
+      {!isOnline && (
+        <div className="bg-amber-500 text-slate-950 px-3.5 py-2 rounded-2xl text-xs font-bold flex items-center justify-between shadow-md">
+          <div className="flex items-center gap-2">
+            <WifiOff className="w-4 h-4 shrink-0" />
+            <span>OFFLINE MODE: Statuses saved locally with exact tap time.</span>
+          </div>
+          <button
+            onClick={toggleOnlineStatus}
+            className="underline text-[11px] font-extrabold uppercase shrink-0"
+          >
+            Reconnect
+          </button>
+        </div>
+      )}
+
+      {/* Main Cockpit Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
         
-        {/* Job Header */}
+        {/* Job Header & Reference */}
         <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
-              Current Assigned Booking
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400">
+              Active Assigned Run
             </span>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-black text-slate-900 dark:text-white font-mono">
               {activeJob?.bookingRef}
             </h2>
             <p className="text-xs text-slate-500">
-              Vehicle: <strong className="text-slate-800 dark:text-slate-200">LT73 XKL</strong> (Mercedes V-Class)
+              Vehicle: <strong className="text-slate-800 dark:text-slate-200">LT73 XKL</strong> (Mercedes-Benz V-Class)
             </p>
           </div>
 
-          <div className="text-right">
-            <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-              £{activeJob?.totalGbp.toFixed(2)}
-            </span>
-            <p className="text-[10px] text-slate-400">Account Fare</p>
-          </div>
+          <button
+            onClick={() => setIsMessagesOpen(true)}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 text-slate-700 dark:text-slate-300 hover:text-blue-600 transition flex items-center gap-1.5 text-xs font-semibold"
+          >
+            <MessageSquare className="w-4 h-4 text-blue-600" />
+            <span>Dispatch</span>
+          </button>
         </div>
 
-        {/* Passenger Info */}
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl flex items-center justify-between">
+        {/* SEPARATE PAYMENT STATUS FROM JOURNEY STATUS */}
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          
+          {/* Box 1: Journey Operational Status */}
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              1. JOURNEY STATUS
+            </span>
+            <div className="flex items-center gap-1.5 font-black text-slate-900 dark:text-white uppercase font-mono text-sm">
+              <span className={`w-2 h-2 rounded-full ${
+                activeJob.status === 'en_route' ? 'bg-blue-500 animate-ping' :
+                activeJob.status === 'arrived' ? 'bg-amber-500 animate-ping' :
+                activeJob.status === 'pob' ? 'bg-purple-500 animate-ping' :
+                activeJob.status === 'completed' ? 'bg-emerald-500' : 'bg-slate-400'
+              }`} />
+              <span>{activeJob?.status.replace('_', ' ')}</span>
+            </div>
+            <p className="text-[10px] text-slate-500">
+              Enforced step progression
+            </p>
+          </div>
+
+          {/* Box 2: Payment Status (Strictly Separated) */}
+          <div className="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-2xl border border-emerald-200/80 dark:border-emerald-800/60 space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">
+              2. PAYMENT STATUS
+            </span>
+            <div className="flex items-center gap-1 font-black text-emerald-800 dark:text-emerald-300 text-sm">
+              <PoundSterling className="w-3.5 h-3.5" />
+              <span>£{activeJob?.totalGbp.toFixed(2)}</span>
+            </div>
+            <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold truncate">
+              {activeJob?.paymentStatus === 'account_invoice' 
+                ? 'Corporate Account Billed' 
+                : activeJob?.paymentStatus === 'paid_card'
+                  ? 'Prepaid Card Online'
+                  : 'Cash on Delivery'}
+            </p>
+          </div>
+
+        </div>
+
+        {/* Passenger Contact Card */}
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl flex items-center justify-between border border-slate-100 dark:border-slate-800">
           <div>
             <p className="text-xs font-bold text-slate-900 dark:text-white">
               {activeJob?.customerName}
             </p>
             <p className="text-[11px] text-slate-500">
-              {activeJob?.passengerCount} Passengers • {activeJob?.luggageCount} Bags
+              {activeJob?.passengerCount} Passengers • {activeJob?.luggageCount} Luggage Bags
             </p>
           </div>
           <a
             href={`tel:${activeJob?.customerPhone}`}
-            className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-md hover:bg-blue-700 transition"
+            className="w-10 h-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-md transition"
+            title="Call passenger"
           >
             <Phone className="w-4 h-4" />
           </a>
         </div>
 
-        {/* Journey Postcodes */}
+        {/* Journey Locations */}
         <div className="space-y-3 py-1">
           <div className="flex items-start gap-3">
-            <MapPin className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+            <div className="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+              <MapPin className="w-4 h-4" />
+            </div>
             <div className="text-xs">
               <p className="font-semibold text-slate-500 uppercase text-[10px]">Pickup Location</p>
-              <p className="font-medium text-slate-900 dark:text-slate-100">{activeJob?.pickupAddress}</p>
+              <p className="font-bold text-slate-900 dark:text-slate-100">{activeJob?.pickupAddress}</p>
               <p className="font-mono text-[11px] text-blue-600 dark:text-blue-400 font-bold">{activeJob?.pickupPostcode}</p>
             </div>
           </div>
 
           <div className="flex items-start gap-3">
-            <Navigation className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+            <div className="w-7 h-7 rounded-xl bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+              <Navigation className="w-4 h-4" />
+            </div>
             <div className="text-xs">
               <p className="font-semibold text-slate-500 uppercase text-[10px]">Destination</p>
-              <p className="font-medium text-slate-900 dark:text-slate-100">{activeJob?.destinationAddress}</p>
+              <p className="font-bold text-slate-900 dark:text-slate-100">{activeJob?.destinationAddress}</p>
               <p className="font-mono text-[11px] text-blue-600 dark:text-blue-400 font-bold">{activeJob?.destinationPostcode}</p>
             </div>
           </div>
         </div>
 
-        {/* Big 4 Driver Action Buttons (Requirement JOB-NEW-01) */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">
-            Tap to advance journey status:
-          </p>
-
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => updateJobStatus(activeJob.id, 'en_route')}
-              className={`p-3.5 rounded-xl font-bold text-xs uppercase tracking-wide transition shadow-sm ${
-                activeJob.status === 'en_route'
-                  ? 'bg-blue-600 text-white ring-4 ring-blue-200 dark:ring-blue-900'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              1. En Route
-            </button>
-
-            <button
-              onClick={() => updateJobStatus(activeJob.id, 'arrived')}
-              className={`p-3.5 rounded-xl font-bold text-xs uppercase tracking-wide transition shadow-sm ${
-                activeJob.status === 'arrived'
-                  ? 'bg-amber-600 text-white ring-4 ring-amber-200 dark:ring-amber-900'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              2. Arrived
-            </button>
-
-            <button
-              onClick={() => updateJobStatus(activeJob.id, 'pob')}
-              className={`p-3.5 rounded-xl font-bold text-xs uppercase tracking-wide transition shadow-sm ${
-                activeJob.status === 'pob'
-                  ? 'bg-purple-600 text-white ring-4 ring-purple-200 dark:ring-purple-900'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              3. POB (On Board)
-            </button>
-
-            <button
-              onClick={() => updateJobStatus(activeJob.id, 'completed')}
-              className={`p-3.5 rounded-xl font-bold text-xs uppercase tracking-wide transition shadow-sm ${
-                activeJob.status === 'completed'
-                  ? 'bg-emerald-600 text-white ring-4 ring-emerald-200 dark:ring-emerald-900'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              4. Job Clear
-            </button>
+        {/* ONE MAIN BUTTON AT A TIME (ENFORCED SEQUENCE) */}
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <span>Next Journey Action:</span>
+            <span className="font-mono text-slate-500">Step Progression</span>
           </div>
-        </div>
 
-        {/* Offline / Panic triggers */}
-        <div className="pt-2 flex items-center justify-between text-xs text-slate-400">
-          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="w-3.5 h-3.5" /> GPS Online (10s refresh)
-          </span>
-          <button className="text-rose-600 font-semibold hover:underline inline-flex items-center gap-1 text-[11px]">
-            <AlertTriangle className="w-3.5 h-3.5" /> Emergency / Panic
+          <button
+            type="button"
+            disabled={primaryBtn.disabled}
+            onClick={handlePrimaryAction}
+            className={`w-full py-4 px-4 rounded-2xl font-black text-sm uppercase tracking-wide transition shadow-xl flex items-center justify-center gap-2 transform active:scale-98 ${primaryBtn.bgClass}`}
+          >
+            <PrimaryIcon className="w-5 h-5" />
+            <span>{primaryBtn.label}</span>
           </button>
         </div>
 
+        {/* Secondary Exception Actions: No-show, Cancel, Wrong Tap */}
+        {activeJob.status !== 'completed' && activeJob.status !== 'cancelled' && activeJob.status !== 'no_show' && (
+          <div className="grid grid-cols-3 gap-2 pt-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setIsWrongTapOpen(true)}
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-[11px] flex flex-col items-center justify-center gap-1 transition"
+              title="Accidental tap revert flow"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
+              <span>Wrong Tap</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsNoShowOpen(true)}
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-orange-50 dark:hover:bg-orange-950/50 hover:text-orange-600 text-slate-700 dark:text-slate-300 font-semibold text-[11px] flex flex-col items-center justify-center gap-1 transition"
+              title="Customer failed to arrive"
+            >
+              <UserX className="w-3.5 h-3.5 text-orange-500" />
+              <span>No-Show</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsCancelOpen(true)}
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 text-slate-700 dark:text-slate-300 font-semibold text-[11px] flex flex-col items-center justify-center gap-1 transition"
+              title="Cancel booking with reason"
+            >
+              <XCircle className="w-3.5 h-3.5 text-rose-500" />
+              <span>Cancel</span>
+            </button>
+          </div>
+        )}
+
       </div>
+
+      {/* PENDING SYNC CHIPS (ORIGINAL TIME VS RECEIVED TIME) */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 border border-slate-200 dark:border-slate-800 shadow-md">
+        <PendingSyncChips maxItems={3} showTitle={true} />
+      </div>
+
+      {/* Modals */}
+      {activeJob && (
+        <>
+          <JobClearConfirmModal
+            booking={activeJob}
+            isOpen={isConfirmClearOpen}
+            onClose={() => setIsConfirmClearOpen(false)}
+            onConfirm={handleConfirmJobClear}
+          />
+
+          <WrongTapModal
+            booking={activeJob}
+            isOpen={isWrongTapOpen}
+            onClose={() => setIsWrongTapOpen(false)}
+            onRevert={(reason) => revertWrongTap(activeJob.id, reason, isOnline)}
+          />
+
+          <NoShowModal
+            booking={activeJob}
+            isOpen={isNoShowOpen}
+            onClose={() => setIsNoShowOpen(false)}
+            onDeclareNoShow={(wait, reason) => markNoShowWithReason(activeJob.id, wait, reason, isOnline)}
+          />
+
+          <CancelJobModal
+            booking={activeJob}
+            isOpen={isCancelOpen}
+            onClose={() => setIsCancelOpen(false)}
+            onCancelBooking={(reason) => cancelJobWithReason(activeJob.id, reason, isOnline)}
+          />
+        </>
+      )}
+
+      <EmergencySosModal
+        isOpen={isSosOpen}
+        onClose={() => setIsSosOpen(false)}
+        onConfirmSos={() => triggerEmergencySos(activeJob?.bookingRef)}
+      />
+
+      <DispatchMessagesModal
+        isOpen={isMessagesOpen}
+        onClose={() => setIsMessagesOpen(false)}
+      />
+
     </div>
   );
 };
 
 export const PACockpitPage: React.FC = () => {
+  const { currentUser } = useAuth();
+
   return (
-    <div className="space-y-4 max-w-md mx-auto">
-      <div className="flex items-center justify-between bg-slate-900 text-white p-3 rounded-2xl shadow-lg">
-        <Link to="/" className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white">
+    <div className="space-y-4 max-w-md mx-auto pb-12">
+      <div className="flex items-center justify-between bg-slate-900 text-white p-3 rounded-2xl shadow-lg border border-slate-800">
+        <Link to="/app/home" className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white">
           <ArrowLeft className="w-4 h-4" />
-          <span>Exit App</span>
+          <span>Exit Cockpit</span>
         </Link>
-        <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+        <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
           <GraduationCap className="w-4 h-4" />
-          PA On Duty (Sarah J.)
+          PA On Duty ({currentUser?.name?.split(' ')[0] || 'Sarah H.'})
         </span>
-        <span className="text-xs font-mono font-bold">15:10</span>
+        <span className="text-xs font-mono font-bold">14:00</span>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-            School Transport Roster (PM Run)
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xl space-y-4 text-xs">
+        <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+            SEN School Transport Contract
           </span>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            CBC-SEN-ROUTE-01
+            The Chiltern School PM Run
           </h2>
-          <p className="text-xs text-slate-500">
-            The Chiltern School &rarr; Dunstable / Leighton Buzzard
+          <p className="text-slate-500">
+            Route: <strong>CBC-SEN-ROUTE-03</strong> • Vehicle: <strong>CB22 WPR</strong>
           </p>
         </div>
 
-        {/* Manifest Preview */}
-        <div className="border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-          <div className="p-3 flex items-center justify-between">
-            <div>
-              <p className="font-bold text-slate-900 dark:text-white">Student 1: Liam K.</p>
-              <p className="text-[11px] text-slate-500">Wheelchair restraint required</p>
-            </div>
-            <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-              BOARDED
-            </span>
-          </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            to="/app/pupils"
+            className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 font-bold flex items-center justify-between"
+          >
+            <span>Pupil Rollcall</span>
+            <ChevronRight className="w-4 h-4 text-blue-500" />
+          </Link>
 
-          <div className="p-3 flex items-center justify-between">
-            <div>
-              <p className="font-bold text-slate-900 dark:text-white">Student 2: Mia T.</p>
-              <p className="text-[11px] text-slate-500">Booster seat & harness</p>
-            </div>
-            <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-              BOARDED
-            </span>
-          </div>
-        </div>
-
-        {/* Mandatory Vehicle Sweep Signoff (Requirement CHK-05 & AT-C10) */}
-        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 space-y-2">
-          <h3 className="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wide">
-            Mandatory End-Of-Run Safety Sweep
-          </h3>
-          <p className="text-xs text-amber-800 dark:text-amber-300">
-            I certify that the entire vehicle has been physically inspected and no pupil or personal belonging remains on board.
-          </p>
-          <button className="w-full py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow transition">
-            Sign & Complete School Sweep
-          </button>
+          <Link
+            to="/app/sweep"
+            className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 font-bold flex items-center justify-between"
+          >
+            <span>Vehicle Sweep</span>
+            <ChevronRight className="w-4 h-4 text-amber-500" />
+          </Link>
         </div>
       </div>
     </div>
   );
 };
-

@@ -3,6 +3,7 @@ import { useCompany } from '../../context/CompanyContext';
 import { useRole, ROLE_CONFIGS } from '../../context/RoleContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types';
 import { 
   Building2, 
@@ -16,7 +17,9 @@ import {
   CheckCircle2,
   ChevronDown,
   Smartphone,
-  ExternalLink
+  LogOut,
+  Clock,
+  User as UserIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -28,13 +31,16 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenuOpen }) => {
   const { subCompanies, selectedCompanyId, setSelectedCompanyId } = useCompany();
   const { currentRole, setCurrentRole, roleConfig } = useRole();
+  const { currentUser, openLogoutDialog, triggerSessionExpired } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { notifications, markNotificationAsRead } = useData();
 
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const unreadNotifs = notifications.filter(n => !n.read);
+  const homePath = (currentRole === 'driver' || currentRole === 'pa') ? '/app/home' : '/office/dashboard';
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 transition-colors">
@@ -51,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
-            <Link to="/" className="flex items-center gap-2.5">
+            <Link to={homePath} className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20 text-lg tracking-wider">
                 DEC
               </div>
@@ -88,13 +94,13 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
             </select>
           </div>
 
-          {/* Right Action Tools: Role Switcher, Staff App Mode, Notifications, Theme */}
+          {/* Right Action Tools: Role Switcher, Staff App Mode, Notifications, Theme, User Profile */}
           <div className="flex items-center gap-2">
             
             {/* Quick Staff Mode shortcut */}
             {(currentRole === 'driver' || currentRole === 'pa') ? (
               <Link
-                to={currentRole === 'driver' ? '/driver-cockpit' : '/pa-cockpit'}
+                to={currentRole === 'driver' ? '/app/driver-cockpit' : '/app/pa-cockpit'}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"
               >
                 <Smartphone className="w-3.5 h-3.5 animate-pulse" />
@@ -102,7 +108,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
               </Link>
             ) : null}
 
-            {/* Role Switcher Pill (Critical for testing requirement roles!) */}
+            {/* Role Switcher Pill */}
             <div className="relative">
               <button
                 onClick={() => setShowRoleMenu(!showRoleMenu)}
@@ -245,6 +251,69 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
             >
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
             </button>
+
+            {/* User Profile & Sign Out Dropdown */}
+            {currentUser && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-1.5 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition"
+                >
+                  <img
+                    src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+                    alt={currentUser.name}
+                    className="w-8 h-8 rounded-lg object-cover ring-1 ring-blue-500/50"
+                  />
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                {showUserMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-2 z-50 text-left">
+                      <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {currentUser.name}
+                        </p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                          {currentUser.email}
+                        </p>
+                        <span className={`inline-block mt-1 text-[9px] font-semibold px-2 py-0.2 rounded-full border ${roleConfig.badgeColor}`}>
+                          {roleConfig.label}
+                        </span>
+                      </div>
+
+                      <div className="py-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            triggerSessionExpired();
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg flex items-center gap-2 font-medium transition"
+                        >
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Simulate Session Timeout</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            openLogoutDialog();
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg flex items-center gap-2 font-semibold transition"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
           </div>
 
         </div>
@@ -252,4 +321,5 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
     </header>
   );
 };
+
 
