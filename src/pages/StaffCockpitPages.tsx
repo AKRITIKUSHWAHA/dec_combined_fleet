@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import { 
   Navigation, 
   Phone, 
@@ -14,12 +15,15 @@ import {
   ShieldAlert,
   Flame,
   Check,
-  ArrowRight
+  ArrowRight,
+  LogOut,
+  User as UserIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const DriverCockpitPage: React.FC = () => {
   const { bookings, updateJobStatus } = useData();
+  const { user, requestLogout, offlineDraftsCount } = useAuth();
   const [isSimulatedOffline, setIsSimulatedOffline] = useState(false);
   const [emergencyAlertSent, setEmergencyAlertSent] = useState(false);
   const [showClearConfirmModal, setShowClearConfirmModal] = useState(false);
@@ -98,83 +102,68 @@ export const DriverCockpitPage: React.FC = () => {
       <div className="nr-card p-6 space-y-5">
         
         {/* Job Header */}
-        <div className="flex items-start justify-between border-b border-[var(--border)] pb-4">
+        <div className="flex items-start justify-between">
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#B6F23C] block">
-              Active Assigned Trip
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#B6F23C] bg-[#B6F23C]/10 px-2 py-0.5 rounded border border-[#B6F23C]/30">
+              Active Assigned Run
             </span>
-            <h2 className="text-2xl font-heading font-bold text-[var(--text)] mt-0.5">
-              {activeJob?.bookingRef}
+            <h2 className="text-2xl font-heading font-bold text-[var(--text)] mt-1">
+              {activeJob?.bookingRef || 'DEC-2026-9810'}
             </h2>
-            <p className="text-xs text-[var(--text-muted)] mt-1">
-              Assigned Vehicle: <strong className="text-[var(--text)] font-mono text-sm">LT73 XKL</strong>
-            </p>
-          </div>
-
-          <div className="text-right">
-            <span className="text-2xl font-heading font-bold text-[#34D399] font-mono tabular-nums">
-              £{activeJob?.totalGbp.toFixed(2)}
-            </span>
-            <p className="text-[10px] text-[var(--text-muted)] font-mono uppercase">Account Fare</p>
-          </div>
-        </div>
-
-        {/* Passenger Contact Card */}
-        <div className="bg-[var(--surface-2)] p-4 rounded-[18px] flex items-center justify-between border border-[var(--border)]">
-          <div>
-            <p className="text-base font-heading font-bold text-[var(--text)]">
-              {activeJob?.customerName}
-            </p>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              {activeJob?.passengerCount} Passengers • {activeJob?.luggageCount} Luggage
+              Customer: <strong className="text-[var(--text)]">{activeJob?.customerName}</strong> • {activeJob?.passengerCount} Passengers
             </p>
           </div>
-          <a
-            href={`tel:${activeJob?.customerPhone}`}
-            className="w-12 h-12 rounded-[14px] bg-[#B6F23C] text-[#08201C] flex items-center justify-center shadow-lime-glow hover:scale-105 active:scale-95 transition-all nr-focus"
-            aria-label="Call passenger"
+
+          <a 
+            href={`tel:${activeJob?.customerPhone || '07700900123'}`} 
+            className="btn-secondary !min-h-[44px] !p-2 !rounded-full text-[#3FE0C5]"
+            title="Call passenger directly"
           >
-            <Phone className="w-5 h-5" />
+            <Phone className="w-4 h-4" />
           </a>
         </div>
 
-        {/* Journey Postcodes & Route */}
-        <div className="space-y-4 py-1">
-          <div className="flex items-start gap-3.5">
-            <div className="w-8 h-8 rounded-full bg-[#34D399]/20 flex items-center justify-center text-[#34D399] shrink-0 mt-0.5 border border-[#34D399]/40">
-              <MapPin className="w-4 h-4" />
-            </div>
-            <div className="flex-1">
-              <p className="font-heading font-bold text-[var(--text-muted)] uppercase text-[10px] tracking-wider">Pickup Location</p>
-              <p className="font-medium text-[var(--text)] text-sm mt-0.5">{activeJob?.pickupAddress}</p>
-              <p className="font-mono text-xs text-[#3FE0C5] font-bold">{activeJob?.pickupPostcode}</p>
+        {/* Route Details */}
+        <div className="space-y-3 bg-[var(--surface-2)] p-4 rounded-[16px] border border-[var(--border)] text-xs">
+          <div className="flex items-start gap-2.5">
+            <MapPin className="w-4 h-4 text-[#3FE0C5] shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[10px] uppercase font-mono text-[var(--text-muted)] font-bold">Pick-up</p>
+              <p className="font-heading font-bold text-[var(--text)]">{activeJob?.pickupAddress}</p>
+              <p className="text-[11px] font-mono text-[#3FE0C5]">{activeJob?.pickupPostcode}</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3.5">
-            <div className="w-8 h-8 rounded-full bg-[#FF5D6C]/20 flex items-center justify-center text-[#FF5D6C] shrink-0 mt-0.5 border border-[#FF5D6C]/40">
-              <Navigation className="w-4 h-4" />
-            </div>
-            <div className="flex-1">
-              <p className="font-heading font-bold text-[var(--text-muted)] uppercase text-[10px] tracking-wider">Destination</p>
-              <p className="font-medium text-[var(--text)] text-sm mt-0.5">{activeJob?.destinationAddress}</p>
-              <p className="font-mono text-xs text-[#3FE0C5] font-bold">{activeJob?.destinationPostcode}</p>
+          <div className="border-t border-[var(--border)] pt-2 flex items-start gap-2.5">
+            <Navigation className="w-4 h-4 text-[#FF9F6B] shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[10px] uppercase font-mono text-[var(--text-muted)] font-bold">Destination Drop</p>
+              <p className="font-heading font-bold text-[var(--text)]">{activeJob?.destinationAddress}</p>
+              <p className="text-[11px] font-mono text-[#FF9F6B]">{activeJob?.destinationPostcode}</p>
             </div>
           </div>
         </div>
 
-        {/* Big 4 Driver Touch Workflow Buttons (JOB-NEW-01) with distinct colors */}
-        <div className="pt-2 border-t border-[var(--border)] space-y-3">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-mono font-bold uppercase tracking-wider text-[var(--text-muted)] text-[11px]">
-              Tap to Advance Status:
-            </span>
-            <span className="text-[11px] font-mono font-bold text-[#B6F23C]">
-              State: {activeJob.status.toUpperCase()}
-            </span>
+        {/* Special Instructions */}
+        {((activeJob as any)?.specialRequirements || (activeJob as any)?.specialNotes) && (
+          <div className="p-3 bg-[#FFC24B]/15 border border-[#FFC24B]/30 rounded-[12px] text-xs text-[var(--text)] flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-[#FFC24B] shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold">Passenger Instruction: </span>
+              <span>{(activeJob as any)?.specialRequirements || (activeJob as any)?.specialNotes}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Interactive 4-Stage Driver Job-Flow */}
+        <div className="space-y-2 pt-2">
+          <div className="flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-muted)]">
+            <span>Progress Journey</span>
+            <span>Current: <strong className="text-[#3FE0C5] uppercase">{activeJob?.status}</strong></span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {/* Step 1: En Route (Aqua #3FE0C5) */}
             <button
               onClick={() => updateJobStatus(activeJob.id, 'en_route')}
@@ -257,6 +246,31 @@ export const DriverCockpitPage: React.FC = () => {
 
       </div>
 
+      {/* Driver Profile & Sign Out (Profile/More Tab Section) */}
+      <div className="nr-card p-4 flex items-center justify-between border border-[var(--border)]">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-[14px] bg-[#34D399]/20 text-[#34D399] flex items-center justify-center font-heading font-bold text-sm border border-[#34D399]/40">
+            {user?.name?.charAt(0) || 'T'}
+          </div>
+          <div>
+            <p className="font-heading font-bold text-xs text-[var(--text)]">{user?.name || 'Tariq Mahmood'}</p>
+            <p className="text-[10px] font-mono text-[var(--text-muted)]">
+              Badge: {user?.badgeNumber || 'LT-PHV-4091'} • {isSimulatedOffline ? '1 unsent record' : 'All synced'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => requestLogout(isSimulatedOffline || offlineDraftsCount > 0)}
+          className="btn-danger !text-xs !py-2 !px-3 !min-h-[40px] flex items-center gap-1.5 cursor-pointer"
+          title="Sign out of Driver Cockpit"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Log Out</span>
+        </button>
+      </div>
+
       {/* Job Clear Confirmation Modal Sheet */}
       {showClearConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
@@ -308,6 +322,7 @@ export const DriverCockpitPage: React.FC = () => {
 };
 
 export const PACockpitPage: React.FC = () => {
+  const { user, requestLogout, offlineDraftsCount } = useAuth();
   const [sweepCompleted, setSweepCompleted] = useState(false);
   const [students, setStudents] = useState([
     { id: '1', name: 'Liam K.', status: 'Boarded', need: 'Wheelchair restraint anchored' },
@@ -344,7 +359,7 @@ export const PACockpitPage: React.FC = () => {
         </Link>
         <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#FF9F6B] flex items-center gap-1.5">
           <GraduationCap className="w-4 h-4" />
-          PA On Duty (Sarah J.)
+          PA On Duty ({user?.name ? user.name.split(' ')[0] : 'Sarah J.'})
         </span>
         <span className="text-xs font-mono font-bold">15:15 PM</span>
       </div>
@@ -409,7 +424,7 @@ export const PACockpitPage: React.FC = () => {
           <button
             onClick={() => {
               setSweepCompleted(!sweepCompleted);
-              alert(sweepCompleted ? 'Sweep cancelled.' : 'Vehicle sweep verified and digitally signed! Driver availability unlocked.');
+              alert(sweepCompleted ? 'Sweep reset.' : 'Vehicle sweep verified and digitally signed! Driver availability unlocked.');
             }}
             className={`min-h-[50px] w-full py-2.5 rounded-[14px] font-heading font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 ${
               sweepCompleted
@@ -423,6 +438,34 @@ export const PACockpitPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* PA Profile & Sign Out (Profile/More Tab Section) */}
+      <div className="nr-card p-4 flex items-center justify-between border border-[var(--border)]">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-[14px] bg-[#FF9F6B]/20 text-[#FF9F6B] flex items-center justify-center font-heading font-bold text-sm border border-[#FF9F6B]/40">
+            {user?.name?.charAt(0) || 'P'}
+          </div>
+          <div>
+            <p className="font-heading font-bold text-xs text-[var(--text)]">{user?.name || 'Sarah Jenkins'}</p>
+            <p className="text-[10px] font-mono text-[var(--text-muted)]">
+              Badge: {user?.badgeNumber || 'CBC-PA-108'} • Passenger Assistant
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => requestLogout(offlineDraftsCount > 0)}
+          className="btn-danger !text-xs !py-2 !px-3 !min-h-[40px] flex items-center gap-1.5 cursor-pointer"
+          title="Sign out of PA Cockpit"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Log Out</span>
+        </button>
+      </div>
+
     </div>
   );
 };
+
+export default DriverCockpitPage;

@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { MOCK_ACCOUNTS } from '../data/mockAuth';
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth, DEMO_ACCOUNTS, getRoleHomeRoute } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { 
   Lock, 
@@ -9,358 +8,294 @@ import {
   Eye, 
   EyeOff, 
   ArrowRight, 
-  AlertCircle, 
+  Loader2, 
+  AlertTriangle, 
   CheckCircle2, 
-  ShieldCheck, 
-  Smartphone, 
-  Building2, 
-  Loader2,
-  Sparkles,
-  Info
+  KeyRound
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
-  const { login, isLoading, logoutMessage, clearLogoutMessage, rememberDevice, setRememberDevice } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Form state
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('owner_admin');
+  const initialAccount = DEMO_ACCOUNTS.owner_admin;
+  const [email, setEmail] = useState(initialAccount.user.email);
+  const [password, setPassword] = useState(initialAccount.defaultPassword);
   const [showPassword, setShowPassword] = useState(false);
-  const [localRemember, setLocalRemember] = useState(false); // Off by default as required
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [selectedDemoRole, setSelectedDemoRole] = useState<UserRole | null>(null);
+  const [showMfaInput, setShowMfaInput] = useState(Boolean(initialAccount.user.requiresMfa));
+  const [otp, setOtp] = useState(['5', '2', '8', '1', '9', '4']);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Read query params for logout notice if applicable
-  const queryNotice = new URLSearchParams(location.search).get('notice');
-  const activeNotice = logoutMessage || (queryNotice === 'signed_out' ? 'You have been signed out.' : null);
+  // Handle demo account quick-fill
+  const handleSelectRole = (r: UserRole) => {
+    setSelectedRole(r);
+    const demo = DEMO_ACCOUNTS[r];
+    if (demo) {
+      setEmail(demo.user.email);
+      setPassword(demo.defaultPassword);
+      setShowMfaInput(Boolean(demo.user.requiresMfa));
+    }
+    setErrorMsg(null);
+  };
 
-  // Clear notice after interaction
-  useEffect(() => {
-    return () => {
-      clearLogoutMessage();
-    };
-  }, [clearLogoutMessage]);
+  const handleOtpChange = (index: number, val: string) => {
+    if (val.length > 1) val = val.slice(-1);
+    const updated = [...otp];
+    updated[index] = val;
+    setOtp(updated);
+    if (val && index < 5) {
+      const nextInput = document.getElementById(`login-otp-${index + 1}`);
+      nextInput?.focus();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null);
+    setErrorMsg(null);
+    setIsLoading(true);
 
-    if (!email.trim()) {
-      setErrorMessage('Please enter your work email address.');
-      return;
-    }
+    try {
+      const mfaCode = showMfaInput ? otp.join('') : undefined;
+      const res = await login(email, password, selectedRole, mfaCode);
 
-    if (!password) {
-      setErrorMessage('Please enter your password.');
-      return;
-    }
+      if (!res.success) {
+        if (res.requiresMfa) {
+          setShowMfaInput(true);
+        }
+        setErrorMsg(res.error || 'Authentication failed. Please verify credentials.');
+        setIsLoading(false);
+        return;
+      }
 
-    const res = await login({
-      email: email.trim(),
-      password,
-      rememberDevice: localRemember
-    });
-
-    if (res.success && res.targetPath) {
-      // Check if redirect was requested via state.from
-      const fromPath = (location.state as { from?: { pathname: string } })?.from?.pathname;
-      const destination = fromPath && !fromPath.includes('/login') ? fromPath : res.targetPath;
+      // Successful login -> Redirect by role
+      const from = (location.state as any)?.from?.pathname;
+      const destination = from && from !== '/login' ? from : getRoleHomeRoute(selectedRole);
       navigate(destination, { replace: true });
-    } else {
-      setErrorMessage(res.error || 'Failed to authenticate. Please verify your details.');
-    }
-  };
-
-  const handleSelectDemoRole = (roleKey: UserRole) => {
-    setSelectedDemoRole(roleKey);
-    const mock = MOCK_ACCOUNTS[roleKey];
-    setEmail(mock.user.email);
-    setPassword(mock.defaultPassword);
-    setErrorMessage(null);
-  };
-
-  const handleQuickLoginAsRole = async (roleKey: UserRole) => {
-    handleSelectDemoRole(roleKey);
-    const mock = MOCK_ACCOUNTS[roleKey];
-    const res = await login({
-      email: mock.user.email,
-      password: mock.defaultPassword,
-      rememberDevice: localRemember
-    });
-
-    if (res.success && res.targetPath) {
-      navigate(res.targetPath, { replace: true });
+    } catch (err: any) {
+      setErrorMsg(err.message || 'An unexpected error occurred during sign-in.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col justify-center items-center p-3 sm:p-6 lg:p-8">
       
-      {/* Decorative ambient background */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-      
-      <div className="max-w-4xl w-full mx-auto space-y-8 relative z-10">
+      {/* Split Card Container */}
+      <div className="max-w-5xl w-full rounded-[24px] overflow-hidden border border-[var(--border)] shadow-2xl grid grid-cols-1 lg:grid-cols-12 bg-[var(--surface)]">
         
-        {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
-            DEC Combined Fleet Dispatch System • UK v1.4
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Transport & Staff Portal
-          </h1>
-          <p className="text-sm text-slate-400 max-w-md mx-auto">
-            Authorized sign-in for Central Office, Workshops, and Mobile Crew (Drivers & Passenger Assistants).
-          </p>
-        </div>
+        {/* Left Column: Night Road Hero Section (Desktop lg:col-span-5) */}
+        <div 
+          style={{ background: 'var(--hero-bg)' }}
+          className="lg:col-span-5 p-8 sm:p-10 text-[#EAF7F2] flex flex-col justify-between relative overflow-hidden space-y-8"
+        >
+          {/* Subtle grid pattern & glow */}
+          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#B6F23C_1px,transparent_1px)] [background-size:24px_24px]" />
+          <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full pointer-events-none" style={{ background: 'var(--accent-glow)' }} />
 
-        {/* Signed Out Notification Banner */}
-        {activeNotice && (
-          <div className="max-w-md mx-auto p-4 bg-emerald-950/80 border border-emerald-500/40 rounded-2xl flex items-start gap-3 text-emerald-200 shadow-xl animate-fadeIn">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-            <div className="text-xs">
-              <p className="font-bold text-emerald-300 text-sm">{activeNotice}</p>
-              <p className="text-emerald-400/90 mt-0.5">
-                All credentials and cached device data have been purged safely for terminal sharing.
-              </p>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Main Login Card (5 cols on lg) */}
-          <div className="lg:col-span-6 bg-slate-800/90 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-6">
-            
-            <div className="border-b border-slate-700/60 pb-4">
-              <h2 className="text-lg font-bold text-white">Sign In to Your Account</h2>
-              <p className="text-xs text-slate-400">
-                Enter your work credentials to access your dispatch dashboard.
-              </p>
-            </div>
-
-            {/* Error Message */}
-            {errorMessage && (
-              <div className="p-3.5 bg-rose-950/70 border border-rose-500/40 rounded-xl flex items-start gap-2.5 text-xs text-rose-300 animate-shake">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
-                <span>{errorMessage}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              
-              {/* Email Input */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
-                  <span>Work Email Address</span>
-                  <span className="text-[10px] text-slate-500 font-mono">@decfleet.co.uk</span>
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. admin@decfleet.co.uk"
-                    autoComplete="email"
-                    className="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                  />
-                </div>
-              </div>
-
-              {/* Password Input with Show/Hide */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-300">
-                    Password
-                  </label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-xs text-blue-400 hover:text-blue-300 hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    autoComplete="current-password"
-                    className="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-10 pr-11 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Remember Device - OFF by default as required */}
-              <div className="pt-1 flex items-start gap-2.5">
-                <input
-                  id="remember-device"
-                  type="checkbox"
-                  checked={localRemember}
-                  onChange={(e) => {
-                    setLocalRemember(e.target.checked);
-                    setRememberDevice(e.target.checked);
-                  }}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900 cursor-pointer"
-                />
-                <label htmlFor="remember-device" className="text-xs text-slate-300 cursor-pointer select-none">
-                  <span className="font-semibold block">Remember this device</span>
-                  <span className="text-[11px] text-slate-500 block leading-tight">
-                    Off by default. Keep disabled when operating shared depot terminals or communal vehicles.
-                  </span>
-                </label>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Authenticating secure session...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign In</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="pt-2 border-t border-slate-700/60 text-center">
-              <p className="text-[11px] text-slate-500 flex items-center justify-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                DVLA / DBS Compliant TLS Transport Sandbox
-              </p>
-            </div>
-
-          </div>
-
-          {/* Role Selector Card for Demo Only (6 cols on lg) */}
-          <div className="lg:col-span-6 bg-slate-800/60 border border-slate-700/60 rounded-3xl p-6 sm:p-7 shadow-xl backdrop-blur-md space-y-4">
-            
-            <div className="flex items-center justify-between border-b border-slate-700/60 pb-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Role Selector for Demo
-                </h3>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                Mock Accounts
+          {/* Top Brand Logo */}
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="font-heading font-extrabold text-3xl tracking-tight text-white flex items-baseline">
+                DEC
+                <span className="w-5 h-1.5 bg-[#B6F23C] rounded-full inline-block ml-1" />
+              </span>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#B6F23C] bg-[#B6F23C]/10 px-2 py-0.5 rounded border border-[#B6F23C]/30">
+                UK GATEWAY
               </span>
             </div>
 
-            <p className="text-xs text-slate-400">
-              Click any mock role below to pre-fill credentials or auto-login. The system will automatically route you to your role's view:
+            <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight leading-snug">
+              Every journey, on track.
+            </h2>
+            <p className="text-xs sm:text-sm text-[#8FB5AA] mt-2 leading-relaxed">
+              Unified fleet roadworthiness, automated DVLA/DVSA compliance, real-time live dispatch, and council school transport safety.
             </p>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {(Object.keys(MOCK_ACCOUNTS) as UserRole[]).map((rKey) => {
-                const acc = MOCK_ACCOUNTS[rKey];
-                const isSelected = selectedDemoRole === rKey || email === acc.user.email;
-                const isField = acc.category === 'app';
+          {/* Compliance Badges */}
+          <div className="relative z-10 space-y-2 text-xs font-mono text-[#8FB5AA] pt-4 border-t border-[#24574D]">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#34D399]" />
+              <span>DVSA MOT History &amp; DVLA ADD APIs</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#3FE0C5]" />
+              <span>DBS Update Service &amp; Safeguarding</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#FF9F6B]" />
+              <span>End-of-Run Child Safety Sweeps</span>
+            </div>
+          </div>
+        </div>
 
+        {/* Right Column: Interactive Login Form (Desktop lg:col-span-7) */}
+        <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-center space-y-6 bg-[var(--surface)]">
+          
+          <div>
+            <h1 className="text-xl sm:text-2xl font-heading font-bold text-[var(--text)]">
+              Sign in to your station
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1">
+              Select your persona below for one-click demo credentials, or enter your staff details.
+            </p>
+          </div>
+
+          {/* Quick Demo Role Picker Tabs */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-mono uppercase font-bold text-[var(--text-muted)] tracking-wider block">
+              Quick-Fill Demo Persona:
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {(Object.keys(DEMO_ACCOUNTS) as UserRole[]).map((r) => {
+                const acc = DEMO_ACCOUNTS[r];
+                const isSelected = selectedRole === r;
                 return (
-                  <div
-                    key={rKey}
-                    onClick={() => handleSelectDemoRole(rKey)}
-                    className={`p-3 rounded-2xl border text-left cursor-pointer transition relative group ${
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => handleSelectRole(r)}
+                    className={`p-2.5 rounded-[12px] text-left transition-all duration-180 border ${
                       isSelected
-                        ? 'bg-blue-600/20 border-blue-500 ring-1 ring-blue-500/50'
-                        : 'bg-slate-900/60 border-slate-700/70 hover:border-slate-600 hover:bg-slate-900/90'
+                        ? 'bg-[#B6F23C]/20 border-[#B6F23C] text-[var(--text)] shadow-sm'
+                        : 'bg-[var(--surface-2)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[#3FE0C5]'
                     }`}
                   >
-                    <div className="flex items-start gap-2.5">
-                      <img
-                        src={acc.user.avatarUrl}
-                        alt={acc.user.name}
-                        className="w-9 h-9 rounded-xl object-cover ring-1 ring-slate-700"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1">
-                          <h4 className="text-xs font-bold text-white truncate">
-                            {acc.demoLabel}
-                          </h4>
-                          {isField ? (
-                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
-                              /app
-                            </span>
-                          ) : (
-                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-purple-950 text-purple-400 border border-purple-800">
-                              /office
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-300 truncate mt-0.5 font-medium">
-                          {acc.user.name}
-                        </p>
-                        <p className="text-[10px] text-slate-500 truncate font-mono">
-                          {acc.user.email}
-                        </p>
-                      </div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-heading font-bold text-xs">{acc.demoLabel.split('/')[0]}</span>
+                      {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#B6F23C]" />}
                     </div>
-
-                    <div className="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between text-[10px]">
-                      <span className="text-slate-400 flex items-center gap-1">
-                        {isField ? <Smartphone className="w-3 h-3 text-emerald-400" /> : <Building2 className="w-3 h-3 text-purple-400" />}
-                        {acc.targetPath}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleQuickLoginAsRole(rKey);
-                        }}
-                        className="text-blue-400 hover:text-blue-300 font-semibold group-hover:underline flex items-center gap-0.5"
-                      >
-                        <span>Login Now</span>
-                        <ArrowRight className="w-2.5 h-2.5" />
-                      </button>
-                    </div>
-                  </div>
+                    <span className="text-[10px] font-mono text-[var(--text-muted)] block truncate mt-0.5">{acc.user.name}</span>
+                  </button>
                 );
               })}
             </div>
+          </div>
 
-            {/* Quick Helper Note */}
-            <div className="p-3 bg-slate-900/80 rounded-2xl border border-slate-700/60 text-[11px] text-slate-400 space-y-1">
-              <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
-                <Info className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                <span>Role Routing Rules</span>
+          {/* Error Message Alert */}
+          {errorMsg && (
+            <div className="p-3.5 rounded-[14px] bg-[#FF5D6C]/15 border border-[#FF5D6C]/40 text-xs text-[#FF5D6C] flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-heading font-bold">Sign-in Error</p>
+                <p className="text-[11px] mt-0.5 opacity-90">{errorMsg}</p>
               </div>
-              <p>
-                • <strong>Admin / Controller / HR / Mechanic</strong> → Redirects to <code className="text-blue-300">/office/dashboard</code>
-              </p>
-              <p>
-                • <strong>Driver / Passenger Assistant (PA)</strong> → Redirects to <code className="text-emerald-300">/app/home</code>
-              </p>
+            </div>
+          )}
+
+          {/* Main Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Email Field */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-heading font-semibold text-[var(--text)] block">
+                Staff Email Address
+              </label>
+              <div className="relative">
+                <Mail className="w-5 h-5 text-[var(--text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="email"
+                  required
+                  placeholder="name@decfleet.co.uk"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="nr-input font-medium"
+                />
+              </div>
             </div>
 
+            {/* Password Field */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-heading font-semibold text-[var(--text)] block">
+                  Security Password
+                </label>
+                <span className="text-[10px] font-mono text-[var(--text-muted)]">Demo: Password123!</span>
+              </div>
+              <div className="relative">
+                <Lock className="w-5 h-5 text-[var(--text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="nr-input pr-12 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] p-1 nr-focus rounded-lg"
+                  title="Show/hide password"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* 6-Digit OTP / MFA Step (Shown for Admin and HR) */}
+            {showMfaInput && (
+              <div className="p-4 rounded-[16px] bg-[var(--surface-2)] border border-[var(--border)] space-y-2.5 animate-in fade-in duration-180">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-heading font-bold text-[var(--text)] flex items-center gap-1.5">
+                    <KeyRound className="w-4 h-4 text-[#B6F23C]" />
+                    <span>2-Factor Staff MFA Verification (6 Digits)</span>
+                  </label>
+                  <span className="text-[10px] font-mono text-[#3FE0C5]">Any 6 digits accepted</span>
+                </div>
+                
+                <div className="flex gap-2 justify-between max-w-xs">
+                  {otp.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      id={`login-otp-${idx}`}
+                      type="text"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      className="w-10 h-12 text-center font-mono font-bold text-base rounded-[10px] bg-[var(--surface)] border border-[var(--border)] focus:border-[#B6F23C] focus:ring-2 focus:ring-[#B6F23C]/30 text-[var(--text)] outline-none transition"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-primary w-full !text-sm !py-3 !min-h-[52px] font-heading font-bold shadow-lime-glow mt-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Verifying Session...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In as {selectedRole.replace('_', ' ').toUpperCase()}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+
+          </form>
+
+          {/* Quick info note */}
+          <div className="text-[11px] text-[var(--text-muted)] text-center border-t border-[var(--border)] pt-4">
+            <span>DEC Fleet UK • Protected Session (Auto-saves in <code>localStorage: dec_session</code>)</span>
           </div>
 
         </div>
 
       </div>
+
     </div>
   );
 };
+
+export default LoginPage;

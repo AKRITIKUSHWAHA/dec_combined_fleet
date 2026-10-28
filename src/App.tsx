@@ -1,11 +1,17 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider, useAuth, getRoleHomeRoute } from './context/AuthContext';
 import { RoleProvider } from './context/RoleContext';
 import { CompanyProvider } from './context/CompanyContext';
 import { DataProvider } from './context/DataContext';
-import { AppLayout } from './components/layout/AppLayout';
-import { RoleGuard } from './components/common/RoleGuard';
 
+import { AppLayout } from './components/layout/AppLayout';
+import { ProtectedRoute, PublicOnlyRoute } from './components/common/ProtectedRoute';
+import { RoleGuard } from './components/common/RoleGuard';
+import { LogoutConfirmModal } from './components/common/LogoutConfirmModal';
+
+import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LiveMapPage } from './pages/LiveMapPage';
 import { BookingsPage } from './pages/BookingsPage';
@@ -20,156 +26,330 @@ import { FinancePage } from './pages/FinancePage';
 import { ReportsPage } from './pages/ReportsPage';
 import { DriverCockpitPage, PACockpitPage } from './pages/StaffCockpitPages';
 import { DesignSystemPage } from './pages/DesignSystemPage';
+import { NotFoundPage, AccessDeniedPage } from './pages/NotFoundPage';
+
+// Root redirect handler: "/" -> /login if unauthenticated, else role home
+const RootRedirect: React.FC = () => {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+  return <Navigate to={getRoleHomeRoute(user.role)} replace />;
+};
+
+// Staff app home router: /app/home -> PA Cockpit or Driver Cockpit depending on active persona
+const StaffAppHomeRouter: React.FC = () => {
+  const { user } = useAuth();
+  if (user?.role === 'pa') {
+    return <PACockpitPage />;
+  }
+  return <DriverCockpitPage />;
+};
 
 export function App() {
   return (
     <ThemeProvider>
-      <RoleProvider>
-        <CompanyProvider>
-          <DataProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route element={<AppLayout />}>
-                  {/* Dashboard: All roles allowed (data is tailored to role) */}
-                  <Route path="/" element={<DashboardPage />} />
+      <AuthProvider>
+        <RoleProvider>
+          <CompanyProvider>
+            <DataProvider>
+              <BrowserRouter>
+                {/* Global Logout Confirmation Modal */}
+                <LogoutConfirmModal />
 
-                  {/* Design System Specimen (Night Road) */}
-                  <Route path="/design-system" element={<DesignSystemPage />} />
-
-                  {/* Live Dispatch Map: Controller & Owner */}
-                  <Route 
-                    path="/live-map" 
+                <Routes>
+                  {/* Public Route: /login */}
+                  <Route
+                    path="/login"
                     element={
-                      <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Live Dispatch Map">
-                        <LiveMapPage />
-                      </RoleGuard>
-                    } 
+                      <PublicOnlyRoute>
+                        <LoginPage />
+                      </PublicOnlyRoute>
+                    }
                   />
 
-                  {/* Bookings & Dispatch: Controller & Owner */}
-                  <Route 
-                    path="/bookings" 
-                    element={
-                      <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Bookings & Dispatch Board">
-                        <BookingsPage />
-                      </RoleGuard>
-                    } 
-                  />
+                  {/* Root route: redirects based on auth & role */}
+                  <Route path="/" element={<RootRedirect />} />
 
-                  {/* School Transport & SEN: Owner, Controller, HR, PA */}
-                  <Route 
-                    path="/schools" 
-                    element={
-                      <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'pa']} featureName="School Transport Module">
-                        <SchoolTransportPage />
-                      </RoleGuard>
-                    } 
-                  />
+                  {/* 403 & 404 Dedicated Pages */}
+                  <Route path="/403" element={<AccessDeniedPage />} />
+                  <Route path="/unauthorised" element={<AccessDeniedPage />} />
 
-                  {/* Fleet & Dual MOTs: Owner, Controller, Mechanic, HR */}
-                  <Route 
-                    path="/fleet" 
+                  {/* ALL Office & App Routes Wrapped in ProtectedRoute */}
+                  <Route
                     element={
-                      <RoleGuard allowedRoles={['owner_admin', 'controller', 'mechanic', 'hr_vetting']} featureName="Fleet & MOT Management">
-                        <FleetPage />
-                      </RoleGuard>
-                    } 
-                  />
+                      <ProtectedRoute>
+                        <AppLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    {/* Office Dashboard (Admin/Controller/HR/Mechanic home) */}
+                    <Route path="/office/dashboard" element={<DashboardPage />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
 
-                  {/* Daily Checks Builder: Owner, Controller, Mechanic */}
-                  <Route 
-                    path="/checks" 
-                    element={
-                      <RoleGuard allowedRoles={['owner_admin', 'controller', 'mechanic']} featureName="Daily Checks Builder">
-                        <ChecksPage />
-                      </RoleGuard>
-                    } 
-                  />
+                    {/* Design System Specimen (Night Road) */}
+                    <Route path="/design-system" element={<DesignSystemPage />} />
 
-                  {/* Defects & Workshop: Owner, Mechanic, Controller */}
-                  <Route 
-                    path="/maintenance" 
-                    element={
-                      <RoleGuard allowedRoles={['owner_admin', 'mechanic', 'controller']} featureName="Defects & Workshop Maintenance">
-                        <MaintenancePage />
-                      </RoleGuard>
-                    } 
-                  />
+                    {/* Live Dispatch Map: Controller & Owner */}
+                    <Route
+                      path="/office/live-map"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Live Dispatch Map">
+                          <LiveMapPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/live-map"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Live Dispatch Map">
+                          <LiveMapPage />
+                        </RoleGuard>
+                      }
+                    />
 
-                  {/* Workforce (Drivers & PAs): Owner, Controller, HR */}
-                  <Route 
-                    path="/workforce" 
-                    element={
-                      <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="Workforce Staff Directory">
-                        <WorkforcePage />
-                      </RoleGuard>
-                    } 
-                  />
+                    {/* Bookings & Dispatch: Controller & Owner */}
+                    <Route
+                      path="/office/bookings"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Bookings & Dispatch Board">
+                          <BookingsPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/bookings"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Bookings & Dispatch Board">
+                          <BookingsPage />
+                        </RoleGuard>
+                      }
+                    />
 
-                  {/* Compliance & DBS Assurance: Owner & HR ONLY (Restricted from Controller!) */}
-                  <Route 
-                    path="/compliance" 
-                    element={
-                      <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="DVLA & DBS Assurance Portal">
-                        <CompliancePage />
-                      </RoleGuard>
-                    } 
-                  />
+                    {/* School Transport & SEN: Owner, Controller, HR, PA */}
+                    <Route
+                      path="/office/schools"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'pa']} featureName="School Transport Module">
+                          <SchoolTransportPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/schools"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'pa']} featureName="School Transport Module">
+                          <SchoolTransportPage />
+                        </RoleGuard>
+                      }
+                    />
 
-                  {/* Tariffs & Pricing Engine: DEC Owner/Admin ONLY */}
-                  <Route 
-                    path="/tariffs" 
-                    element={
-                      <RoleGuard allowedRoles={['owner_admin']} featureName="Tariff & Pricing Engine">
-                        <TariffsPage />
-                      </RoleGuard>
-                    } 
-                  />
+                    {/* Fleet & Dual MOTs: Owner, Controller, Mechanic, HR */}
+                    <Route
+                      path="/office/fleet"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'mechanic', 'hr_vetting']} featureName="Fleet & MOT Management">
+                          <FleetPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/fleet"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'mechanic', 'hr_vetting']} featureName="Fleet & MOT Management">
+                          <FleetPage />
+                        </RoleGuard>
+                      }
+                    />
 
-                  {/* Finance, Invoicing & Settlements: Owner & Controller */}
-                  <Route 
-                    path="/finance" 
-                    element={
-                      <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Finance & Accounts">
-                        <FinancePage />
-                      </RoleGuard>
-                    } 
-                  />
+                    {/* Daily Checks Builder: Owner, Controller, Mechanic */}
+                    <Route
+                      path="/office/checks"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'mechanic']} featureName="Daily Checks Builder">
+                          <ChecksPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/checks"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'mechanic']} featureName="Daily Checks Builder">
+                          <ChecksPage />
+                        </RoleGuard>
+                      }
+                    />
 
-                  {/* Reports & Audits: Owner, Controller, HR, Mechanic */}
-                  <Route 
-                    path="/reports" 
-                    element={
-                      <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'mechanic']} featureName="Reports & Compliance Audits">
-                        <ReportsPage />
-                      </RoleGuard>
-                    } 
-                  />
-                  
-                  {/* Dedicated Staff App Cockpit routes */}
-                  <Route 
-                    path="/driver-cockpit" 
-                    element={
-                      <RoleGuard allowedRoles={['driver', 'owner_admin', 'controller']} featureName="Driver Mobile Cockpit">
-                        <DriverCockpitPage />
-                      </RoleGuard>
-                    } 
-                  />
+                    {/* Defects & Workshop: Owner, Mechanic, Controller */}
+                    <Route
+                      path="/office/maintenance"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'mechanic', 'controller']} featureName="Defects & Workshop Maintenance">
+                          <MaintenancePage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/maintenance"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'mechanic', 'controller']} featureName="Defects & Workshop Maintenance">
+                          <MaintenancePage />
+                        </RoleGuard>
+                      }
+                    />
 
-                  <Route 
-                    path="/pa-cockpit" 
-                    element={
-                      <RoleGuard allowedRoles={['pa', 'owner_admin', 'controller']} featureName="Passenger Assistant Cockpit">
-                        <PACockpitPage />
-                      </RoleGuard>
-                    } 
-                  />
-                </Route>
-              </Routes>
-            </BrowserRouter>
-          </DataProvider>
-        </CompanyProvider>
-      </RoleProvider>
+                    {/* Workforce (Drivers & PAs): Owner, Controller, HR */}
+                    <Route
+                      path="/office/workforce"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="Workforce Staff Directory">
+                          <WorkforcePage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/workforce"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="Workforce Staff Directory">
+                          <WorkforcePage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* Compliance & DBS Assurance: Owner & HR ONLY */}
+                    <Route
+                      path="/office/compliance"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="DVLA & DBS Assurance Portal">
+                          <CompliancePage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/compliance"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="DVLA & DBS Assurance Portal">
+                          <CompliancePage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* Tariffs & Pricing Engine: DEC Owner/Admin ONLY */}
+                    <Route
+                      path="/office/tariffs"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin']} featureName="Tariff & Pricing Engine">
+                          <TariffsPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/tariffs"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin']} featureName="Tariff & Pricing Engine">
+                          <TariffsPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* Finance, Invoicing & Settlements: Owner & Controller */}
+                    <Route
+                      path="/office/finance"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Finance & Accounts">
+                          <FinancePage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/finance"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller']} featureName="Finance & Accounts">
+                          <FinancePage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* Reports & Audits: Owner, Controller, HR, Mechanic */}
+                    <Route
+                      path="/office/reports"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'mechanic']} featureName="Reports & Compliance Audits">
+                          <ReportsPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/reports"
+                      element={
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting', 'mechanic']} featureName="Reports & Compliance Audits">
+                          <ReportsPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    {/* Mobile Staff App routes (Driver & PA Home) */}
+                    <Route path="/app/home" element={<StaffAppHomeRouter />} />
+
+                    <Route
+                      path="/driver-cockpit"
+                      element={
+                        <RoleGuard allowedRoles={['driver', 'owner_admin', 'controller']} featureName="Driver Mobile Cockpit">
+                          <DriverCockpitPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/app/driver"
+                      element={
+                        <RoleGuard allowedRoles={['driver', 'owner_admin', 'controller']} featureName="Driver Mobile Cockpit">
+                          <DriverCockpitPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/app/driver-cockpit"
+                      element={
+                        <RoleGuard allowedRoles={['driver', 'owner_admin', 'controller']} featureName="Driver Mobile Cockpit">
+                          <DriverCockpitPage />
+                        </RoleGuard>
+                      }
+                    />
+
+                    <Route
+                      path="/pa-cockpit"
+                      element={
+                        <RoleGuard allowedRoles={['pa', 'owner_admin', 'controller']} featureName="Passenger Assistant Cockpit">
+                          <PACockpitPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/app/pa"
+                      element={
+                        <RoleGuard allowedRoles={['pa', 'owner_admin', 'controller']} featureName="Passenger Assistant Cockpit">
+                          <PACockpitPage />
+                        </RoleGuard>
+                      }
+                    />
+                    <Route
+                      path="/app/pa-cockpit"
+                      element={
+                        <RoleGuard allowedRoles={['pa', 'owner_admin', 'controller']} featureName="Passenger Assistant Cockpit">
+                          <PACockpitPage />
+                        </RoleGuard>
+                      }
+                    />
+                  </Route>
+
+                  {/* Wildcard unknown routes -> 404 Page */}
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </BrowserRouter>
+            </DataProvider>
+          </CompanyProvider>
+        </RoleProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

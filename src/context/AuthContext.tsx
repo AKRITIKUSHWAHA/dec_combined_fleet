@@ -1,241 +1,271 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthUser, LoginCredentials, OfflineDraftAction, UserRole } from '../types';
-import { MOCK_ACCOUNTS, findMockAccountByEmail, getDefaultRedirectPath } from '../data/mockAuth';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { UserRole, AuthUser, MockAccount, OfflineDraftAction } from '../types';
+import { MOCK_ACCOUNTS, findMockAccountByEmail, getDefaultRedirectPath, isMfaRole } from '../data/mockAuth';
+
+export interface AuthSessionData {
+  user: AuthUser;
+  token: string;
+  loginTime: string;
+}
+
+export const getRoleHomeRoute = (role: UserRole): string => {
+  return getDefaultRedirectPath(role);
+};
+
+export const DEMO_ACCOUNTS = MOCK_ACCOUNTS;
 
 interface AuthContextType {
-  currentUser: AuthUser | null;
+  // Required core properties
+  user: AuthUser | null;
+  role: UserRole | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  isSessionExpired: boolean;
+  login: (
+    email: string, 
+    pass: string, 
+    roleHint?: UserRole, 
+    mfaCode?: string
+  ) => Promise<{ success: boolean; error?: string; requiresMfa?: boolean }>;
+  logout: (draftAction?: OfflineDraftAction) => Promise<void> | void;
+  requestLogout: (hasUnsentWork?: boolean) => void;
+  showLogoutModal: boolean;
+  setShowLogoutModal: (show: boolean) => void;
+  hasUnsentWorkWarning: boolean;
+  toastMessage: string | null;
+  setToastMessage: (msg: string | null) => void;
+
+  // Backwards compatibility & staff app extensions
+  currentUser: AuthUser | null;
   isLogoutDialogOpen: boolean;
-  offlineDraftsCount: number;
-  logoutMessage: string | null;
-  rememberDevice: boolean;
-  isOnline: boolean;
-  lastSyncTime: string;
-  
-  // Actions
-  login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string; targetPath?: string }>;
-  logout: (offlineAction?: OfflineDraftAction) => Promise<void>;
   openLogoutDialog: () => void;
   closeLogoutDialog: () => void;
-  triggerSessionExpired: () => void;
-  reauthenticateSession: (password: string) => Promise<{ success: boolean; error?: string }>;
-  syncOfflineDrafts: () => Promise<void>;
-  discardOfflineDrafts: () => void;
+  isOnline: boolean;
   toggleOnlineStatus: () => void;
-  setRememberDevice: (remember: boolean) => void;
-  clearLogoutMessage: () => void;
+  lastSyncTime: string;
+  syncOfflineDrafts: () => Promise<void>;
+  offlineDraftsCount: number;
+  isLoading: boolean;
+  isSessionExpired: boolean;
+  reauthenticateSession: (password?: string) => Promise<{ success: boolean; error?: string }>;
   switchRoleQuick: (role: UserRole) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'dec_fleet_auth_user';
-const REMEMBER_KEY = 'dec_fleet_remember_device';
-const OFFLINE_DRAFTS_KEY = 'dec_fleet_offline_drafts_count';
+export const SESSION_STORAGE_KEY = 'dec_session';
+const OFFLINE_DRAFTS_KEY = 'dec_offline_drafts';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Remember device is OFF by default as per requirement
-  const [rememberDevice, setRememberDevice] = useState<boolean>(() => {
-    return localStorage.getItem(REMEMBER_KEY) === 'true';
-  });
-
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+  // 1. Initialise user session strictly from localStorage ("dec_session")
+  // If there is no session on first load, isAuthenticated = false.
+  const [user, setUser] = useState<AuthUser | null>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(SESSION_STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed: AuthSessionData = JSON.parse(stored);
+        if (parsed && parsed.user && parsed.user.role) {
+          return parsed.user;
+        }
       }
-    } catch {
-      // Fallback
+    } catch (e) {
+      console.error('Failed to parse stored session:', e);
     }
-    // Default to owner_admin for initial demo load if nothing stored
-    return MOCK_ACCOUNTS.owner_admin.user;
+    return null;
   });
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSessionExpired, setIsSessionExpired] = useState(false);
-  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
-  const [logoutMessage, setLogoutMessage] = useState<string | null>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [hasUnsentWorkWarning, setHasUnsentWorkWarning] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Network connectivity simulator for Driver/PA field apps
+  // Field Staff Offline / Sync states
   const [isOnline, setIsOnline] = useState<boolean>(true);
-  const [lastSyncTime, setLastSyncTime] = useState<string>('14:35:10');
-
-  // For driver and PA roles, mock unsent offline drafts (e.g., vehicle walkaround draft, SEN student rollcall draft)
   const [offlineDraftsCount, setOfflineDraftsCount] = useState<number>(() => {
-    const saved = localStorage.getItem(OFFLINE_DRAFTS_KEY);
-    return saved !== null ? parseInt(saved, 10) : 2;
+    try {
+      const drafts = localStorage.getItem(OFFLINE_DRAFTS_KEY);
+      return drafts ? JSON.parse(drafts).length : 2; // Default 2 simulated drafts for driver/PA demo
+    } catch {
+      return 2;
+    }
   });
+  const [lastSyncTime, setLastSyncTime] = useState<string>('14:32:05');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const toggleOnlineStatus = () => {
-    setIsOnline(prev => !prev);
-  };
+  const isAuthenticated = Boolean(user);
+  const role = user ? user.role : null;
 
-  // Keep offline drafts count updated
+  // Auto-dismiss toast notifications after 4 seconds
   useEffect(() => {
-    localStorage.setItem(OFFLINE_DRAFTS_KEY, offlineDraftsCount.toString());
-  }, [offlineDraftsCount]);
-
-  // Persist or clean storage when currentUser changes
-  useEffect(() => {
-    if (currentUser) {
-      if (rememberDevice) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentUser));
-        localStorage.setItem(REMEMBER_KEY, 'true');
-      } else {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(currentUser));
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(REMEMBER_KEY);
-      }
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-      sessionStorage.removeItem(STORAGE_KEY);
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 4000);
+      return () => clearTimeout(timer);
     }
-  }, [currentUser, rememberDevice]);
+  }, [toastMessage]);
 
-  const login = async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string; targetPath?: string }> => {
+  // Login handler
+  const login = async (
+    email: string,
+    pass: string,
+    roleHint?: UserRole,
+    mfaCode?: string
+  ): Promise<{ success: boolean; error?: string; requiresMfa?: boolean }> => {
     setIsLoading(true);
-    setLogoutMessage(null);
+    // Realistic short delay for feedback
+    await new Promise((r) => setTimeout(r, 450));
 
-    // Realistic API network delay
-    await new Promise(res => setTimeout(res, 550));
+    const trimmed = email.trim().toLowerCase();
 
-    const account = findMockAccountByEmail(credentials.email);
+    // 1. Find account by email match or fallback to roleHint or demo map
+    let matchedAccount: MockAccount | undefined = findMockAccountByEmail(trimmed);
 
-    if (!account) {
+    if (!matchedAccount && roleHint && MOCK_ACCOUNTS[roleHint]) {
+      matchedAccount = MOCK_ACCOUNTS[roleHint];
+    }
+
+    // Also support @decgroup.co.uk alias
+    if (!matchedAccount) {
+      const prefix = trimmed.split('@')[0];
+      matchedAccount = Object.values(MOCK_ACCOUNTS).find((acc) => {
+        const accPrefix = acc.user.email.split('@')[0];
+        return accPrefix === prefix;
+      });
+    }
+
+    if (!matchedAccount) {
       setIsLoading(false);
       return {
         success: false,
-        error: 'No DEC Fleet account registered with this email address. Please check your credentials or pick a demo role account.'
+        error: 'Unrecognised staff email address. Please select a demo persona or verify your details.'
       };
     }
 
-    if (credentials.password !== account.defaultPassword && credentials.password !== 'Password123!') {
+    if (pass.trim().length < 4) {
       setIsLoading(false);
       return {
         success: false,
-        error: 'Invalid password. Please ensure correct casing or reset your credentials.'
+        error: 'Password must be at least 4 characters.'
       };
     }
 
-    // Set user
-    setCurrentUser(account.user);
-    setRememberDevice(credentials.rememberDevice);
-    setIsSessionExpired(false);
-    setIsLoading(false);
-
-    // If driver or pa, reset default drafts for demo demonstration
-    if (account.user.role === 'driver' || account.user.role === 'pa') {
-      setOfflineDraftsCount(2);
+    // MFA Check for Admin and HR
+    if (isMfaRole(matchedAccount.user.role)) {
+      if (!mfaCode || mfaCode.trim().length < 6) {
+        setIsLoading(false);
+        return {
+          success: false,
+          requiresMfa: true,
+          error: 'Please enter the 6-digit MFA security code sent to your authorized mobile terminal.'
+        };
+      }
     }
 
-    return {
-      success: true,
-      targetPath: getDefaultRedirectPath(account.user.role)
+    // Save session in localStorage with key "dec_session"
+    const sessionData: AuthSessionData = {
+      user: matchedAccount.user,
+      token: `dec_jwt_${Date.now()}_${Math.random().toString(36).substring(2)}`,
+      loginTime: new Date().toISOString()
     };
-  };
 
-  const syncOfflineDrafts = async (): Promise<void> => {
-    setIsLoading(true);
-    // Simulate sync
-    await new Promise(res => setTimeout(res, 900));
-    setOfflineDraftsCount(0);
-    localStorage.setItem(OFFLINE_DRAFTS_KEY, '0');
-    setLastSyncTime(new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionData));
+    setUser(matchedAccount.user);
     setIsLoading(false);
+    setToastMessage(`Welcome back, ${matchedAccount.user.name}`);
+
+    return { success: true };
   };
 
+  // Logout request modal trigger
+  const requestLogout = useCallback((hasUnsentWork?: boolean) => {
+    // If hasUnsentWork is not explicitly passed, determine from current role & pending drafts
+    const isField = user?.role === 'driver' || user?.role === 'pa';
+    const warning = typeof hasUnsentWork === 'boolean' ? hasUnsentWork : (isField && offlineDraftsCount > 0);
+    setHasUnsentWorkWarning(warning);
+    setShowLogoutModal(true);
+  }, [user, offlineDraftsCount]);
 
-  const discardOfflineDrafts = (): void => {
-    setOfflineDraftsCount(0);
-    localStorage.setItem(OFFLINE_DRAFTS_KEY, '0');
-  };
-
-  const logout = async (offlineAction?: OfflineDraftAction): Promise<void> => {
-    if (offlineAction === 'sync') {
-      await syncOfflineDrafts();
-    } else if (offlineAction === 'discard') {
-      discardOfflineDrafts();
+  // Confirm logout
+  const logout = useCallback((draftAction?: OfflineDraftAction) => {
+    // Handle offline draft decisions
+    if (draftAction === 'discard') {
+      localStorage.removeItem(OFFLINE_DRAFTS_KEY);
+      setOfflineDraftsCount(0);
+    } else if (draftAction === 'sync') {
+      // Simulate sync
+      setOfflineDraftsCount(0);
     }
-    // If 'keep', we leave offlineDraftsCount untouched for next session
+    // 'keep' retains the offline items in local storage
 
-    // Shared device security: wipe state completely
-    setCurrentUser(null);
-    localStorage.removeItem(STORAGE_KEY);
-    sessionStorage.removeItem(STORAGE_KEY);
-    setIsLogoutDialogOpen(false);
-    setIsSessionExpired(false);
-    
-    // Set banner message for login screen
-    setLogoutMessage('You have been signed out.');
+    // Clear session from localStorage
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    setUser(null);
+    setShowLogoutModal(false);
+    setHasUnsentWorkWarning(false);
+
+    // Show toast "You have been signed out"
+    setToastMessage('You have been signed out');
+  }, []);
+
+  // Offline / sync simulator helpers
+  const toggleOnlineStatus = () => {
+    setIsOnline((prev) => {
+      const next = !prev;
+      setToastMessage(next ? 'Network restored. Reconnected to Central Dispatch.' : 'Network offline. Using device local cache.');
+      return next;
+    });
   };
 
-  const reauthenticateSession = async (password: string): Promise<{ success: boolean; error?: string }> => {
+  const syncOfflineDrafts = async () => {
     setIsLoading(true);
-    await new Promise(res => setTimeout(res, 500));
-
-    if (password === 'Password123!' || (currentUser && password.length >= 6)) {
-      setIsSessionExpired(false);
-      setIsLoading(false);
-      return { success: true };
-    }
-
+    await new Promise((r) => setTimeout(r, 600));
+    setOfflineDraftsCount(0);
+    const now = new Date();
+    setLastSyncTime(now.toTimeString().split(' ')[0]);
     setIsLoading(false);
-    return { success: false, error: 'Incorrect password for current session' };
+    setToastMessage('All offline records synchronized successfully with Central Dispatch.');
   };
 
-  const triggerSessionExpired = () => {
-    setIsSessionExpired(true);
-  };
-
-  const openLogoutDialog = () => {
-    setIsLogoutDialogOpen(true);
-  };
-
-  const closeLogoutDialog = () => {
-    setIsLogoutDialogOpen(false);
-  };
-
-  const clearLogoutMessage = () => {
-    setLogoutMessage(null);
-  };
-
-  const switchRoleQuick = (role: UserRole) => {
-    const acc = MOCK_ACCOUNTS[role];
+  const switchRoleQuick = (newRole: UserRole) => {
+    const acc = MOCK_ACCOUNTS[newRole];
     if (acc) {
-      setCurrentUser(acc.user);
-      if (role === 'driver' || role === 'pa') {
-        setOfflineDraftsCount(2);
-      }
+      const sessionData: AuthSessionData = {
+        user: acc.user,
+        token: `dec_jwt_${Date.now()}_quick`,
+        loginTime: new Date().toISOString()
+      };
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionData));
+      setUser(acc.user);
+      setToastMessage(`Active persona switched to ${acc.demoLabel}`);
     }
+  };
+
+  const reauthenticateSession = async (pass?: string): Promise<{ success: boolean; error?: string }> => {
+    return { success: true };
   };
 
   return (
     <AuthContext.Provider
       value={{
-        currentUser,
-        isAuthenticated: !!currentUser,
-        isLoading,
-        isSessionExpired,
-        isLogoutDialogOpen,
-        offlineDraftsCount,
-        logoutMessage,
-        rememberDevice,
-        isOnline,
-        lastSyncTime,
+        user,
+        currentUser: user,
+        role,
+        isAuthenticated,
         login,
         logout,
-        openLogoutDialog,
-        closeLogoutDialog,
-        triggerSessionExpired,
-        reauthenticateSession,
-        syncOfflineDrafts,
-        discardOfflineDrafts,
+        requestLogout,
+        openLogoutDialog: () => requestLogout(),
+        closeLogoutDialog: () => setShowLogoutModal(false),
+        showLogoutModal,
+        setShowLogoutModal,
+        isLogoutDialogOpen: showLogoutModal,
+        hasUnsentWorkWarning,
+        toastMessage,
+        setToastMessage,
+        isOnline,
         toggleOnlineStatus,
-        setRememberDevice,
-        clearLogoutMessage,
+        lastSyncTime,
+        syncOfflineDrafts,
+        offlineDraftsCount,
+        isLoading,
+        isSessionExpired: false,
+        reauthenticateSession,
         switchRoleQuick
       }}
     >
