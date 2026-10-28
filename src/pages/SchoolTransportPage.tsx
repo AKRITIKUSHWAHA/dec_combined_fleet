@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import { useRole } from '../context/RoleContext';
 import { useCompany } from '../context/CompanyContext';
@@ -324,7 +324,7 @@ export const SchoolTransportPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span>Vehicle & Driver:</span>
                       <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        {route.assignedVehicleReg} • {route.assignedDriverName}
+                        {route.assignedVehicleReg} ΓÇó {route.assignedDriverName}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -357,7 +357,7 @@ export const SchoolTransportPage: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 mt-1">
-                    Destination: <strong className="text-slate-800 dark:text-slate-200">{activeRoute.schoolName}</strong> • Scheduled {activeRoute.scheduledStartTime} - {activeRoute.scheduledEndTime}
+                    Destination: <strong className="text-slate-800 dark:text-slate-200">{activeRoute.schoolName}</strong> ΓÇó Scheduled {activeRoute.scheduledStartTime} - {activeRoute.scheduledEndTime}
                   </p>
                 </div>
 
@@ -461,7 +461,7 @@ export const SchoolTransportPage: React.FC = () => {
 
                       {activeRoute.sweepDetails?.paCountersigned && (
                         <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium mt-1">
-                          ✓ Sweep verified by PA {activeRoute.sweepDetails.paSignatureName} at {activeRoute.sweepDetails.paTimestamp}. Driver & vehicle released to available pool.
+                          Γ£ô Sweep verified by PA {activeRoute.sweepDetails.paSignatureName} at {activeRoute.sweepDetails.paTimestamp}. Driver & vehicle released to available pool.
                         </p>
                       )}
                     </div>
@@ -501,7 +501,7 @@ export const SchoolTransportPage: React.FC = () => {
                     Pupil Attendance & Handover Manifest ({activeRoute.pupils.length} Students)
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Boarded: {boardedCount} • Handed Over: {deliveredCount} • Absent: {absentCount}
+                    Boarded: {boardedCount} ΓÇó Handed Over: {deliveredCount} ΓÇó Absent: {absentCount}
                   </p>
                 </div>
               </div>
@@ -676,7 +676,7 @@ export const SchoolTransportPage: React.FC = () => {
             </div>
 
             <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-xs text-amber-900 dark:text-amber-200 font-medium">
-              ⚠️ Submitting this will place the run into <strong className="font-bold">Awaiting PA Countersignature</strong>. You will remain blocked from receiving general jobs until the Passenger Assistant countersigns.
+              ΓÜá∩╕Å Submitting this will place the run into <strong className="font-bold">Awaiting PA Countersignature</strong>. You will remain blocked from receiving general jobs until the Passenger Assistant countersigns.
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2">

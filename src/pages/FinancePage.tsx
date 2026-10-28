@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import { AccountInvoice, DriverSettlement } from '../types';
 import { 
@@ -149,7 +149,7 @@ export const FinancePage: React.FC = () => {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Total Invoiced (MTD)</p>
             <p className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
-              £{totalBilled.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
+              ┬ú{totalBilled.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
             </p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center">
@@ -161,7 +161,7 @@ export const FinancePage: React.FC = () => {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Collected Revenue</p>
             <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
-              £{totalPaid.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
+              ┬ú{totalPaid.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
             </p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center">
@@ -174,7 +174,7 @@ export const FinancePage: React.FC = () => {
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Overdue Invoices</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <p className="text-xl font-black text-rose-600 dark:text-rose-400">
-                £{totalOverdue.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
+                ┬ú{totalOverdue.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
               </p>
             </div>
           </div>
@@ -187,7 +187,7 @@ export const FinancePage: React.FC = () => {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Driver Payouts Due</p>
             <p className="text-xl font-black text-purple-600 dark:text-purple-400 mt-0.5">
-              £{totalPendingSettlements.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
+              ┬ú{totalPendingSettlements.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
             </p>
           </div>
           <div className="w-10 h-10 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 flex items-center justify-center">
@@ -252,7 +252,7 @@ export const FinancePage: React.FC = () => {
                     <th className="py-3 px-4">Category</th>
                     <th className="py-3 px-4">Issue Date</th>
                     <th className="py-3 px-4">Due Date</th>
-                    <th className="py-3 px-4">Total Amount (£)</th>
+                    <th className="py-3 px-4">Total Amount (┬ú)</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
@@ -279,7 +279,7 @@ export const FinancePage: React.FC = () => {
                         <td className="py-3.5 px-4 font-mono">{inv.issueDate}</td>
                         <td className="py-3.5 px-4 font-mono">{inv.dueDate}</td>
                         <td className="py-3.5 px-4 font-mono font-black text-slate-900 dark:text-white">
-                          £{inv.totalGbp.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
+                          ┬ú{inv.totalGbp.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
                         </td>
                         <td className="py-3.5 px-4">
                           {inv.status === 'paid' && (
@@ -386,16 +386,16 @@ export const FinancePage: React.FC = () => {
                           {set.completedJobsCount} trips
                         </td>
                         <td className="py-3.5 px-4 font-mono">
-                          £{set.grossFaresGbp.toFixed(2)}
+                          ┬ú{set.grossFaresGbp.toFixed(2)}
                         </td>
                         <td className="py-3.5 px-4 font-mono text-rose-600 dark:text-rose-400">
-                          -£{set.operatorCommissionGbp.toFixed(2)}
+                          -┬ú{set.operatorCommissionGbp.toFixed(2)}
                         </td>
                         <td className="py-3.5 px-4 font-mono text-emerald-600 dark:text-emerald-400">
-                          +£{(set.airportTollReimbursementsGbp + set.fuelAllowanceGbp).toFixed(2)}
+                          +┬ú{(set.airportTollReimbursementsGbp + set.fuelAllowanceGbp).toFixed(2)}
                         </td>
                         <td className="py-3.5 px-4 font-mono font-black text-sm text-slate-900 dark:text-white">
-                          £{set.netPayoutGbp.toFixed(2)}
+                          ┬ú{set.netPayoutGbp.toFixed(2)}
                         </td>
                         <td className="py-3.5 px-4">
                           {set.status === 'paid_disbursed' ? (
@@ -468,8 +468,8 @@ export const FinancePage: React.FC = () => {
                     <tr>
                       <th className="p-2.5">Description</th>
                       <th className="p-2.5 text-center">Qty</th>
-                      <th className="p-2.5 text-right">Unit (£)</th>
-                      <th className="p-2.5 text-right">Total (£)</th>
+                      <th className="p-2.5 text-right">Unit (┬ú)</th>
+                      <th className="p-2.5 text-right">Total (┬ú)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -477,8 +477,8 @@ export const FinancePage: React.FC = () => {
                       <tr key={idx}>
                         <td className="p-2.5 font-medium text-slate-800 dark:text-slate-200">{item.description}</td>
                         <td className="p-2.5 text-center font-mono">{item.quantity}</td>
-                        <td className="p-2.5 text-right font-mono">£{item.unitPriceGbp.toFixed(2)}</td>
-                        <td className="p-2.5 text-right font-mono font-bold">£{item.totalGbp.toFixed(2)}</td>
+                        <td className="p-2.5 text-right font-mono">┬ú{item.unitPriceGbp.toFixed(2)}</td>
+                        <td className="p-2.5 text-right font-mono font-bold">┬ú{item.totalGbp.toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -490,15 +490,15 @@ export const FinancePage: React.FC = () => {
             <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1 text-xs">
               <div className="flex justify-between text-slate-600 dark:text-slate-400">
                 <span>Subtotal (Net)</span>
-                <span className="font-mono">£{selectedInvoice.subtotalGbp.toFixed(2)}</span>
+                <span className="font-mono">┬ú{selectedInvoice.subtotalGbp.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-slate-600 dark:text-slate-400">
                 <span>VAT (Zero-Rated / 20%)</span>
-                <span className="font-mono">£{selectedInvoice.vatGbp.toFixed(2)}</span>
+                <span className="font-mono">┬ú{selectedInvoice.vatGbp.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm font-black text-slate-900 dark:text-white pt-1 border-t border-slate-200 dark:border-slate-700">
                 <span>Total Due</span>
-                <span className="font-mono">£{selectedInvoice.totalGbp.toFixed(2)}</span>
+                <span className="font-mono">┬ú{selectedInvoice.totalGbp.toFixed(2)}</span>
               </div>
             </div>
 
@@ -546,7 +546,7 @@ export const FinancePage: React.FC = () => {
               Record Payment: {selectedInvoice.invoiceRef}
             </h3>
             <p className="text-xs text-slate-500">
-              Total Amount: <strong className="text-slate-900 dark:text-white">£{selectedInvoice.totalGbp.toFixed(2)}</strong>
+              Total Amount: <strong className="text-slate-900 dark:text-white">┬ú{selectedInvoice.totalGbp.toFixed(2)}</strong>
             </p>
 
             <div>
@@ -596,25 +596,25 @@ export const FinancePage: React.FC = () => {
               Disburse Settlement: {selectedSettlement.driverName}
             </h3>
             <p className="text-xs text-slate-500">
-              Period: {selectedSettlement.period} • Completed Jobs: {selectedSettlement.completedJobsCount}
+              Period: {selectedSettlement.period} ΓÇó Completed Jobs: {selectedSettlement.completedJobsCount}
             </p>
 
             <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5 text-xs">
               <div className="flex justify-between">
                 <span>Gross Customer Fares</span>
-                <span className="font-mono font-bold">£{selectedSettlement.grossFaresGbp.toFixed(2)}</span>
+                <span className="font-mono font-bold">┬ú{selectedSettlement.grossFaresGbp.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-rose-600">
                 <span>DEC Operator Commission (20%)</span>
-                <span className="font-mono font-bold">-£{selectedSettlement.operatorCommissionGbp.toFixed(2)}</span>
+                <span className="font-mono font-bold">-┬ú{selectedSettlement.operatorCommissionGbp.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-emerald-600">
                 <span>Toll & Fuel Reimbursements</span>
-                <span className="font-mono font-bold">+£{(selectedSettlement.airportTollReimbursementsGbp + selectedSettlement.fuelAllowanceGbp).toFixed(2)}</span>
+                <span className="font-mono font-bold">+┬ú{(selectedSettlement.airportTollReimbursementsGbp + selectedSettlement.fuelAllowanceGbp).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm font-black text-slate-900 dark:text-white pt-1.5 border-t border-slate-200 dark:border-slate-700">
                 <span>Net BACS Payout</span>
-                <span className="font-mono">£{selectedSettlement.netPayoutGbp.toFixed(2)}</span>
+                <span className="font-mono">┬ú{selectedSettlement.netPayoutGbp.toFixed(2)}</span>
               </div>
             </div>
 
