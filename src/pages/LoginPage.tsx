@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, DEMO_ACCOUNTS, getRoleHomeRoute } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { UserRole } from '../types';
+import fleetHeroImg from '../assets/fleet-hero.jpg';
 import { 
   Lock, 
   Mail, 
@@ -225,8 +226,31 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Executive Fleet Photograph Banner */}
+          <div className="relative z-10 my-4 rounded-[20px] overflow-hidden border border-[#24574D] shadow-2xl group bg-[#08201C]">
+            <img
+              src={fleetHeroImg}
+              alt="DEC Combined Fleet - Executive Chauffeur & Municipal Minibus"
+              className="w-full h-44 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-700 brightness-95"
+            />
+            {/* Dark gradient overlay for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#08201C] via-[#08201C]/30 to-transparent pointer-events-none" />
+            
+            {/* Floating Glassmorphic Pill */}
+            <div className="absolute top-3 left-3 flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#08201C]/80 backdrop-blur-md border border-[#24574D] text-[10px] font-mono text-[#EAF7F2]">
+              <span className="w-2 h-2 rounded-full bg-[#34D399] animate-pulse" />
+              <span className="font-bold">EXECUTIVE CHAUFFEUR &amp; MINIBUS FLEET</span>
+            </div>
+
+            {/* Bottom image caption */}
+            <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-[10px] font-mono text-[#8FB5AA]">
+              <span>Station Base: Bedfordshire &amp; London Corridors</span>
+              <span className="text-[#B6F23C] font-bold">142 Vehicles Active</span>
+            </div>
+          </div>
+
           {/* Center: Live Dispatch Telematics Card Preview */}
-          <div className="relative z-10 my-6 bg-[#0F2F29]/80 backdrop-blur-md p-4 rounded-[20px] border border-[#24574D] shadow-xl space-y-3">
+          <div className="relative z-10 mb-4 bg-[#0F2F29]/80 backdrop-blur-md p-4 rounded-[20px] border border-[#24574D] shadow-xl space-y-3">
             <div className="flex items-center justify-between text-[10px] font-mono">
               <span className="flex items-center gap-1.5 text-[#3FE0C5] font-bold uppercase tracking-wider">
                 <Activity className="w-3.5 h-3.5 animate-pulse" />
