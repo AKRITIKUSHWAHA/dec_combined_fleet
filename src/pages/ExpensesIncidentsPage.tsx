@@ -715,3 +715,4 @@ export const ExpensesIncidentsPage: React.FC = () => {
     </div>
   );
 };
+

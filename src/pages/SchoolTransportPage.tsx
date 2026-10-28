@@ -3,6 +3,19 @@ import { useData } from '../context/DataContext';
 import { useRole } from '../context/RoleContext';
 import { useCompany } from '../context/CompanyContext';
 import { SchoolRoute, Pupil } from '../types';
+import { SchoolRoutesExtras } from '../components/schools/SchoolRoutesExtras';
+import { 
+  mockTermCalendar, 
+  mockStudentAbsences, 
+  mockReplacementStaffCandidates, 
+  mockFailedHandoverCases 
+} from '../data/mockDataPhase12';
+import { 
+  TermCalendarItem, 
+  StudentAbsenceRecord, 
+  ReplacementStaffCandidate, 
+  FailedHandoverCase 
+} from '../types/phase12';
 import { 
   GraduationCap, 
   Car, 
@@ -49,6 +62,25 @@ export const SchoolTransportPage: React.FC = () => {
   const [selectedRouteId, setSelectedRouteId] = useState<string>(schoolRoutes[0]?.id || '');
   const [searchQuery, setSearchQuery] = useState('');
   const [councilFilter, setCouncilFilter] = useState('all');
+
+  // Phase 12 Main Tabs State
+  const [mainTab, setMainTab] = useState<'routes' | 'term_calendar' | 'absences' | 'crew_replacement' | 'failed_handover'>('routes');
+  const [terms, setTerms] = useState<TermCalendarItem[]>(mockTermCalendar);
+  const [absences, setAbsences] = useState<StudentAbsenceRecord[]>(mockStudentAbsences);
+  const [candidates, setCandidates] = useState<ReplacementStaffCandidate[]>(mockReplacementStaffCandidates);
+  const [failedHandovers, setFailedHandovers] = useState<FailedHandoverCase[]>(mockFailedHandoverCases);
+
+  // Replacement Crew Form Selection
+  const [selectedRepDriver, setSelectedRepDriver] = useState<string>('STAFF-REP-01');
+  const [selectedRepPA1, setSelectedRepPA1] = useState<string>('STAFF-REP-03');
+  const [selectedRepPA2, setSelectedRepPA2] = useState<string>('STAFF-REP-04');
+  const [crewAssignedSuccess, setCrewAssignedSuccess] = useState<string | null>(null);
+
+  // Failed Handover Modal
+  const [isFailedHandoverModalOpen, setIsFailedHandoverModalOpen] = useState(false);
+  const [fhoStudent, setFhoStudent] = useState('Liam Davies');
+  const [fhoAddress, setFhoAddress] = useState('14 Hill Rise, Dunstable');
+  const [fhoNotes, setFhoNotes] = useState('Driver knocked at door for 5 minutes, phone unanswered.');
 
   // Modals state
   const [isSweepModalOpen, setIsSweepModalOpen] = useState(false);
@@ -183,6 +215,57 @@ export const SchoolTransportPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Phase 12: School Routes Extras Tabs */}
+      <div className="flex bg-[var(--surface-2)] p-1 rounded-[14px] border border-[var(--border)] overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setMainTab('routes')}
+          className={`px-4 py-2 rounded-[10px] text-xs font-heading font-bold transition whitespace-nowrap nr-focus ${
+            mainTab === 'routes' ? 'bg-[#B6F23C] text-[#08201C] shadow-lime-glow' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+          }`}
+        >
+          Daily Routes Directory ({schoolRoutes.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setMainTab('term_calendar')}
+          className={`px-4 py-2 rounded-[10px] text-xs font-heading font-bold transition whitespace-nowrap nr-focus ${
+            mainTab === 'term_calendar' ? 'bg-[#B6F23C] text-[#08201C] shadow-lime-glow' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+          }`}
+        >
+          Academic Term Calendar ({terms.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setMainTab('absences')}
+          className={`px-4 py-2 rounded-[10px] text-xs font-heading font-bold transition whitespace-nowrap nr-focus ${
+            mainTab === 'absences' ? 'bg-[#B6F23C] text-[#08201C] shadow-lime-glow' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+          }`}
+        >
+          Student Absences & Route Skips ({absences.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setMainTab('crew_replacement')}
+          className={`px-4 py-2 rounded-[10px] text-xs font-heading font-bold transition whitespace-nowrap nr-focus ${
+            mainTab === 'crew_replacement' ? 'bg-[#B6F23C] text-[#08201C] shadow-lime-glow' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+          }`}
+        >
+          Replacement Crew Flow (1 Driver + 2 PAs)
+        </button>
+        <button
+          type="button"
+          onClick={() => setMainTab('failed_handover')}
+          className={`px-4 py-2 rounded-[10px] text-xs font-heading font-bold transition whitespace-nowrap nr-focus ${
+            mainTab === 'failed_handover' ? 'bg-[#FF5D6C] text-white shadow-coral-glow' : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+          }`}
+        >
+          Failed Handover Escalation ({failedHandovers.length})
+        </button>
+      </div>
+
+      {mainTab === 'routes' ? (
+        <>
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-slate-900 rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
@@ -646,6 +729,10 @@ export const SchoolTransportPage: React.FC = () => {
         )}
 
       </div>
+        </>
+      ) : (
+        <SchoolRoutesExtras currentTab={mainTab} />
+      )}
 
       {/* ======================================================================
           MODAL 1: DRIVER PHYSICAL SWEEP SIGN-OFF

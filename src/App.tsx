@@ -7,6 +7,11 @@ import { CompanyProvider } from './context/CompanyContext';
 import { DataProvider } from './context/DataContext';
 
 import { AppLayout } from './components/layout/AppLayout';
+import { PublicLayout } from './components/layout/PublicLayout';
+import { CustomerBookingPage } from './pages/public/CustomerBookingPage';
+import { CustomerTrackingPage } from './pages/public/CustomerTrackingPage';
+import { CorporatePortalPage } from './pages/public/CorporatePortalPage';
+import { ParentTrackingPage } from './pages/public/ParentTrackingPage';
 import { ProtectedRoute, PublicOnlyRoute } from './components/common/ProtectedRoute';
 import { RoleGuard } from './components/common/RoleGuard';
 import { LogoutConfirmModal } from './components/common/LogoutConfirmModal';
