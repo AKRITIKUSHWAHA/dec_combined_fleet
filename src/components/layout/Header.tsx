@@ -19,7 +19,8 @@ import {
   Smartphone,
   Clock,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Sparkles
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -35,12 +36,13 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
   const { notifications, markNotificationAsRead } = useData();
   const { user, requestLogout, toastMessage } = useAuth();
 
+  const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const unreadNotifs = notifications.filter(n => !n.read);
 
-  // Short clean display for persona role to prevent awkward 2-line wraps
+  // Short clean display for persona role
   const getCleanRoleLabel = (role: UserRole): string => {
     switch (role) {
       case 'owner_admin':
@@ -62,12 +64,16 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-[var(--surface)] border-b border-[var(--border)] transition-colors duration-180">
-        <div className="max-w-[1600px] w-full mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-3">
+      <header className="sticky top-0 z-40 bg-[var(--surface)] border-b border-[var(--border)] transition-colors duration-180 select-none">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 gap-4">
 
-            {/* Left: Mobile hamburger & Clean Wordmark */}
-            <div className="flex items-center gap-3 shrink-0">
+            {/* ========================================================
+                LEFT: Hamburger + Brand Wordmark + Entity Switcher
+               ======================================================== */}
+            <div className="flex items-center gap-3.5 shrink-0">
+              
+              {/* Mobile Menu Toggle Button */}
               <button
                 onClick={onMobileMenuToggle}
                 className="lg:hidden p-2 rounded-[10px] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] nr-focus"
@@ -76,6 +82,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
                 {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
 
+              {/* Brand Wordmark */}
               <Link to="/" className="flex items-center gap-2 group shrink-0">
                 <div className="font-heading font-extrabold text-2xl tracking-tight text-[var(--text)] flex items-baseline">
                   DEC
@@ -85,46 +92,113 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
                   FLEET UK
                 </span>
               </Link>
+
+              {/* Subtle Vertical Divider */}
+              <div className="hidden md:block h-5 w-[1px] bg-[var(--border)]" />
+
+              {/* Operating Company / Sub-Company Selector */}
+              <div className="hidden md:flex items-center gap-2 bg-[var(--surface-2)] px-2.5 h-9 rounded-[12px] border border-[var(--border)] hover:border-[#3FE0C5]/50 transition max-w-[240px] lg:max-w-[270px]">
+                <Building2 className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" />
+                <select
+                  value={selectedCompanyId}
+                  onChange={(e) => setSelectedCompanyId(e.target.value)}
+                  className="bg-transparent text-xs font-semibold text-[var(--text)] pr-4 focus:outline-none cursor-pointer truncate w-full"
+                  aria-label="Filter by Operating Company"
+                >
+                  <option value="all">All Entities (DEC HQ)</option>
+                  {subCompanies.map(c => (
+                    <option key={c.id} value={c.id} className="text-slate-900 bg-white dark:bg-slate-900 dark:text-white">
+                      {c.name} ({c.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Live Status Indicator */}
+              <div className="hidden xl:flex items-center gap-1.5 px-2.5 h-7 rounded-full bg-[#34D399]/10 text-[#34D399] border border-[#34D399]/20 text-[10px] font-mono font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] animate-pulse" />
+                <span>ONLINE</span>
+              </div>
+
             </div>
 
-            {/* Center: Clean Compact Operating Entity Switcher */}
-            <div className="hidden md:flex items-center gap-2 bg-[var(--surface-2)] px-2.5 h-9 rounded-[12px] border border-[var(--border)] max-w-[240px] lg:max-w-[270px] shrink-0">
-              <Building2 className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" />
-              <select
-                value={selectedCompanyId}
-                onChange={(e) => setSelectedCompanyId(e.target.value)}
-                className="bg-transparent text-xs font-semibold text-[var(--text)] pr-4 focus:outline-none cursor-pointer truncate w-full"
-                aria-label="Filter by Operating Company"
-              >
-                <option value="all">All Entities (DEC HQ)</option>
-                {subCompanies.map(c => (
-                  <option key={c.id} value={c.id} className="text-slate-900 bg-white dark:bg-slate-900 dark:text-white">
-                    {c.name} ({c.code})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* ========================================================
+                RIGHT: Persona Switcher + Alerts + Theme + Profile
+               ======================================================== */}
+            <div className="flex items-center gap-2.5 shrink-0">
 
-            {/* Right Action Tools: All items unified at 36px height (h-9) */}
-            <div className="flex items-center gap-2 shrink-0">
-
-              {/* Quick Staff Cockpit Shortcut */}
+              {/* Quick Staff Cockpit Shortcut (Only shown when persona is Driver or PA) */}
               {(currentRole === 'driver' || currentRole === 'pa') && (
                 <Link
                   to={currentRole === 'driver' ? '/driver-cockpit' : '/pa-cockpit'}
-                  className="btn-primary text-xs !h-9 !py-0 !px-3 !min-h-0 whitespace-nowrap shrink-0"
+                  className="btn-primary text-xs !h-9 !py-0 !px-3 !min-h-0 whitespace-nowrap shrink-0 flex items-center gap-1.5"
                 >
                   <Smartphone className="w-3.5 h-3.5 shrink-0" />
                   <span className="hidden sm:inline">Active App</span>
                 </Link>
               )}
 
-              {/* Notifications Dropdown */}
+              {/* Persona / Role Quick Switcher Pill */}
+              <div className="relative shrink-0 hidden sm:block">
+                <button
+                  type="button"
+                  onClick={() => setShowRoleMenu(!showRoleMenu)}
+                  className="flex items-center gap-1.5 px-3 h-9 rounded-[12px] text-xs font-heading font-semibold border transition-all duration-180 whitespace-nowrap nr-focus bg-[var(--surface-2)] border-[var(--border)] text-[var(--text)] hover:border-[#B6F23C]"
+                  title="Active Role / Persona - Click to switch"
+                  aria-label="Switch active role"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#3FE0C5]" />
+                  <span>{getCleanRoleLabel(currentRole)}</span>
+                  <ChevronDown className="w-3 h-3 text-[var(--text-muted)]" />
+                </button>
+
+                {showRoleMenu && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowRoleMenu(false)} />
+                    <div className="absolute right-0 mt-2 w-60 bg-[var(--surface)] text-[var(--text)] rounded-[18px] shadow-2xl border border-[var(--border)] py-2 z-50 text-left animate-in fade-in duration-180">
+                      <div className="px-3 py-1.5 border-b border-[var(--border)] flex items-center justify-between">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                          Active Persona
+                        </span>
+                        <span className="text-[10px] font-mono text-[#3FE0C5]">Switch Role</span>
+                      </div>
+                      <div className="p-1 space-y-0.5">
+                        {(Object.keys(ROLE_CONFIGS) as UserRole[]).map((rKey) => {
+                          const r = ROLE_CONFIGS[rKey];
+                          const isSelected = currentRole === rKey;
+                          return (
+                            <button
+                              key={rKey}
+                              type="button"
+                              onClick={() => {
+                                setCurrentRole(rKey);
+                                setShowRoleMenu(false);
+                              }}
+                              className={`w-full text-left px-2.5 py-2 rounded-[10px] text-xs transition flex items-center justify-between ${
+                                isSelected
+                                  ? 'bg-[#B6F23C]/20 text-[var(--text)] font-bold'
+                                  : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                              }`}
+                            >
+                              <span className="truncate">{r.label}</span>
+                              {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#B6F23C] shrink-0 ml-1" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Notifications Alert Dropdown */}
               <div className="relative shrink-0">
                 <button
+                  type="button"
                   onClick={() => setShowNotifMenu(!showNotifMenu)}
-                  className="w-9 h-9 rounded-[12px] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] flex items-center justify-center relative transition nr-focus"
+                  className="w-9 h-9 rounded-[12px] bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)] border border-[var(--border)] flex items-center justify-center relative transition nr-focus"
                   aria-label="View notifications"
+                  title="Operational alerts"
                 >
                   <Bell className="w-4 h-4" />
                   {unreadNotifs.length > 0 && (
@@ -184,21 +258,26 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
                 )}
               </div>
 
-              {/* Dark / Light Mode Toggle */}
+              {/* Dark / Light Theme Toggle Button */}
               <button
+                type="button"
                 onClick={toggleTheme}
-                className="w-9 h-9 rounded-[12px] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] flex items-center justify-center transition nr-focus shrink-0"
+                className="w-9 h-9 rounded-[12px] bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)] border border-[var(--border)] flex items-center justify-center transition nr-focus shrink-0"
                 aria-label="Toggle dark/light theme"
-                title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
+                title={`Switch to ${theme === 'dark' ? 'Light Mode (Soft Mint)' : 'Dark Mode (Night Road)'}`}
               >
-                {theme === 'dark' ? <Sun className="w-4 h-4 text-[#FFC24B]" /> : <Moon className="w-4 h-4 text-[var(--text)]" />}
+                {theme === 'dark' ? <Sun className="w-4 h-4 text-[#B6F23C]" /> : <Moon className="w-4 h-4 text-[#0B2B26]" />}
               </button>
+
+              {/* Subtle Vertical Divider */}
+              <div className="hidden sm:block h-5 w-[1px] bg-[var(--border)]" />
 
               {/* User Avatar Dropdown (Required: Clean name, Role, Logout) */}
               <div className="relative shrink-0">
                 <button
+                  type="button"
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 pl-1 pr-2 h-9 rounded-[12px] hover:bg-[var(--surface-2)] text-[var(--text)] transition-all duration-180 nr-focus border border-transparent hover:border-[var(--border)]"
+                  className="flex items-center gap-2 pl-1 pr-2.5 h-9 rounded-[12px] bg-[var(--surface-2)] hover:bg-[var(--surface-2)]/80 text-[var(--text)] transition-all duration-180 nr-focus border border-[var(--border)] hover:border-[var(--text-muted)]"
                   title="Staff account & session options"
                   aria-label="User account menu"
                 >
@@ -213,8 +292,8 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
                       {user?.name ? user.name.charAt(0) : <UserIcon className="w-3.5 h-3.5" />}
                     </div>
                   )}
-                  <span className="hidden lg:inline text-xs font-heading font-semibold max-w-[90px] truncate whitespace-nowrap">
-                    {user?.name ? user.name.split(' ')[0] : 'Staff'}
+                  <span className="hidden sm:inline text-xs font-heading font-semibold max-w-[110px] truncate whitespace-nowrap">
+                    {user?.name || 'Arthur Pendelton'}
                   </span>
                   <ChevronDown className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0" />
                 </button>
@@ -242,7 +321,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
                         </div>
                       </div>
 
-                      {/* Role / Persona Switcher Section inside User Menu */}
+                      {/* Role Switcher in User Menu */}
                       <div className="p-1.5 border-b border-[var(--border)]">
                         <p className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)] font-bold">
                           Switch Active Role / Persona
@@ -254,6 +333,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle, isMobileMenu
                             return (
                               <button
                                 key={rKey}
+                                type="button"
                                 onClick={() => {
                                   setCurrentRole(rKey);
                                   setShowUserMenu(false);
