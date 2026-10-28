@@ -336,9 +336,6 @@ export function App() {
                         </RoleGuard>
                       }
                     />
-                        </RoleGuard>
-                      }
-                    />
 
                     {/* Mobile Staff App routes (Driver & PA Home) */}
                     <Route path="/app/home" element={<StaffAppHomeRouter />} />
