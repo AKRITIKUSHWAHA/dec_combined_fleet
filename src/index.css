@@ -110,6 +110,122 @@
     overflow-wrap: anywhere;
   }
 
+  /* Responsive Mobile Modal / Full-Screen Sheet:
+     Full viewport on mobile with sticky top bar and bottom footer actions;
+     standard centered card on tablet & desktop */
+  .nr-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  @media (min-width: 640px) {
+    .nr-modal-backdrop {
+      align-items: center;
+      padding: 1rem;
+    }
+  }
+
+  .nr-modal-sheet {
+    background-color: var(--surface);
+    color: var(--text);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    max-height: 94dvh;
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    border: 1px solid var(--border);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+  }
+  @media (min-width: 640px) {
+    .nr-modal-sheet {
+      border-radius: 24px;
+      max-height: 88vh;
+      max-width: 32rem; /* 512px */
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  /* Kanban Snap-Scrolling Columns on Mobile */
+  .kanban-snap-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  .kanban-snap-container::-webkit-scrollbar {
+    height: 4px;
+  }
+  .kanban-snap-container::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+  .kanban-snap-col {
+    scroll-snap-align: center;
+    flex: 0 0 88%;
+    min-width: 88%;
+  }
+  @media (min-width: 640px) {
+    .kanban-snap-col {
+      flex: 0 0 320px;
+      min-width: 320px;
+    }
+  }
+  @media (min-width: 1280px) {
+    .kanban-snap-container {
+      display: grid;
+      overflow-x: visible;
+      scroll-snap-type: none;
+    }
+    .kanban-snap-col {
+      flex: auto;
+      min-width: 0;
+    }
+  }
+
+  /* Sticky first column table & scroll indicator */
+  .table-sticky-first th:first-child,
+  .table-sticky-first td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background-color: var(--surface);
+  }
+  .table-scroll-hint {
+    position: relative;
+  }
+  .table-scroll-hint::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    pointer-events: none;
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.15));
+  }
+  .dark .table-scroll-hint::after {
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.4));
+  }
+
+  /* Horizontally scrollable pill tabs */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   /* JetBrains Mono with tabular numbers for timestamps & mileage */
   .tabular-nums, .font-mono {
     font-family: 'JetBrains Mono', monospace;

@@ -80,7 +80,47 @@ export const SchoolRoutesExtras: React.FC<SchoolRoutesExtrasProps> = ({ currentT
             </button>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* MOBILE: Stacked Term Cards (<md) */}
+          <div className="md:hidden space-y-3">
+            {terms.map(t => (
+              <div key={t.id} className="p-4 rounded-[16px] bg-[var(--surface-2)] border border-[var(--border)] space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
+                  <span className="font-heading font-bold text-xs text-[var(--text)]">{t.name}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono ${
+                    t.type === 'term_time'
+                      ? 'chip-ready'
+                      : t.type === 'half_term'
+                      ? 'chip-due-soon'
+                      : 'chip-blocked'
+                  }`}>
+                    {t.type.replace('_', ' ')}
+                  </span>
+                </div>
+
+                <div className="text-xs space-y-1">
+                  <div className="flex justify-between text-[var(--text-muted)] font-mono text-[11px]">
+                    <span>Duration:</span>
+                    <span className="font-bold text-[var(--text)]">{t.startDate} → {t.endDate}</span>
+                  </div>
+                  <div className="text-[11px] text-[var(--text-muted)]">
+                    Affected: <strong className="text-[var(--text)]">{t.schoolAffected}</strong>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-[var(--border)] flex justify-between items-center text-xs">
+                  <span className="text-[var(--text-muted)]">Fleet Schedule:</span>
+                  {t.type === 'term_time' ? (
+                    <span className="text-[#34D399] font-mono font-bold text-[11px]">Routes Active ✓</span>
+                  ) : (
+                    <span className="text-[var(--text-muted)] font-mono text-[11px]">Routes Suspended</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* DESKTOP: Sticky Table (hidden md:block) */}
+          <div className="hidden md:block overflow-x-auto table-sticky-first table-scroll-hint">
             <table className="w-full text-left text-xs divide-y divide-[var(--border)]">
               <thead className="bg-[var(--surface-2)] text-[var(--text-muted)] font-heading font-semibold">
                 <tr>
@@ -127,7 +167,7 @@ export const SchoolRoutesExtras: React.FC<SchoolRoutesExtrasProps> = ({ currentT
 
       {/* 2. STUDENT ABSENCES & ROUTE SKIPS (Requirement 5) */}
       {currentTab === 'absences' && (
-        <div className="nr-card p-5 sm:p-6 space-y-4">
+        <div className="nr-card p-4 sm:p-6 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] flex-wrap gap-2">
             <div>
               <h3 className="font-heading font-bold text-sm text-[var(--text)]">
@@ -147,7 +187,39 @@ export const SchoolRoutesExtras: React.FC<SchoolRoutesExtrasProps> = ({ currentT
             </button>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* MOBILE: Stacked Absence Cards (<md) */}
+          <div className="md:hidden space-y-3">
+            {absences.map(abs => (
+              <div key={abs.id} className="p-4 rounded-[16px] bg-[var(--surface-2)] border border-[var(--border)] space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
+                  <div>
+                    <span className="font-heading font-bold text-xs text-[var(--text)] block">{abs.studentName}</span>
+                    <span className="font-mono text-[10px] text-[#3FE0C5]">{abs.routeRef}</span>
+                  </div>
+                  <span className="chip-ready px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono">
+                    Skip Stop (-6m)
+                  </span>
+                </div>
+
+                <div className="text-xs space-y-1">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-[var(--text-muted)]">Date:</span>
+                    <span className="font-mono font-bold text-[var(--text)]">{abs.absenceDate}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-[var(--text-muted)]">Reason:</span>
+                    <span className="font-medium text-[var(--text)] capitalize">{abs.reason.replace('_', ' ')}</span>
+                  </div>
+                  <div className="text-[10px] text-[var(--text-muted)] pt-1">
+                    Reported by: {abs.reportedBy} ({abs.reportedAt})
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* DESKTOP: Sticky Table (hidden md:block) */}
+          <div className="hidden md:block overflow-x-auto table-sticky-first table-scroll-hint">
             <table className="w-full text-left text-xs divide-y divide-[var(--border)]">
               <thead className="bg-[var(--surface-2)] text-[var(--text-muted)] font-heading font-semibold">
                 <tr>
@@ -373,56 +445,83 @@ export const SchoolRoutesExtras: React.FC<SchoolRoutesExtrasProps> = ({ currentT
         </div>
       )}
 
-      {/* Failed Handover Escalation Modal */}
+      {/* Failed Handover Escalation Modal (nr-modal-sheet) */}
       {isFailedHandoverModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="nr-card p-6 max-w-md w-full space-y-4 shadow-2xl border border-[var(--border)]">
-            <div className="flex justify-between items-center pb-2 border-b border-[var(--border)]">
+        <div className="nr-modal-backdrop" onClick={() => setIsFailedHandoverModalOpen(false)}>
+          <div className="nr-modal-sheet max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <div className="nr-modal-sheet-header">
               <div>
-                <h3 className="font-heading font-bold text-base text-[#FF5D6C] flex items-center gap-2">
-                  <ShieldAlert className="w-5 h-5" />
-                  <span>Failed Handover Protocol</span>
+                <h3 className="font-heading font-black text-base text-[#FF5D6C] flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5 text-[#FF5D6C]" />
+                  <span>Failed Handover Protocol (SEN-05)</span>
                 </h3>
                 <p className="text-xs text-[var(--text-muted)]">Immediate safeguarding escalation</p>
               </div>
-              <button onClick={() => setIsFailedHandoverModalOpen(false)} className="text-sm font-bold text-[var(--text-muted)]">✕</button>
+              <button 
+                type="button"
+                onClick={() => setIsFailedHandoverModalOpen(false)} 
+                className="p-2 rounded-full hover:bg-[var(--surface-2)] text-[var(--text-muted)]"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-3 bg-[#FF5D6C]/10 border border-[#FF5D6C]/30 rounded-[12px] space-y-1 text-[#FF5D6C]">
-                <span className="font-bold block">Protocol Steps 1 &amp; 2 Enforced:</span>
-                <p className="text-[11px]">
+            <div className="p-4 sm:p-6 space-y-4 text-xs">
+              <div className="p-3 bg-[#FF5D6C]/10 border border-[#FF5D6C]/30 rounded-[14px] space-y-1 text-[#FF5D6C]">
+                <span className="font-bold block text-xs">Protocol Steps 1 &amp; 2 Enforced:</span>
+                <p className="text-[11px] leading-relaxed">
                   1. Driver and PA remain with child in locked vehicle.<br />
                   2. Dispatch controller alerted to dial secondary guardian contacts.<br />
                   3. If unreachable in 15 mins, vehicle re-routed to Dunstable Depot Safe Room.
                 </p>
               </div>
 
-              <div>
-                <label className="font-heading font-semibold text-[var(--text)] block mb-1">Student Subject</label>
-                <input type="text" value={fhoStudent} onChange={(e) => setFhoStudent(e.target.value)} className="nr-input font-bold" />
+              <div className="space-y-1">
+                <label className="font-heading font-bold text-[var(--text)] block text-xs">Student Subject</label>
+                <input 
+                  type="text" 
+                  value={fhoStudent} 
+                  onChange={(e) => setFhoStudent(e.target.value)} 
+                  className="nr-input font-bold !h-[50px] text-sm" 
+                />
               </div>
 
-              <div>
-                <label className="font-heading font-semibold text-[var(--text)] block mb-1">Residence Drop-off Address</label>
-                <input type="text" value={fhoAddress} onChange={(e) => setFhoAddress(e.target.value)} className="nr-input" />
+              <div className="space-y-1">
+                <label className="font-heading font-bold text-[var(--text)] block text-xs">Residence Drop-off Address</label>
+                <input 
+                  type="text" 
+                  value={fhoAddress} 
+                  onChange={(e) => setFhoAddress(e.target.value)} 
+                  className="nr-input !h-[50px] text-sm" 
+                />
               </div>
 
-              <div>
-                <label className="font-heading font-semibold text-[var(--text)] block mb-1">Controller Action Notes</label>
-                <textarea rows={2} value={fhoNotes} onChange={(e) => setFhoNotes(e.target.value)} className="w-full p-2.5 rounded-[12px] bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] text-xs" />
+              <div className="space-y-1">
+                <label className="font-heading font-bold text-[var(--text)] block text-xs">Controller Action Notes</label>
+                <textarea 
+                  rows={2} 
+                  value={fhoNotes} 
+                  onChange={(e) => setFhoNotes(e.target.value)} 
+                  className="w-full p-3 rounded-[14px] bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] text-sm" 
+                />
               </div>
             </div>
 
-            <div className="pt-2 border-t border-[var(--border)] flex gap-2">
-              <button type="button" onClick={() => setIsFailedHandoverModalOpen(false)} className="btn-ghost flex-1 !text-xs !min-h-[42px]">Cancel</button>
+            <div className="nr-modal-sheet-footer">
+              <button 
+                type="button" 
+                onClick={() => setIsFailedHandoverModalOpen(false)} 
+                className="btn-ghost flex-1 !text-xs !min-h-[48px] font-bold"
+              >
+                Cancel
+              </button>
               <button 
                 type="button" 
                 onClick={() => { 
                   setIsFailedHandoverModalOpen(false); 
                   alert('Emergency Handover Incident Logged! Secondary guardian contacted & safe holding room placed on active standby.'); 
                 }} 
-                className="btn-danger flex-1 !text-xs !min-h-[42px]"
+                className="btn-danger flex-1 !text-xs !min-h-[48px] font-bold"
               >
                 Deploy Safe Haven Standby
               </button>
