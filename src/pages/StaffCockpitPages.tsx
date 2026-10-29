@@ -90,11 +90,11 @@ export const DriverCockpitPage: React.FC = () => {
         className="flex items-center justify-between text-white p-4 rounded-[20px] shadow-2xl border border-[var(--border)]"
       >
         <Link 
-          to="/" 
-          className="flex items-center gap-1.5 text-xs font-heading font-semibold text-[#8FB5AA] hover:text-white p-2 focus:outline-none nr-focus rounded-[12px]"
+          to="/dashboard" 
+          className="flex items-center gap-1.5 text-xs font-heading font-extrabold text-[#08201C] bg-[#B6F23C] hover:bg-[#a2dc34] py-1.5 px-3 focus:outline-none nr-focus rounded-[12px] shadow-sm transition active:scale-95"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Exit Cockpit</span>
+          <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+          <span>Back to Dashboard</span>
         </Link>
 
         <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#34D399] flex items-center gap-1.5">
@@ -452,11 +452,11 @@ export const PACockpitPage: React.FC = () => {
         className="flex items-center justify-between text-white p-4 rounded-[20px] shadow-2xl border border-[var(--border)]"
       >
         <Link 
-          to="/" 
-          className="flex items-center gap-1.5 text-xs font-heading font-semibold text-[#8FB5AA] hover:text-white p-2 focus:outline-none nr-focus rounded-[12px]"
+          to="/dashboard" 
+          className="flex items-center gap-1.5 text-xs font-heading font-extrabold text-[#08201C] bg-[#B6F23C] hover:bg-[#a2dc34] py-1.5 px-3 focus:outline-none nr-focus rounded-[12px] shadow-sm transition active:scale-95"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Exit Cockpit</span>
+          <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+          <span>Back to Dashboard</span>
         </Link>
         <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#FF9F6B] flex items-center gap-1.5">
           <GraduationCap className="w-4 h-4" />

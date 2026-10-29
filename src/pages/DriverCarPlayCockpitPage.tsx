@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Navigation,
   Volume2,
@@ -18,12 +18,14 @@ import {
   Split,
   MapPin,
   Check,
-  X
+  X,
+  Smartphone
 } from 'lucide-react';
 import { initialCarPlayNavState, initialDestinationModeConfig, initialSplitPaymentSession } from '../data/mockDataPhase13';
 import { CarPlayNavState, SplitPaymentSession } from '../types/phase13';
 
 export const DriverCarPlayCockpitPage: React.FC = () => {
+  const navigate = useNavigate();
   const [navState, setNavState] = useState<CarPlayNavState>(initialCarPlayNavState);
   const [jobState, setJobState] = useState<'en_route' | 'arrived' | 'pob' | 'completed'>('en_route');
   const [isDestinationModeOn, setIsDestinationModeOn] = useState(false);
@@ -47,6 +49,10 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
   const triggerToast = (msg: string) => {
     setCockpitToast(msg);
     setTimeout(() => setCockpitToast(null), 3500);
+  };
+
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
   };
 
   const handleNextJobState = () => {
@@ -92,20 +98,30 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
       {/* TOP BAR: CarPlay HUD header with Exit, Time, Status, and Speed Limit */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0F2F29] border border-[#24574D] rounded-[24px] px-4 py-3 shadow-xl">
         
-        {/* Left: Exit / Switch View + Mode Tag */}
+        {/* Left: Prominent Back to Dashboard Button + Phone View Toggle */}
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={handleBackToDashboard}
+            className="h-12 sm:h-14 px-4 sm:px-5 rounded-[16px] bg-[#B6F23C] hover:bg-[#a2dc34] text-[#08201C] font-heading font-black text-xs sm:text-sm flex items-center gap-2 transition active:scale-95 shadow-lg shadow-[#B6F23C]/20 shrink-0"
+            title="Return to Main Office Dashboard"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
+            <span>Back to Dashboard</span>
+          </button>
+
           <Link
             to="/driver-cockpit"
-            className="h-12 sm:h-14 px-3 sm:px-4 rounded-[16px] bg-[#164038] hover:bg-[#24574D] border border-[#24574D] flex items-center gap-2 text-xs font-heading font-bold text-[#EAF7F2] transition active:scale-95"
-            title="Switch back to Driver Mobile Phone Portrait View"
+            className="h-12 sm:h-14 px-3 sm:px-4 rounded-[16px] bg-[#164038] hover:bg-[#24574D] border border-[#24574D] flex items-center gap-2 text-xs font-heading font-semibold text-[#8FB5AA] hover:text-[#EAF7F2] transition active:scale-95"
+            title="Switch to Driver Mobile Phone Portrait View"
           >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-[#B6F23C]" />
-            <span>Mobile Phone View</span>
+            <Smartphone className="w-4 h-4 text-[#3FE0C5]" />
+            <span className="hidden sm:inline">Phone View</span>
           </Link>
 
-          <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#B6F23C]/20 text-[#B6F23C] border border-[#B6F23C]/40 uppercase tracking-wider items-center gap-1.5">
+          <span className="hidden lg:inline-flex px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#B6F23C]/20 text-[#B6F23C] border border-[#B6F23C]/40 uppercase tracking-wider items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>CarPlay Cockpit (Landscape In-Car Display)</span>
+            <span>CarPlay In-Car Cockpit</span>
           </span>
         </div>
 
