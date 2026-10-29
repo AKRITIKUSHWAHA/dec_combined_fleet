@@ -251,11 +251,11 @@ export function App() {
                       }
                     />
 
-                    {/* Compliance & DBS Assurance: Owner & HR ONLY */}
+                    {/* Compliance & DBS Assurance: Owner & HR (Full), Controller (Restricted DBS) */}
                     <Route
                       path="/office/compliance"
                       element={
-                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="DVLA & DBS Assurance Portal">
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="DVLA & DBS Assurance Portal">
                           <CompliancePage />
                         </RoleGuard>
                       }
@@ -263,7 +263,7 @@ export function App() {
                     <Route
                       path="/compliance"
                       element={
-                        <RoleGuard allowedRoles={['owner_admin', 'hr_vetting']} featureName="DVLA & DBS Assurance Portal">
+                        <RoleGuard allowedRoles={['owner_admin', 'controller', 'hr_vetting']} featureName="DVLA & DBS Assurance Portal">
                           <CompliancePage />
                         </RoleGuard>
                       }
