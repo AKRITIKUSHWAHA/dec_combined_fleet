@@ -38,8 +38,12 @@ export const AppLayout: React.FC = () => {
         />
 
         {/* Main Content Area: Exactly 16px mobile, 24px tablet, 32px desktop. pb-28 ensures no overlap with bottom nav */}
-        <main className={`flex-1 min-w-0 pb-28 sm:pb-24 lg:pb-10 p-4 sm:p-6 lg:p-8 ${
-          isMobileCockpit ? 'max-w-2xl mx-auto' : isCarPlay ? 'w-full max-w-7xl mx-auto' : ''
+        <main className={`flex-1 min-w-0 pb-28 sm:pb-24 lg:pb-10 ${
+          isMobileCockpit 
+            ? 'max-w-2xl mx-auto p-3 sm:p-6' 
+            : isCarPlay 
+            ? 'w-full max-w-7xl mx-auto p-2 sm:p-4 lg:p-6' 
+            : 'p-4 sm:p-6 lg:p-8'
         }`}>
           <Outlet />
         </main>

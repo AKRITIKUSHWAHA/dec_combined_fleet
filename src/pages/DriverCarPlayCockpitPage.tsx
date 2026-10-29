@@ -96,7 +96,7 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
       )}
 
       {/* TOP BAR: CarPlay HUD header with Exit, Time, Status, and Speed Limit */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0F2F29] border border-[#24574D] rounded-[24px] px-4 py-3 shadow-xl">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#0F2F29] border border-[#24574D] rounded-[24px] p-3 sm:px-4 sm:py-3 shadow-xl">
         
         {/* Left: Prominent Back to Dashboard Button + Phone View Toggle */}
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -119,62 +119,65 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
             <span className="hidden sm:inline">Phone View</span>
           </Link>
 
-          <span className="hidden lg:inline-flex px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#B6F23C]/20 text-[#B6F23C] border border-[#B6F23C]/40 uppercase tracking-wider items-center gap-1.5">
+          <span className="hidden xl:inline-flex px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#B6F23C]/20 text-[#B6F23C] border border-[#B6F23C]/40 uppercase tracking-wider items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>CarPlay In-Car Cockpit</span>
+            <span>CarPlay HUD</span>
           </span>
         </div>
 
-        {/* Center: Destination mode status */}
-        <button
-          type="button"
-          onClick={() => {
-            setIsDestinationModeOn(!isDestinationModeOn);
-            triggerToast(isDestinationModeOn ? 'Destination Mode DISABLED' : 'Destination Mode ACTIVE: Filtering rides towards Bedford MK40');
-          }}
-          className={`h-12 sm:h-14 px-3 sm:px-4 rounded-[16px] border flex items-center gap-2.5 transition active:scale-95 ${
-            isDestinationModeOn
-              ? 'bg-[#3FE0C5]/20 border-[#3FE0C5] text-[#3FE0C5]'
-              : 'bg-[#164038] border-[#24574D] text-[#8FB5AA] hover:text-[#EAF7F2]'
-          }`}
-        >
-          <Compass className={`w-4 h-4 sm:w-5 sm:h-5 ${isDestinationModeOn ? 'animate-spin' : ''}`} />
-          <div className="text-left hidden md:block">
-            <span className="text-[10px] font-mono block uppercase leading-none">Destination Mode</span>
-            <span className="text-xs font-bold leading-none">{isDestinationModeOn ? 'Heading to MK40 3EA' : 'Off (Accept All)'}</span>
-          </div>
-        </button>
+        {/* Center / Right Telematics */}
+        <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+          {/* Destination mode status */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsDestinationModeOn(!isDestinationModeOn);
+              triggerToast(isDestinationModeOn ? 'Destination Mode DISABLED' : 'Destination Mode ACTIVE: Filtering rides towards Bedford MK40');
+            }}
+            className={`h-12 sm:h-14 px-3 sm:px-4 rounded-[16px] border flex items-center gap-2 transition active:scale-95 ${
+              isDestinationModeOn
+                ? 'bg-[#3FE0C5]/20 border-[#3FE0C5] text-[#3FE0C5]'
+                : 'bg-[#164038] border-[#24574D] text-[#8FB5AA] hover:text-[#EAF7F2]'
+            }`}
+          >
+            <Compass className={`w-4 h-4 sm:w-5 sm:h-5 ${isDestinationModeOn ? 'animate-spin' : ''}`} />
+            <div className="text-left hidden md:block">
+              <span className="text-[10px] font-mono block uppercase leading-none">Destination Mode</span>
+              <span className="text-xs font-bold leading-none">{isDestinationModeOn ? 'Heading to MK40' : 'Off (Accept All)'}</span>
+            </div>
+          </button>
 
-        {/* Right: Telematics & Speed Limit Instrument */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* UK Road Speed Limit Circle */}
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white border-4 border-[#FF5D6C] flex flex-col items-center justify-center text-slate-900 shadow-md shrink-0">
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold leading-none">LIMIT</span>
-            <span className="text-sm sm:text-base font-extrabold font-mono leading-tight">{navState.speedLimitMph}</span>
-          </div>
+          {/* Right: Telematics & Speed Limit Instrument */}
+          <div className="flex items-center gap-2">
+            {/* UK Road Speed Limit Circle */}
+            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white border-4 border-[#FF5D6C] flex flex-col items-center justify-center text-slate-900 shadow-md shrink-0">
+              <span className="text-[8px] sm:text-[10px] font-mono font-bold leading-none">LIMIT</span>
+              <span className="text-xs sm:text-base font-extrabold font-mono leading-tight">{navState.speedLimitMph}</span>
+            </div>
 
-          {/* Live GPS Speedometer */}
-          <div className={`h-12 sm:h-14 px-3 sm:px-4 rounded-[18px] border flex flex-col justify-center items-center shrink-0 ${
-            isOverSpeed 
-              ? 'bg-[#FF5D6C]/20 border-[#FF5D6C] text-[#FF5D6C] animate-pulse'
-              : 'bg-[#164038] border-[#24574D] text-[#34D399]'
-          }`}>
-            <span className="text-lg sm:text-xl font-mono font-black tracking-tight leading-none">
-              {navState.currentMph}
-            </span>
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-[#8FB5AA]">
-              MPH GPS
-            </span>
+            {/* Live GPS Speedometer */}
+            <div className={`h-11 sm:h-14 px-2.5 sm:px-4 rounded-[16px] sm:rounded-[18px] border flex flex-col justify-center items-center shrink-0 ${
+              isOverSpeed 
+                ? 'bg-[#FF5D6C]/20 border-[#FF5D6C] text-[#FF5D6C] animate-pulse'
+                : 'bg-[#164038] border-[#24574D] text-[#34D399]'
+            }`}>
+              <span className="text-base sm:text-xl font-mono font-black tracking-tight leading-none">
+                {navState.currentMph}
+              </span>
+              <span className="text-[8px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-[#8FB5AA]">
+                MPH GPS
+              </span>
+            </div>
           </div>
         </div>
 
       </div>
 
       {/* MIDDLE SECTION: Large Navigation Guidance Card */}
-      <div className="my-4 grid grid-cols-1 md:grid-cols-12 gap-4">
+      <div className="my-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
         
         {/* Giant Turn Guidance Panel (Col 8) */}
-        <div className="md:col-span-8 bg-[#0F2F29] border border-[#24574D] rounded-[28px] p-5 sm:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+        <div className="lg:col-span-8 bg-[#0F2F29] border border-[#24574D] rounded-[28px] p-5 sm:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden">
           
           {/* Subtle glow accent */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-[#B6F23C]/5 rounded-full blur-3xl pointer-events-none" />
@@ -190,11 +193,11 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
               <div className="w-16 h-16 sm:w-22 sm:h-22 rounded-[20px] bg-[#B6F23C] text-[#08201C] flex items-center justify-center shrink-0 shadow-lg shadow-[#B6F23C]/20">
                 <Navigation className="w-8 h-8 sm:w-12 sm:h-12 rotate-45 transform" />
               </div>
-              <div className="space-y-1">
-                <h1 className="text-xl sm:text-3xl md:text-4xl font-heading font-black text-[#EAF7F2] tracking-tight">
+              <div className="space-y-1 min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-heading font-black text-[#EAF7F2] tracking-tight break-words">
                   {navState.nextInstruction}
                 </h1>
-                <p className="text-xs sm:text-base text-[#8FB5AA] font-mono">
+                <p className="text-xs sm:text-base text-[#8FB5AA] font-mono break-words">
                   Currently on: <strong className="text-[#EAF7F2]">{navState.currentStreet}</strong> → onto <strong className="text-[#3FE0C5]">{navState.nextStreet}</strong>
                 </p>
               </div>
@@ -203,13 +206,13 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
 
           {/* Current Job Badge */}
           <div className="mt-6 pt-4 border-t border-[#24574D] flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#34D399] animate-ping" />
-              <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#34D399]">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-3 h-3 rounded-full bg-[#34D399] animate-ping shrink-0" />
+              <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#34D399] truncate">
                 Active Ride: DEC-2026-881 • Luton Airport T1 → Cambridge
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setNavState(prev => ({ ...prev, isVoiceMuted: !prev.isVoiceMuted }))}
@@ -224,41 +227,41 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
         </div>
 
         {/* Quick Driver In-Cab Action Buttons (Col 4) */}
-        <div className="md:col-span-4 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-1 gap-3">
+        <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
           
           {/* Contactless / Split Payment Button */}
           <button
             type="button"
             onClick={() => setShowPaymentTerminal(true)}
-            className="h-20 lg:h-24 bg-[#164038] hover:bg-[#24574D] border-2 border-[#3FE0C5]/40 hover:border-[#3FE0C5] rounded-[24px] p-4 flex items-center justify-between transition active:scale-95 text-left group shadow-lg"
+            className="h-20 lg:h-24 bg-[#164038] hover:bg-[#24574D] border-2 border-[#3FE0C5]/40 hover:border-[#3FE0C5] rounded-[24px] p-4 flex items-center justify-between transition active:scale-95 text-left group shadow-lg min-w-0"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
               <div className="w-12 h-12 rounded-[14px] bg-[#3FE0C5]/20 text-[#3FE0C5] flex items-center justify-center shrink-0 group-hover:scale-105 transition">
                 <CreditCard className="w-6 h-6" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <span className="text-xs font-mono uppercase text-[#3FE0C5] block font-bold">In-Cab Terminal</span>
-                <span className="text-sm font-heading font-extrabold text-[#EAF7F2] block">Split &amp; Contactless</span>
+                <span className="text-sm font-heading font-extrabold text-[#EAF7F2] block truncate">Split &amp; Contactless</span>
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-[#8FB5AA] group-hover:text-white" />
+            <ChevronRight className="w-5 h-5 text-[#8FB5AA] group-hover:text-white shrink-0" />
           </button>
 
           {/* Passenger Call Direct Button */}
           <a
             href="tel:07700900122"
-            className="h-20 lg:h-24 bg-[#164038] hover:bg-[#24574D] border border-[#24574D] rounded-[24px] p-4 flex items-center justify-between transition active:scale-95 text-left group shadow-lg"
+            className="h-20 lg:h-24 bg-[#164038] hover:bg-[#24574D] border border-[#24574D] rounded-[24px] p-4 flex items-center justify-between transition active:scale-95 text-left group shadow-lg min-w-0"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
               <div className="w-12 h-12 rounded-[14px] bg-[#FF9F6B]/20 text-[#FF9F6B] flex items-center justify-center shrink-0 group-hover:scale-105 transition">
                 <Phone className="w-6 h-6" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <span className="text-xs font-mono uppercase text-[#8FB5AA] block">Call Passenger</span>
-                <span className="text-sm font-heading font-extrabold text-[#EAF7F2] block">Liam Henderson</span>
+                <span className="text-sm font-heading font-extrabold text-[#EAF7F2] block truncate">Liam Henderson</span>
               </div>
             </div>
-            <span className="text-xs font-mono text-[#34D399] font-bold">Direct Line</span>
+            <span className="text-xs font-mono text-[#34D399] font-bold shrink-0 bg-[#34D399]/15 px-2 py-1 rounded-full border border-[#34D399]/30">Direct</span>
           </a>
 
           {/* Emergency SOS Pulse Button */}
@@ -268,24 +271,24 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
               setEmergencyAlertActive(!emergencyAlertActive);
               triggerToast(emergencyAlertActive ? 'Emergency Stand-Down Sent' : 'EMERGENCY DISPATCH CAD ALERT BROADCAST TO BASE & 999');
             }}
-            className={`h-20 lg:h-24 rounded-[24px] p-4 flex items-center justify-between transition active:scale-95 text-left shadow-lg ${
+            className={`h-20 lg:h-24 rounded-[24px] p-4 flex items-center justify-between transition active:scale-95 text-left shadow-lg min-w-0 ${
               emergencyAlertActive
                 ? 'bg-[#FF5D6C] text-white animate-pulse'
                 : 'bg-[#FF5D6C]/15 border-2 border-[#FF5D6C]/40 hover:border-[#FF5D6C] text-[#FF5D6C]'
             }`}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
               <div className="w-12 h-12 rounded-[14px] bg-[#FF5D6C] text-white flex items-center justify-center shrink-0">
                 <ShieldAlert className="w-6 h-6" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <span className="text-xs font-mono uppercase block font-bold">Emergency Alert</span>
-                <span className="text-sm font-heading font-extrabold block">
+                <span className="text-sm font-heading font-extrabold block truncate">
                   {emergencyAlertActive ? 'ACTIVE SOS PULSING' : 'Tap for Emergency'}
                 </span>
               </div>
             </div>
-            <span className="text-xs font-mono font-black uppercase">SOS</span>
+            <span className="text-xs font-mono font-black uppercase shrink-0 px-2.5 py-1 rounded-full bg-[#FF5D6C]/20 border border-[#FF5D6C]/40">SOS</span>
           </button>
 
         </div>

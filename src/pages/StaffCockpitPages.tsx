@@ -39,6 +39,11 @@ export const DriverCockpitPage: React.FC = () => {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showIncidentModal, setShowIncidentModal] = useState(false);
   const [driverToast, setDriverToast] = useState<string | null>(null);
+  const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
+  const [isSubmittingIncident, setIsSubmittingIncident] = useState(false);
+  const [expensePhotoUrl, setExpensePhotoUrl] = useState<string | null>('https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=60');
+  const [incidentPhotoUrl, setIncidentPhotoUrl] = useState<string | null>('https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400&auto=format&fit=crop&q=60');
+  const [uploadProgress, setUploadProgress] = useState(100);
 
   // Mobile expense form state
   const [expCategory, setExpCategory] = useState<'fuel_diesel' | 'fuel_petrol' | 'ev_charging' | 'adblue' | 'parking_tolls'>('fuel_diesel');
@@ -59,18 +64,54 @@ export const DriverCockpitPage: React.FC = () => {
   const [incInjuryNotes, setIncInjuryNotes] = useState('No injuries. Roadside paramedic clearance.');
   const [incPhotoAttached, setIncPhotoAttached] = useState(true);
 
+  const handleExpensePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadProgress(25);
+      const url = URL.createObjectURL(file);
+      setTimeout(() => setUploadProgress(70), 200);
+      setTimeout(() => {
+        setExpensePhotoUrl(url);
+        setExpReceiptAttached(true);
+        setUploadProgress(100);
+      }, 500);
+    }
+  };
+
+  const handleIncidentPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadProgress(25);
+      const url = URL.createObjectURL(file);
+      setTimeout(() => setUploadProgress(70), 200);
+      setTimeout(() => {
+        setIncidentPhotoUrl(url);
+        setIncPhotoAttached(true);
+        setUploadProgress(100);
+      }, 500);
+    }
+  };
+
   const handleMobileSubmitExpense = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowExpenseModal(false);
-    setDriverToast('Expense receipt successfully submitted! Sent to office controller for approval.');
-    setTimeout(() => setDriverToast(null), 4000);
+    setIsSubmittingExpense(true);
+    setTimeout(() => {
+      setIsSubmittingExpense(false);
+      setShowExpenseModal(false);
+      setDriverToast('Expense receipt successfully submitted! Sent to office controller for approval.');
+      setTimeout(() => setDriverToast(null), 4000);
+    }, 800);
   };
 
   const handleMobileSubmitIncident = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowIncidentModal(false);
-    setDriverToast('INCIDENT REPORT FILED: CAD ref & photos sent to Controller & Aviva Fleet Claims hotline.');
-    setTimeout(() => setDriverToast(null), 5000);
+    setIsSubmittingIncident(true);
+    setTimeout(() => {
+      setIsSubmittingIncident(false);
+      setShowIncidentModal(false);
+      setDriverToast('INCIDENT REPORT FILED: CAD ref & photos sent to Controller & Aviva Fleet Claims hotline.');
+      setTimeout(() => setDriverToast(null), 5000);
+    }, 900);
   };
   
   // Find an active or assigned booking for testing
@@ -226,7 +267,7 @@ export const DriverCockpitPage: React.FC = () => {
             {/* Step 1: En Route (Aqua #3FE0C5) */}
             <button
               onClick={() => updateJobStatus(activeJob.id, 'en_route')}
-              className={`min-h-[56px] p-3 rounded-[14px] font-heading font-bold text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus ${
+              className={`min-h-[64px] p-3 rounded-[16px] font-heading font-black text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus active:scale-[0.98] ${
                 activeJob.status === 'en_route'
                   ? 'bg-[#3FE0C5] text-[#08201C] shadow-aqua-glow ring-2 ring-white'
                   : 'bg-[var(--surface-2)] text-[var(--text)] hover:border-[#3FE0C5] border border-[var(--border)]'
@@ -241,7 +282,7 @@ export const DriverCockpitPage: React.FC = () => {
             {/* Step 2: Arrived (Apricot #FF9F6B) */}
             <button
               onClick={() => updateJobStatus(activeJob.id, 'arrived')}
-              className={`min-h-[56px] p-3 rounded-[14px] font-heading font-bold text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus ${
+              className={`min-h-[64px] p-3 rounded-[16px] font-heading font-black text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus active:scale-[0.98] ${
                 activeJob.status === 'arrived'
                   ? 'bg-[#FF9F6B] text-[#08201C] shadow-md ring-2 ring-white'
                   : 'bg-[var(--surface-2)] text-[var(--text)] hover:border-[#FF9F6B] border border-[var(--border)]'
@@ -256,7 +297,7 @@ export const DriverCockpitPage: React.FC = () => {
             {/* Step 3: POB (Mint #34D399) */}
             <button
               onClick={() => updateJobStatus(activeJob.id, 'pob')}
-              className={`min-h-[56px] p-3 rounded-[14px] font-heading font-bold text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus ${
+              className={`min-h-[64px] p-3 rounded-[16px] font-heading font-black text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus active:scale-[0.98] ${
                 activeJob.status === 'pob'
                   ? 'bg-[#34D399] text-[#08201C] shadow-md ring-2 ring-white'
                   : 'bg-[var(--surface-2)] text-[var(--text)] hover:border-[#34D399] border border-[var(--border)]'
@@ -271,17 +312,58 @@ export const DriverCockpitPage: React.FC = () => {
             {/* Step 4: Job Clear (Signal Lime #B6F23C with Confirm Sheet) */}
             <button
               onClick={() => setShowClearConfirmModal(true)}
-              className={`min-h-[56px] p-3 rounded-[14px] font-heading font-bold text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus ${
+              className={`min-h-[64px] p-3 rounded-[16px] font-heading font-black text-xs uppercase tracking-wider transition-all duration-180 flex flex-col items-center justify-center gap-1 nr-focus active:scale-[0.98] ${
                 activeJob.status === 'completed'
                   ? 'bg-[#B6F23C] text-[#08201C] shadow-lime-glow ring-2 ring-white'
                   : 'bg-[var(--surface-2)] text-[var(--text)] hover:border-[#B6F23C] border border-[var(--border)]'
               }`}
             >
-              <span>4. Job Clear</span>
+              <span>4. Clear Job</span>
               {activeJob.statusTimestamps.jobClear && (
                 <span className="text-[10px] font-mono opacity-80">{activeJob.statusTimestamps.jobClear}</span>
               )}
             </button>
+          </div>
+
+          {/* Dedicated 64px Full-Width Thumb-Reachable Primary Job-Flow Button */}
+          <div className="pt-2">
+            {activeJob.status === 'en_route' ? (
+              <button
+                type="button"
+                onClick={() => updateJobStatus(activeJob.id, 'arrived')}
+                className="btn-job-flow bg-[#FF9F6B] text-[#08201C] hover:brightness-105"
+              >
+                <MapPin className="w-6 h-6 shrink-0" />
+                <span>TAP WHEN ARRIVED AT PICKUP</span>
+              </button>
+            ) : activeJob.status === 'arrived' ? (
+              <button
+                type="button"
+                onClick={() => updateJobStatus(activeJob.id, 'pob')}
+                className="btn-job-flow bg-[#34D399] text-[#08201C] hover:brightness-105"
+              >
+                <CheckCircle2 className="w-6 h-6 shrink-0" />
+                <span>PASSENGER ON BOARD (POB)</span>
+              </button>
+            ) : activeJob.status === 'pob' ? (
+              <button
+                type="button"
+                onClick={() => setShowClearConfirmModal(true)}
+                className="btn-job-flow bg-[#B6F23C] text-[#08201C] hover:brightness-105 shadow-lime-glow"
+              >
+                <Check className="w-6 h-6 stroke-[3] shrink-0" />
+                <span>COMPLETE &amp; CLEAR (£{activeJob.totalGbp.toFixed(2)})</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => updateJobStatus(activeJob.id, 'en_route')}
+                className="btn-job-flow bg-[#3FE0C5] text-[#08201C] hover:brightness-105"
+              >
+                <Navigation className="w-6 h-6 shrink-0" />
+                <span>START JOURNEY &bull; EN ROUTE</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -400,20 +482,425 @@ export const DriverCockpitPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <button
+                type="button"
                 onClick={() => setShowClearConfirmModal(false)}
-                className="btn-ghost flex-1 !min-h-[44px] !text-xs"
+                className="btn-ghost flex-1 !min-h-[48px] !text-xs"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleJobClearConfirm}
-                className="btn-primary flex-1 !min-h-[44px] !text-xs"
+                className="btn-primary flex-1 !min-h-[48px] !text-xs font-bold"
               >
                 Confirm Clear
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Modal 1: Log Vehicle Expense & Fuel Receipt */}
+      {showExpenseModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md">
+          <div className="nr-card w-full sm:max-w-lg rounded-t-[28px] sm:rounded-[28px] p-5 sm:p-7 shadow-2xl space-y-5 max-h-[92dvh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-[12px] bg-[#B6F23C]/20 text-[#08201C] dark:text-[#B6F23C] flex items-center justify-center shrink-0">
+                  <Fuel className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-black text-base text-[var(--text)]">
+                    Log Vehicle Expense
+                  </h3>
+                  <span className="text-xs text-[var(--text-muted)]">Instant fuel &amp; receipt signoff</span>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowExpenseModal(false)}
+                className="p-2.5 rounded-full hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleMobileSubmitExpense} className="space-y-4">
+              
+              {/* Category Selection */}
+              <div>
+                <label className="font-heading font-semibold text-xs text-[var(--text)] block mb-1.5">
+                  Expense Category
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {[
+                    { id: 'fuel_diesel', label: 'Diesel Fuel' },
+                    { id: 'fuel_petrol', label: 'Petrol' },
+                    { id: 'ev_charging', label: 'EV Supercharge' },
+                    { id: 'adblue', label: 'AdBlue DEF' },
+                    { id: 'parking_tolls', label: 'Tolls / Parking' },
+                  ].map(cat => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setExpCategory(cat.id as any)}
+                      className={`h-[48px] px-3 rounded-[12px] text-xs font-heading font-bold border transition text-center ${
+                        expCategory === cat.id
+                          ? 'border-[#B6F23C] bg-[#B6F23C]/20 text-[var(--text)]'
+                          : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Amount and Litres (Single column on mobile, 2 cols on md+) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="font-heading font-semibold text-xs text-[var(--text)] block mb-1">
+                    Total Amount (£ GBP) <span className="text-[#FF5D6C]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    required
+                    value={expAmount}
+                    onChange={e => setExpAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="nr-input font-mono font-bold text-base sm:text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="font-heading font-semibold text-xs text-[var(--text)] block mb-1">
+                    Litres / kWh Dispensed
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={expLitres}
+                    onChange={e => setExpLitres(e.target.value)}
+                    placeholder="e.g. 36.2"
+                    className="nr-input font-mono font-bold text-base sm:text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Vehicle Registration */}
+              <div>
+                <label className="font-heading font-semibold text-xs text-[var(--text)] block mb-1">
+                  Vehicle Registration (VRN) <span className="text-[#FF5D6C]">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  required
+                  value={expReg}
+                  onChange={e => setExpReg(e.target.value.toUpperCase())}
+                  placeholder="e.g. BD24 TYU"
+                  className="nr-input font-mono font-black uppercase text-base sm:text-xs tracking-wider"
+                />
+              </div>
+
+              {/* File / Camera Upload with Thumbnail & Progress */}
+              <div className="space-y-2">
+                <label className="font-heading font-semibold text-xs text-[var(--text)] flex items-center justify-between">
+                  <span>VAT Forecourt Receipt Photo</span>
+                  <span className="text-[10px] text-[#34D399] font-mono">Camera or Gallery</span>
+                </label>
+
+                {expensePhotoUrl ? (
+                  <div className="relative rounded-[16px] overflow-hidden border border-[var(--border)] bg-black/40 p-2 flex items-center gap-3">
+                    <img 
+                      src={expensePhotoUrl} 
+                      alt="Receipt thumbnail" 
+                      className="w-16 h-16 rounded-[12px] object-cover border border-white/20" 
+                    />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-bold text-[var(--text)] block truncate">receipt_forecourt.jpg</span>
+                      <span className="text-[11px] text-[#34D399] font-mono block">✓ Photo verified &bull; {uploadProgress}%</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setExpensePhotoUrl(null)}
+                      className="p-2 rounded-full bg-[#FF5D6C]/20 text-[#FF5D6C] hover:bg-[#FF5D6C] hover:text-white transition"
+                      title="Remove uploaded photo"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      id="expense-receipt-input"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handleExpensePhotoUpload}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="expense-receipt-input"
+                      className="h-[52px] rounded-[14px] border-2 border-dashed border-[#B6F23C]/50 hover:border-[#B6F23C] bg-[var(--surface-2)] flex items-center justify-center gap-2 cursor-pointer text-xs font-heading font-bold text-[var(--text)] transition active:scale-98"
+                    >
+                      <Camera className="w-5 h-5 text-[#B6F23C]" />
+                      <span>Take Photo or Upload Receipt</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons: Stack under 480px */}
+              <div className="pt-3 border-t border-[var(--border)] flex flex-col sm:flex-row gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowExpenseModal(false)}
+                  className="btn-ghost flex-1 !h-[52px] !text-xs order-2 sm:order-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingExpense}
+                  className="btn-primary flex-1 !h-[52px] !text-xs font-black shadow-lime-glow order-1 sm:order-2 flex items-center justify-center gap-2"
+                >
+                  {isSubmittingExpense ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                      <span>Submitting Receipt...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 stroke-[3]" />
+                      <span>Submit Fuel Expense</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Modal 2: Log Roadside Incident & Collision Report */}
+      {showIncidentModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md">
+          <div className="nr-card w-full sm:max-w-lg rounded-t-[28px] sm:rounded-[28px] p-5 sm:p-7 shadow-2xl space-y-5 max-h-[92dvh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-[12px] bg-[#FF5D6C]/20 text-[#FF5D6C] flex items-center justify-center shrink-0">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-black text-base text-[var(--text)]">
+                    Report Road Traffic Incident
+                  </h3>
+                  <span className="text-xs text-[var(--text-muted)]">Immediate Fleet &amp; CAD Notification</span>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowIncidentModal(false)}
+                className="p-2.5 rounded-full hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleMobileSubmitIncident} className="space-y-4">
+              
+              {/* Location */}
+              <div>
+                <label className="font-heading font-semibold text-xs text-[var(--text)] block mb-1">
+                  Incident Location <span className="text-[#FF5D6C]">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={incLocation}
+                  onChange={e => setIncLocation(e.target.value)}
+                  placeholder="e.g. A505 Roundabout Dunstable"
+                  className="nr-input font-medium text-base sm:text-xs"
+                />
+              </div>
+
+              {/* Drivable Status Toggle */}
+              <div>
+                <label className="font-heading font-semibold text-xs text-[var(--text)] block mb-1.5">
+                  Vehicle Drivability Status
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIncDrivable('drivable')}
+                    className={`h-[48px] rounded-[12px] text-xs font-heading font-bold border transition ${
+                      incDrivable === 'drivable'
+                        ? 'border-[#34D399] bg-[#34D399]/20 text-[#34D399]'
+                        : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]'
+                    }`}
+                  >
+                    Vehicle Drivable
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIncDrivable('vor_towed')}
+                    className={`h-[48px] rounded-[12px] text-xs font-heading font-bold border transition ${
+                      incDrivable === 'vor_towed'
+                        ? 'border-[#FF5D6C] bg-[#FF5D6C]/20 text-[#FF5D6C]'
+                        : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]'
+                    }`}
+                  >
+                    VOR / Needs Tow Truck
+                  </button>
+                </div>
+              </div>
+
+              {/* Police CAD and Third Party Reg */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="font-heading font-semibold text-xs text-[var(--text)] block mb-1">
+                    Police CAD Incident Ref
+                  </label>
+                  <input
+                    type="text"
+                    autoCapitalize="characters"
+                    value={incPoliceCad}
+                    onChange={e => setIncPoliceCad(e.target.value.toUpperCase())}
+                    placeholder="e.g. CAD-8812-28OCT"
+                    className="nr-input font-mono font-bold uppercase text-base sm:text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="font-heading font-semibold text-xs text-[var(--text)] block mb-1">
+                    Third-Party Reg (VRN)
+                  </label>
+                  <input
+                    type="text"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    value={incTpReg}
+                    onChange={e => setIncTpReg(e.target.value.toUpperCase())}
+                    placeholder="e.g. FE19 KPL"
+                    className="nr-input font-mono font-bold uppercase text-base sm:text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Third Party Phone & Driver */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="font-heading font-semibold text-xs text-[var(--text)] block mb-1">
+                    Other Driver Name
+                  </label>
+                  <input
+                    type="text"
+                    value={incTpDriver}
+                    onChange={e => setIncTpDriver(e.target.value)}
+                    placeholder="e.g. John Davies"
+                    className="nr-input font-medium text-base sm:text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="font-heading font-semibold text-xs text-[var(--text)] block mb-1">
+                    Other Driver Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    value={incTpPhone}
+                    onChange={e => setIncTpPhone(e.target.value)}
+                    placeholder="07700 900421"
+                    className="nr-input font-mono font-bold text-base sm:text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Scene Photo Upload with Preview */}
+              <div className="space-y-2">
+                <label className="font-heading font-semibold text-xs text-[var(--text)] flex items-center justify-between">
+                  <span>Accident Scene / Damage Photos</span>
+                  <span className="text-[10px] text-[#FF5D6C] font-mono">Mandatory Evidence</span>
+                </label>
+
+                {incidentPhotoUrl ? (
+                  <div className="relative rounded-[16px] overflow-hidden border border-[var(--border)] bg-black/40 p-2 flex items-center gap-3">
+                    <img 
+                      src={incidentPhotoUrl} 
+                      alt="Damage thumbnail" 
+                      className="w-16 h-16 rounded-[12px] object-cover border border-white/20" 
+                    />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-bold text-[var(--text)] block truncate">collision_damage_01.jpg</span>
+                      <span className="text-[11px] text-[#34D399] font-mono block">✓ Damage attached &bull; {uploadProgress}%</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIncidentPhotoUrl(null)}
+                      className="p-2 rounded-full bg-[#FF5D6C]/20 text-[#FF5D6C] hover:bg-[#FF5D6C] hover:text-white transition"
+                      title="Remove scene photo"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      id="incident-photo-input"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handleIncidentPhotoUpload}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="incident-photo-input"
+                      className="h-[52px] rounded-[14px] border-2 border-dashed border-[#FF5D6C]/50 hover:border-[#FF5D6C] bg-[var(--surface-2)] flex items-center justify-center gap-2 cursor-pointer text-xs font-heading font-bold text-[var(--text)] transition active:scale-98"
+                    >
+                      <Camera className="w-5 h-5 text-[#FF5D6C]" />
+                      <span>Take Photo of Vehicle Damage</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-3 border-t border-[var(--border)] flex flex-col sm:flex-row gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowIncidentModal(false)}
+                  className="btn-ghost flex-1 !h-[52px] !text-xs order-2 sm:order-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingIncident}
+                  className="btn-danger flex-1 !h-[52px] !text-xs font-black shadow-lg order-1 sm:order-2 flex items-center justify-center gap-2"
+                >
+                  {isSubmittingIncident ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Transmitting CAD Incident...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldAlert className="w-4 h-4" />
+                      <span>Broadcast Incident to Base</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </form>
+
           </div>
         </div>
       )}

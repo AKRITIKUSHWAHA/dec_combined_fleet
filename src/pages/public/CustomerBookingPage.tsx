@@ -21,7 +21,8 @@ import {
   User,
   Check,
   Eye,
-  EyeOff
+  EyeOff,
+  Loader2
 } from 'lucide-react';
 import { mockCustomerBookings } from '../../data/mockDataPhase12';
 import { 
@@ -75,6 +76,7 @@ export const CustomerBookingPage: React.FC = () => {
 
   // Submitted Confirmation State
   const [submittedBooking, setSubmittedBooking] = useState<CustomerBookingRecord | null>(null);
+  const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
 
   // Dynamic Quote Calculation
   const calculateQuote = () => {
@@ -93,53 +95,57 @@ export const CustomerBookingPage: React.FC = () => {
 
   const handleBookingSubmit = (e: React.FormEvent, forceState?: CustomerBookingState) => {
     e.preventDefault();
+    setIsSubmittingBooking(true);
 
-    // Determine state: if corporate or standard online card, can be confirmed or request received
-    const assignedState: CustomerBookingState = forceState || (paymentMethod === 'card_online' ? 'confirmed' : 'request_received');
-    const newRef = `DEC-BK-${Math.floor(1000 + Math.random() * 9000)}`;
+    setTimeout(() => {
+      // Determine state: if corporate or standard online card, can be confirmed or request received
+      const assignedState: CustomerBookingState = forceState || (paymentMethod === 'card_online' ? 'confirmed' : 'request_received');
+      const newRef = `DEC-BK-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    const newBooking: CustomerBookingRecord = {
-      id: `CBK-${Date.now()}`,
-      bookingRef: newRef,
-      customerName,
-      customerEmail,
-      customerPhone,
-      pickupAddress,
-      pickupPostcode,
-      destinationAddress,
-      destinationPostcode,
-      dateTime: `${date} ${time}`,
-      vehicleCategory,
-      passengerCount: passengers,
-      luggageCount: luggage,
-      accessibility,
-      flightDetails: hasFlight ? {
-        airline,
-        flightNumber,
-        airport: 'Heathrow (LHR)',
-        terminal,
-        landingTime: '08:45',
-        landingBufferMinutes: landingBuffer,
-        meetAndGreet,
-        nameboardText
-      } : undefined,
-      inclusions: [
-        { title: 'Included Mileage Allowance', included: true, detail: '36.5 direct transit miles included in fixed quote' },
-        { title: 'Flight Delay Waiting Buffer', included: hasFlight, detail: `${landingBuffer} mins free waiting after actual landing` },
-        { title: 'Terminal Barrier Drop-off Fee', included: hasFlight, detail: 'Heathrow barrier charge (£6.50) fully covered' },
-        { title: 'Accessibility Specification', included: accessibility.wheelchairRequired || accessibility.hearingLoop, detail: 'Vehicle pre-dispatched matching accessibility profile' },
-        { title: 'Zero Card Processing Fee', included: true, detail: 'No hidden checkout or surcharge fees' }
-      ],
-      quoteGbp: currentQuote,
-      state: assignedState,
-      paymentMethod,
-      corporatePoNumber: corporatePo || undefined,
-      trackingLinkUrl: `/track/${newRef}`,
-      createdAt: 'Just now'
-    };
+      const newBooking: CustomerBookingRecord = {
+        id: `CBK-${Date.now()}`,
+        bookingRef: newRef,
+        customerName,
+        customerEmail,
+        customerPhone,
+        pickupAddress,
+        pickupPostcode,
+        destinationAddress,
+        destinationPostcode,
+        dateTime: `${date} ${time}`,
+        vehicleCategory,
+        passengerCount: passengers,
+        luggageCount: luggage,
+        accessibility,
+        flightDetails: hasFlight ? {
+          airline,
+          flightNumber,
+          airport: 'Heathrow (LHR)',
+          terminal,
+          landingTime: '08:45',
+          landingBufferMinutes: landingBuffer,
+          meetAndGreet,
+          nameboardText
+        } : undefined,
+        inclusions: [
+          { title: 'Included Mileage Allowance', included: true, detail: '36.5 direct transit miles included in fixed quote' },
+          { title: 'Flight Delay Waiting Buffer', included: hasFlight, detail: `${landingBuffer} mins free waiting after actual landing` },
+          { title: 'Terminal Barrier Drop-off Fee', included: hasFlight, detail: 'Heathrow barrier charge (£6.50) fully covered' },
+          { title: 'Accessibility Specification', included: accessibility.wheelchairRequired || accessibility.hearingLoop, detail: 'Vehicle pre-dispatched matching accessibility profile' },
+          { title: 'Zero Card Processing Fee', included: true, detail: 'No hidden checkout or surcharge fees' }
+        ],
+        quoteGbp: currentQuote,
+        state: assignedState,
+        paymentMethod,
+        corporatePoNumber: corporatePo || undefined,
+        trackingLinkUrl: `/track/${newRef}`,
+        createdAt: 'Just now'
+      };
 
-    setSubmittedBooking(newBooking);
-    setBookingsList([newBooking, ...bookingsList]);
+      setSubmittedBooking(newBooking);
+      setBookingsList([newBooking, ...bookingsList]);
+      setIsSubmittingBooking(false);
+    }, 600);
   };
 
   return (
@@ -279,10 +285,29 @@ export const CustomerBookingPage: React.FC = () => {
       ) : activeTab === 'new_booking' ? (
         
         /* NEW BOOKING FORM (Responsive, WCAG AA, Keyboard Friendly) */
-        <form onSubmit={handleBookingSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs">
+        <form onSubmit={handleBookingSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs pb-24 lg:pb-0">
           
           {/* Main 2 Columns: Locations, Flight, Accessibility, Contact */}
           <div className="lg:col-span-2 space-y-6">
+
+            {/* Multi-Step Progress Header */}
+            <div className="bg-[var(--surface-2)] p-4 rounded-[18px] border border-[var(--border)] space-y-2">
+              <div className="flex items-center justify-between text-xs font-heading font-bold">
+                <span className="text-[var(--text)]">Booking Wizard Progress</span>
+                <span className="text-[#3FE0C5] font-mono">Step 1 to 6 &bull; Fixed Price Guarantee</span>
+              </div>
+              <div className="w-full bg-[var(--surface)] h-2 rounded-full overflow-hidden border border-[var(--border)]">
+                <div className="bg-gradient-to-r from-[#3FE0C5] to-[#B6F23C] h-full rounded-full transition-all duration-300 w-full" />
+              </div>
+              <div className="flex justify-between text-[10px] font-mono text-[var(--text-muted)] pt-0.5">
+                <span>1. Route</span>
+                <span>2. Vehicle</span>
+                <span>3. Flight</span>
+                <span>4. Access</span>
+                <span>5. GPS</span>
+                <span>6. Payment</span>
+              </div>
+            </div>
             
             {/* Step 1: Journey Route & Schedule */}
             <div className="nr-card p-5 sm:p-6 space-y-4">
@@ -300,9 +325,10 @@ export const CustomerBookingPage: React.FC = () => {
                     id="pickup"
                     type="text"
                     required
+                    enterKeyHint="next"
                     value={pickupAddress}
                     onChange={(e) => setPickupAddress(e.target.value)}
-                    className="nr-input font-medium"
+                    className="nr-input font-medium text-base sm:text-xs"
                     placeholder="e.g. 14 High Street or Train Station"
                   />
                 </div>
@@ -314,9 +340,12 @@ export const CustomerBookingPage: React.FC = () => {
                     id="pickup_postcode"
                     type="text"
                     required
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    enterKeyHint="next"
                     value={pickupPostcode}
-                    onChange={(e) => setPickupPostcode(e.target.value)}
-                    className="nr-input font-mono font-bold uppercase"
+                    onChange={(e) => setPickupPostcode(e.target.value.toUpperCase())}
+                    className="nr-input font-mono font-bold uppercase text-base sm:text-xs"
                     placeholder="e.g. LU1 3JW"
                   />
                 </div>
@@ -331,9 +360,10 @@ export const CustomerBookingPage: React.FC = () => {
                     id="dest"
                     type="text"
                     required
+                    enterKeyHint="next"
                     value={destinationAddress}
                     onChange={(e) => setDestinationAddress(e.target.value)}
-                    className="nr-input font-medium"
+                    className="nr-input font-medium text-base sm:text-xs"
                     placeholder="e.g. London Heathrow Airport T5"
                   />
                 </div>
@@ -345,24 +375,29 @@ export const CustomerBookingPage: React.FC = () => {
                     id="dest_postcode"
                     type="text"
                     required
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    enterKeyHint="next"
                     value={destinationPostcode}
-                    onChange={(e) => setDestinationPostcode(e.target.value)}
-                    className="nr-input font-mono font-bold uppercase"
+                    onChange={(e) => setDestinationPostcode(e.target.value.toUpperCase())}
+                    className="nr-input font-mono font-bold uppercase text-base sm:text-xs"
                     placeholder="e.g. TW6 2GA"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
                 <div>
                   <label htmlFor="date" className="font-heading font-semibold text-[var(--text)] block mb-1">Date (DD/MM/YYYY)</label>
                   <input
                     id="date"
                     type="text"
                     required
+                    placeholder="DD/MM/YYYY"
+                    inputMode="numeric"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="nr-input font-mono font-bold"
+                    className="nr-input font-mono font-bold text-base sm:text-xs"
                   />
                 </div>
                 <div>
@@ -373,7 +408,7 @@ export const CustomerBookingPage: React.FC = () => {
                     required
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="nr-input font-mono font-bold"
+                    className="nr-input font-mono font-bold text-base sm:text-xs"
                   />
                 </div>
                 <div>
@@ -383,9 +418,10 @@ export const CustomerBookingPage: React.FC = () => {
                     type="number"
                     min="1"
                     max="16"
+                    inputMode="numeric"
                     value={passengers}
                     onChange={(e) => setPassengers(parseInt(e.target.value) || 1)}
-                    className="nr-input font-mono"
+                    className="nr-input font-mono text-base sm:text-xs"
                   />
                 </div>
                 <div>
@@ -395,9 +431,10 @@ export const CustomerBookingPage: React.FC = () => {
                     type="number"
                     min="0"
                     max="16"
+                    inputMode="numeric"
                     value={luggage}
                     onChange={(e) => setLuggage(parseInt(e.target.value) || 0)}
-                    className="nr-input font-mono"
+                    className="nr-input font-mono text-base sm:text-xs"
                   />
                 </div>
               </div>
@@ -664,9 +701,11 @@ export const CustomerBookingPage: React.FC = () => {
                   <input
                     type="text"
                     required
+                    autoComplete="name"
+                    enterKeyHint="next"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="nr-input font-medium"
+                    className="nr-input font-medium text-base sm:text-xs"
                   />
                 </div>
                 <div>
@@ -674,9 +713,13 @@ export const CustomerBookingPage: React.FC = () => {
                   <input
                     type="email"
                     required
+                    inputMode="email"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    enterKeyHint="next"
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
-                    className="nr-input font-medium"
+                    className="nr-input font-medium text-base sm:text-xs"
                   />
                 </div>
                 <div>
@@ -684,9 +727,12 @@ export const CustomerBookingPage: React.FC = () => {
                   <input
                     type="tel"
                     required
+                    inputMode="tel"
+                    autoComplete="tel"
+                    enterKeyHint="done"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
-                    className="nr-input font-mono font-bold"
+                    className="nr-input font-mono font-bold text-base sm:text-xs"
                   />
                 </div>
               </div>
@@ -726,10 +772,12 @@ export const CustomerBookingPage: React.FC = () => {
                     <input
                       type="text"
                       required
+                      autoCapitalize="characters"
+                      autoCorrect="off"
                       placeholder="e.g. PO-AZ-2026-981"
                       value={corporatePo}
                       onChange={(e) => setCorporatePo(e.target.value)}
-                      className="nr-input !h-[38px] font-mono font-bold uppercase text-xs"
+                      className="nr-input !h-[48px] font-mono font-bold uppercase text-base sm:text-xs"
                     />
                   </div>
                 )}
@@ -795,17 +843,28 @@ export const CustomerBookingPage: React.FC = () => {
               <div className="space-y-2 pt-4 border-t border-[var(--border)]">
                 <button
                   type="button"
+                  disabled={isSubmittingBooking}
                   onClick={(e) => handleBookingSubmit(e, 'confirmed')}
-                  className="btn-primary w-full !min-h-[48px] !text-xs !font-bold font-heading"
+                  className="btn-primary w-full !min-h-[52px] !text-xs !font-bold font-heading flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Confirm &amp; Book Now (£{currentQuote.toFixed(2)})</span>
-                  <ArrowRight className="w-4 h-4" />
+                  {isSubmittingBooking ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Confirming Booking...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Confirm &amp; Book Now (£{currentQuote.toFixed(2)})</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
 
                 <button
                   type="button"
+                  disabled={isSubmittingBooking}
                   onClick={(e) => handleBookingSubmit(e, 'request_received')}
-                  className="btn-secondary w-full !min-h-[44px] !text-xs"
+                  className="btn-secondary w-full !min-h-[48px] !text-xs cursor-pointer"
                 >
                   Submit as "Request Received"
                 </button>
@@ -816,6 +875,37 @@ export const CustomerBookingPage: React.FC = () => {
               </div>
 
             </div>
+          </div>
+
+          {/* Sticky Mobile Action Bar: Fixed at bottom with safe-area padding */}
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--surface)]/95 backdrop-blur-md border-t border-[var(--border)] p-3 pb-safe shadow-2xl flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider block font-bold">
+                Fixed Quote
+              </span>
+              <span className="text-xl font-mono font-black text-[#34D399]">
+                £{currentQuote.toFixed(2)}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              disabled={isSubmittingBooking}
+              onClick={(e) => handleBookingSubmit(e, 'confirmed')}
+              className="btn-primary !h-[50px] !px-5 text-xs font-heading font-black shadow-lime-glow flex items-center gap-2 shrink-0 cursor-pointer"
+            >
+              {isSubmittingBooking ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Booking...</span>
+                </>
+              ) : (
+                <>
+                  <span>Confirm &amp; Book</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
           </div>
 
         </form>

@@ -364,30 +364,38 @@ export const BookingsPage: React.FC = () => {
 
       {/* New Booking Modal */}
       {isNewBookingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="nr-card p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md">
+          <div className="nr-card p-5 sm:p-6 w-full sm:max-w-md rounded-t-[28px] sm:rounded-[24px] shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
-              <h3 className="font-heading font-bold text-sm text-[var(--text)]">
+              <h3 className="font-heading font-black text-base text-[var(--text)]">
                 Create New UK Booking
               </h3>
-              <button onClick={() => setIsNewBookingModalOpen(false)}>
-                <X className="w-5 h-5 text-[var(--text-muted)]" />
+              <button 
+                type="button"
+                onClick={() => setIsNewBookingModalOpen(false)}
+                className="p-2 rounded-full hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)]"
+                aria-label="Close modal"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-3.5 text-xs">
               <div>
-                <label className="font-heading font-semibold block mb-1 text-[var(--text)]">Customer / Passenger Name</label>
+                <label className="font-heading font-semibold block mb-1 text-[var(--text)]">
+                  Customer / Passenger Name <span className="text-[#FF5D6C]">*</span>
+                </label>
                 <input
                   type="text"
+                  required
                   placeholder="e.g. Lady Catherine Howard"
                   value={newCustomerName}
                   onChange={e => setNewCustomerName(e.target.value)}
-                  className="nr-input !h-[44px] !px-3"
+                  className="nr-input text-base sm:text-xs"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-heading font-semibold block mb-1 text-[var(--text)]">Pickup Address</label>
                   <input
@@ -395,22 +403,24 @@ export const BookingsPage: React.FC = () => {
                     placeholder="Luton Airport Terminal"
                     value={newPickup}
                     onChange={e => setNewPickup(e.target.value)}
-                    className="nr-input !h-[44px] !px-3"
+                    className="nr-input text-base sm:text-xs"
                   />
                 </div>
                 <div>
                   <label className="font-heading font-semibold block mb-1 text-[var(--text)]">Pickup Postcode</label>
                   <input
                     type="text"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
                     placeholder="LU2 9QT"
                     value={newPickupPostcode}
-                    onChange={e => setNewPickupPostcode(e.target.value)}
-                    className="nr-input !h-[44px] !px-3 font-mono"
+                    onChange={e => setNewPickupPostcode(e.target.value.toUpperCase())}
+                    className="nr-input font-mono font-bold uppercase text-base sm:text-xs"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-heading font-semibold block mb-1 text-[var(--text)]">Destination</label>
                   <input
@@ -418,28 +428,30 @@ export const BookingsPage: React.FC = () => {
                     placeholder="Mayfair, London"
                     value={newDropoff}
                     onChange={e => setNewDropoff(e.target.value)}
-                    className="nr-input !h-[44px] !px-3"
+                    className="nr-input text-base sm:text-xs"
                   />
                 </div>
                 <div>
                   <label className="font-heading font-semibold block mb-1 text-[var(--text)]">Destination Postcode</label>
                   <input
                     type="text"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
                     placeholder="W1K 2AL"
                     value={newDropoffPostcode}
-                    onChange={e => setNewDropoffPostcode(e.target.value)}
-                    className="nr-input !h-[44px] !px-3 font-mono"
+                    onChange={e => setNewDropoffPostcode(e.target.value.toUpperCase())}
+                    className="nr-input font-mono font-bold uppercase text-base sm:text-xs"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-heading font-semibold block mb-1 text-[var(--text)]">Vehicle Category</label>
                   <select
                     value={newVehicleCategory}
                     onChange={e => setNewVehicleCategory(e.target.value as any)}
-                    className="nr-input !h-[44px] !px-3"
+                    className="nr-input text-base sm:text-xs cursor-pointer"
                   >
                     <option value="Saloon">Saloon</option>
                     <option value="Executive">Executive</option>
@@ -451,27 +463,30 @@ export const BookingsPage: React.FC = () => {
                   <label className="font-heading font-semibold block mb-1 text-[var(--text)]">Quoted Fare (GBP £)</label>
                   <input
                     type="text"
+                    inputMode="decimal"
                     value={newFareGbp}
                     onChange={e => setNewFareGbp(e.target.value)}
-                    className="nr-input !h-[44px] !px-3 font-mono font-bold"
+                    className="nr-input font-mono font-bold text-base sm:text-xs"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[var(--border)] flex gap-2">
+            <div className="pt-3 border-t border-[var(--border)] flex flex-col sm:flex-row gap-2.5">
               <button
+                type="button"
                 onClick={() => setIsNewBookingModalOpen(false)}
-                className="btn-ghost flex-1 !text-xs !min-h-[44px]"
+                className="btn-ghost flex-1 !h-[50px] !text-xs order-2 sm:order-1"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => {
                   alert('New booking logged to dispatch queue!');
                   setIsNewBookingModalOpen(false);
                 }}
-                className="btn-primary flex-1 !text-xs !min-h-[44px]"
+                className="btn-primary flex-1 !h-[50px] !text-xs font-bold order-1 sm:order-2"
               >
                 Save &amp; Post
               </button>

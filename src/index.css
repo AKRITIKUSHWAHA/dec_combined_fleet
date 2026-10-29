@@ -95,6 +95,21 @@
     }
   }
 
+  /* Body typography: min 14px, line-height 1.4-1.6 */
+  body, p, span, label, div {
+    line-height: 1.5;
+  }
+  body {
+    font-size: 0.9375rem; /* 15px */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Safe text wrapping utilities */
+  .safe-wrap {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
   /* JetBrains Mono with tabular numbers for timestamps & mileage */
   .tabular-nums, .font-mono {
     font-family: 'JetBrains Mono', monospace;
@@ -294,11 +309,21 @@
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding-left: 2.75rem;
+    padding-left: 1rem;
     padding-right: 1rem;
-    font-size: 0.9375rem;
+    font-size: 16px;
+    line-height: 1.5;
     transition: border-color 180ms ease-out, box-shadow 180ms ease-out;
     width: 100%;
+    box-sizing: border-box;
+  }
+  @media (min-width: 640px) {
+    .nr-input {
+      font-size: 0.9375rem;
+    }
+  }
+  .nr-input.nr-input-with-icon {
+    padding-left: 2.75rem;
   }
   .nr-input:focus {
     outline: none;
@@ -308,6 +333,40 @@
   .nr-input.nr-input-error {
     border-color: #FF5D6C;
     box-shadow: 0 0 0 3px rgba(255, 93, 108, 0.25);
+  }
+
+  /* Responsive button group: stacks vertically on screens < 480px */
+  .btn-group-responsive {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    width: 100%;
+  }
+  @media (min-width: 480px) {
+    .btn-group-responsive {
+      flex-direction: row;
+    }
+  }
+
+  /* 64px thumb-reachable job-flow button */
+  .btn-job-flow {
+    min-height: 64px;
+    width: 100%;
+    border-radius: 18px;
+    font-size: 0.9375rem;
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 180ms ease-out;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    padding: 0.75rem 1.25rem;
+    text-align: center;
+  }
+  .btn-job-flow:active {
+    transform: scale(0.98);
   }
 
   /* Status Chips (15% background tint + colored dot + text label) */

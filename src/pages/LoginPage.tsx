@@ -125,13 +125,40 @@ export const LoginPage: React.FC = () => {
   };
 
   const handleOtpChange = (index: number, val: string) => {
-    if (val.length > 1) val = val.slice(-1);
+    // Only accept numeric characters
+    const cleanVal = val.replace(/\D/g, '');
+    if (cleanVal.length > 1) {
+      val = cleanVal.slice(-1);
+    } else {
+      val = cleanVal;
+    }
     const updated = [...otp];
     updated[index] = val;
     setOtp(updated);
     if (val && index < 5) {
       const nextInput = document.getElementById(`login-otp-${index + 1}`);
       nextInput?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`login-otp-${index - 1}`);
+      prevInput?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').trim().replace(/\D/g, '').slice(0, 6);
+    if (pastedData) {
+      const updated = [...otp];
+      for (let i = 0; i < pastedData.length; i++) {
+        updated[i] = pastedData[i];
+      }
+      setOtp(updated);
+      const targetIndex = Math.min(pastedData.length, 5);
+      document.getElementById(`login-otp-${targetIndex}`)?.focus();
     }
   };
 
@@ -413,9 +440,9 @@ export const LoginPage: React.FC = () => {
           {errorMsg && (
             <div className="p-3.5 rounded-[16px] bg-[#FF5D6C]/15 border border-[#FF5D6C]/40 text-xs text-[#FF5D6C] flex items-start gap-2.5 animate-bounce">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-heading font-bold">Sign-in Error</p>
-                <p className="text-[11px] mt-0.5 opacity-90">{errorMsg}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-heading font-bold text-xs">Sign-in Error</p>
+                <p className="text-xs mt-0.5 opacity-90 break-words leading-relaxed">{errorMsg}</p>
               </div>
             </div>
           )}
@@ -432,11 +459,16 @@ export const LoginPage: React.FC = () => {
                 <Mail className="w-5 h-5 text-[var(--text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  enterKeyHint="next"
                   required
                   placeholder="name@decfleet.co.uk"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-[52px] pl-11 pr-4 rounded-[14px] bg-[var(--surface-2)] border border-[var(--border)] text-xs font-semibold text-[var(--text)] focus:border-[#B6F23C] focus:ring-2 focus:ring-[#B6F23C]/20 outline-none transition"
+                  className="w-full h-[52px] pl-11 pr-4 rounded-[14px] bg-[var(--surface-2)] border border-[var(--border)] text-base sm:text-xs font-semibold text-[var(--text)] focus:border-[#B6F23C] focus:ring-2 focus:ring-[#B6F23C]/20 outline-none transition"
                 />
               </div>
             </div>
@@ -460,46 +492,56 @@ export const LoginPage: React.FC = () => {
                 <Lock className="w-5 h-5 text-[var(--text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  enterKeyHint="go"
                   required
                   placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-[52px] pl-11 pr-12 rounded-[14px] bg-[var(--surface-2)] border border-[var(--border)] text-xs font-mono font-bold text-[var(--text)] focus:border-[#B6F23C] focus:ring-2 focus:ring-[#B6F23C]/20 outline-none transition"
+                  className="w-full h-[52px] pl-11 pr-12 rounded-[14px] bg-[var(--surface-2)] border border-[var(--border)] text-base sm:text-xs font-mono font-bold text-[var(--text)] focus:border-[#B6F23C] focus:ring-2 focus:ring-[#B6F23C]/20 outline-none transition"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] p-1 nr-focus rounded-lg"
                   title="Show/hide password"
+                  aria-label="Toggle password visibility"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* 6-Digit OTP / MFA Step (Shown for Admin and HR) */}
+            {/* 6-Digit OTP / MFA Step (Fits at 320px with Paste & Numeric Pad) */}
             {showMfaInput && (
               <div className="p-4 rounded-[18px] bg-[var(--surface-2)] border border-[var(--border)] space-y-3 animate-in fade-in duration-180">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-1">
                   <label className="text-xs font-heading font-bold text-[var(--text)] flex items-center gap-1.5">
-                    <KeyRound className="w-4 h-4 text-[#B6F23C]" />
-                    <span>2-Factor Staff MFA Verification (6 Digits)</span>
+                    <KeyRound className="w-4 h-4 text-[#B6F23C] shrink-0" />
+                    <span>2-Factor Staff MFA (6 Digits)</span>
                   </label>
                   <span className="text-[10px] font-mono font-bold text-[#3FE0C5] bg-[#3FE0C5]/10 px-2 py-0.5 rounded-full">
-                    Any 6 digits accepted
+                    Auto-advance &bull; Paste supported
                   </span>
                 </div>
                 
-                <div className="flex gap-2 justify-between max-w-xs">
+                <div className="flex gap-1.5 sm:gap-2 justify-between w-full max-w-xs">
                   {otp.map((digit, idx) => (
                     <input
                       key={idx}
                       id={`login-otp-${idx}`}
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="one-time-code"
                       maxLength={1}
                       value={digit}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      onPaste={handleOtpPaste}
                       onChange={(e) => handleOtpChange(idx, e.target.value)}
-                      className="w-10 h-12 text-center font-mono font-black text-base rounded-[12px] bg-[var(--surface)] border border-[var(--border)] focus:border-[#B6F23C] focus:ring-2 focus:ring-[#B6F23C]/30 text-[var(--text)] outline-none transition"
+                      className="w-8 sm:w-10 h-11 sm:h-12 text-center font-mono font-black text-base rounded-[12px] bg-[var(--surface)] border border-[var(--border)] focus:border-[#B6F23C] focus:ring-2 focus:ring-[#B6F23C]/30 text-[var(--text)] outline-none transition"
                     />
                   ))}
                 </div>
@@ -510,7 +552,7 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="btn-primary w-full !text-sm !h-[52px] font-heading font-black shadow-lime-glow mt-2 flex items-center justify-center gap-2 group active:scale-[0.98] transition"
+              className="btn-primary w-full !text-sm !h-[52px] font-heading font-black shadow-lime-glow mt-2 flex items-center justify-center gap-2 group active:scale-[0.98] transition cursor-pointer"
             >
               {isLoading ? (
                 <>
