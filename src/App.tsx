@@ -89,6 +89,15 @@ export function App() {
                   {/* 403 Access Denied explicit route */}
                   <Route path="/403" element={<AccessDeniedPage />} />
 
+                  {/* Phase 12: Public Customer & Guardian Portals under PublicLayout (Strictly no staff menus) */}
+                  <Route element={<PublicLayout />}>
+                    <Route path="/book" element={<CustomerBookingPage />} />
+                    <Route path="/track" element={<CustomerTrackingPage />} />
+                    <Route path="/track/:bookingRef" element={<CustomerTrackingPage />} />
+                    <Route path="/corporate" element={<CorporatePortalPage />} />
+                    <Route path="/parent" element={<ParentTrackingPage />} />
+                  </Route>
+
                   {/* Root path: authenticated role home redirect */}
                   <Route path="/" element={<RootRedirect />} />
 
