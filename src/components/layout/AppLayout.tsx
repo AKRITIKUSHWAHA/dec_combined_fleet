@@ -9,7 +9,9 @@ export const AppLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  const isDedicatedCockpit = location.pathname.includes('-cockpit');
+  const isCarPlay = location.pathname.includes('carplay');
+  const isMobileCockpit = (location.pathname.includes('driver-cockpit') || location.pathname.includes('pa-cockpit') || location.pathname.startsWith('/app/')) && !isCarPlay;
+  const isDedicatedCockpit = isMobileCockpit || isCarPlay;
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col transition-colors duration-180">
@@ -22,7 +24,7 @@ export const AppLayout: React.FC = () => {
 
       <div className="flex-1 flex max-w-[1600px] w-full mx-auto">
         
-        {/* Desktop Sidebar (hidden on mobile & tablet) */}
+        {/* Desktop Sidebar (hidden on mobile & tablet, and in full dedicated cockpits) */}
         {!isDedicatedCockpit && (
           <div className="hidden lg:block">
             <Sidebar />
@@ -35,8 +37,10 @@ export const AppLayout: React.FC = () => {
           onClose={() => setIsMobileMenuOpen(false)} 
         />
 
-        {/* Main Content Area */}
-        <main className={`flex-1 min-w-0 pb-20 lg:pb-10 p-3 sm:p-6 lg:p-8 ${isDedicatedCockpit ? 'max-w-2xl mx-auto' : ''}`}>
+        {/* Main Content Area: Mobile cockpits are max-w-2xl, CarPlay is wide max-w-7xl, standard is full-width */}
+        <main className={`flex-1 min-w-0 pb-20 lg:pb-10 p-3 sm:p-6 lg:p-8 ${
+          isMobileCockpit ? 'max-w-2xl mx-auto' : isCarPlay ? 'w-full max-w-7xl mx-auto' : ''
+        }`}>
           <Outlet />
         </main>
       </div>

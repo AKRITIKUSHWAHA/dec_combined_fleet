@@ -80,7 +80,7 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
   const isOverSpeed = navState.currentMph > navState.speedLimitMph;
 
   return (
-    <div className="min-h-screen bg-[#051412] text-[#EAF7F2] select-none p-3 sm:p-5 flex flex-col justify-between font-sans overflow-x-hidden">
+    <div className="w-full bg-[#051412] text-[#EAF7F2] select-none p-3 sm:p-5 flex flex-col justify-between font-sans overflow-x-hidden rounded-[28px] border border-[#24574D] shadow-2xl">
       
       {/* Toast banner */}
       {cockpitToast && (
@@ -90,24 +90,23 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
       )}
 
       {/* TOP BAR: CarPlay HUD header with Exit, Time, Status, and Speed Limit */}
-      <div className="flex items-center justify-between gap-3 bg-[#0F2F29] border border-[#24574D] rounded-[24px] px-4 py-3 shadow-xl">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0F2F29] border border-[#24574D] rounded-[24px] px-4 py-3 shadow-xl">
         
-        {/* Left: Exit + Mode Tag */}
-        <div className="flex items-center gap-3">
+        {/* Left: Exit / Switch View + Mode Tag */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <Link
             to="/driver-cockpit"
-            className="h-14 px-4 rounded-[16px] bg-[#164038] hover:bg-[#24574D] border border-[#24574D] flex items-center gap-2 text-xs font-heading font-bold text-[#EAF7F2] transition active:scale-95"
+            className="h-12 sm:h-14 px-3 sm:px-4 rounded-[16px] bg-[#164038] hover:bg-[#24574D] border border-[#24574D] flex items-center gap-2 text-xs font-heading font-bold text-[#EAF7F2] transition active:scale-95"
+            title="Switch back to Driver Mobile Phone Portrait View"
           >
-            <ArrowLeft className="w-5 h-5 text-[#B6F23C]" />
-            <span className="hidden sm:inline">Exit Cockpit</span>
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-[#B6F23C]" />
+            <span>Mobile Phone View</span>
           </Link>
 
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#B6F23C]/20 text-[#B6F23C] border border-[#B6F23C]/40 uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Enhancement: CarPlay Cockpit</span>
-            </span>
-          </div>
+          <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#B6F23C]/20 text-[#B6F23C] border border-[#B6F23C]/40 uppercase tracking-wider items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>CarPlay Cockpit (Landscape In-Car Display)</span>
+          </span>
         </div>
 
         {/* Center: Destination mode status */}
@@ -117,13 +116,13 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
             setIsDestinationModeOn(!isDestinationModeOn);
             triggerToast(isDestinationModeOn ? 'Destination Mode DISABLED' : 'Destination Mode ACTIVE: Filtering rides towards Bedford MK40');
           }}
-          className={`h-14 px-4 rounded-[16px] border flex items-center gap-2.5 transition active:scale-95 ${
+          className={`h-12 sm:h-14 px-3 sm:px-4 rounded-[16px] border flex items-center gap-2.5 transition active:scale-95 ${
             isDestinationModeOn
               ? 'bg-[#3FE0C5]/20 border-[#3FE0C5] text-[#3FE0C5]'
               : 'bg-[#164038] border-[#24574D] text-[#8FB5AA] hover:text-[#EAF7F2]'
           }`}
         >
-          <Compass className={`w-5 h-5 ${isDestinationModeOn ? 'animate-spin' : ''}`} />
+          <Compass className={`w-4 h-4 sm:w-5 sm:h-5 ${isDestinationModeOn ? 'animate-spin' : ''}`} />
           <div className="text-left hidden md:block">
             <span className="text-[10px] font-mono block uppercase leading-none">Destination Mode</span>
             <span className="text-xs font-bold leading-none">{isDestinationModeOn ? 'Heading to MK40 3EA' : 'Off (Accept All)'}</span>
@@ -131,23 +130,23 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
         </button>
 
         {/* Right: Telematics & Speed Limit Instrument */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* UK Road Speed Limit Circle */}
-          <div className="w-14 h-14 rounded-full bg-white border-4 border-[#FF5D6C] flex flex-col items-center justify-center text-slate-900 shadow-md shrink-0">
-            <span className="text-[10px] font-mono font-bold leading-none">LIMIT</span>
-            <span className="text-base font-extrabold font-mono leading-tight">{navState.speedLimitMph}</span>
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white border-4 border-[#FF5D6C] flex flex-col items-center justify-center text-slate-900 shadow-md shrink-0">
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold leading-none">LIMIT</span>
+            <span className="text-sm sm:text-base font-extrabold font-mono leading-tight">{navState.speedLimitMph}</span>
           </div>
 
           {/* Live GPS Speedometer */}
-          <div className={`h-14 px-4 rounded-[18px] border flex flex-col justify-center items-center shrink-0 ${
+          <div className={`h-12 sm:h-14 px-3 sm:px-4 rounded-[18px] border flex flex-col justify-center items-center shrink-0 ${
             isOverSpeed 
               ? 'bg-[#FF5D6C]/20 border-[#FF5D6C] text-[#FF5D6C] animate-pulse'
               : 'bg-[#164038] border-[#24574D] text-[#34D399]'
           }`}>
-            <span className="text-xl font-mono font-black tracking-tight leading-none">
+            <span className="text-lg sm:text-xl font-mono font-black tracking-tight leading-none">
               {navState.currentMph}
             </span>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#8FB5AA]">
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-[#8FB5AA]">
               MPH GPS
             </span>
           </div>
@@ -156,10 +155,10 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
       </div>
 
       {/* MIDDLE SECTION: Large Navigation Guidance Card */}
-      <div className="my-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="my-4 grid grid-cols-1 md:grid-cols-12 gap-4">
         
         {/* Giant Turn Guidance Panel (Col 8) */}
-        <div className="lg:col-span-8 bg-[#0F2F29] border border-[#24574D] rounded-[28px] p-6 sm:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+        <div className="md:col-span-8 bg-[#0F2F29] border border-[#24574D] rounded-[28px] p-5 sm:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden">
           
           {/* Subtle glow accent */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-[#B6F23C]/5 rounded-full blur-3xl pointer-events-none" />
@@ -171,15 +170,15 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
               <span className="text-[#3FE0C5] font-bold">ETA {navState.estimatedArrival} ({navState.remainingMinutes}m remaining)</span>
             </div>
 
-            <div className="flex items-start gap-5">
-              <div className="w-18 h-18 sm:w-22 sm:h-22 rounded-[20px] bg-[#B6F23C] text-[#08201C] flex items-center justify-center shrink-0 shadow-lg shadow-[#B6F23C]/20">
-                <Navigation className="w-10 h-10 sm:w-12 sm:h-12 rotate-45 transform" />
+            <div className="flex items-start gap-4 sm:gap-5">
+              <div className="w-16 h-16 sm:w-22 sm:h-22 rounded-[20px] bg-[#B6F23C] text-[#08201C] flex items-center justify-center shrink-0 shadow-lg shadow-[#B6F23C]/20">
+                <Navigation className="w-8 h-8 sm:w-12 sm:h-12 rotate-45 transform" />
               </div>
               <div className="space-y-1">
-                <h1 className="text-2xl sm:text-4xl font-heading font-black text-[#EAF7F2] tracking-tight">
+                <h1 className="text-xl sm:text-3xl md:text-4xl font-heading font-black text-[#EAF7F2] tracking-tight">
                   {navState.nextInstruction}
                 </h1>
-                <p className="text-sm sm:text-base text-[#8FB5AA] font-mono">
+                <p className="text-xs sm:text-base text-[#8FB5AA] font-mono">
                   Currently on: <strong className="text-[#EAF7F2]">{navState.currentStreet}</strong> → onto <strong className="text-[#3FE0C5]">{navState.nextStreet}</strong>
                 </p>
               </div>
@@ -198,7 +197,7 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setNavState(prev => ({ ...prev, isVoiceMuted: !prev.isVoiceMuted }))}
-                className="h-12 px-3 rounded-[14px] bg-[#164038] hover:bg-[#24574D] border border-[#24574D] flex items-center gap-2 text-xs font-semibold text-[#EAF7F2]"
+                className="h-10 sm:h-12 px-3 rounded-[14px] bg-[#164038] hover:bg-[#24574D] border border-[#24574D] flex items-center gap-2 text-xs font-semibold text-[#EAF7F2]"
               >
                 {navState.isVoiceMuted ? <VolumeX className="w-4 h-4 text-[#FF5D6C]" /> : <Volume2 className="w-4 h-4 text-[#3FE0C5]" />}
                 <span>{navState.isVoiceMuted ? 'Muted' : 'Voice ON'}</span>
@@ -209,7 +208,7 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
         </div>
 
         {/* Quick Driver In-Cab Action Buttons (Col 4) */}
-        <div className="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-3">
+        <div className="md:col-span-4 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-1 gap-3">
           
           {/* Contactless / Split Payment Button */}
           <button
@@ -298,7 +297,7 @@ export const DriverCarPlayCockpitPage: React.FC = () => {
           <button
             type="button"
             onClick={handleNextJobState}
-            className={`w-full sm:w-auto min-h-[80px] px-8 sm:px-12 rounded-[22px] font-heading font-extrabold text-lg sm:text-xl flex items-center justify-center gap-4 transition active:scale-95 shadow-2xl ${
+            className={`w-full sm:w-auto min-h-[72px] sm:min-h-[80px] px-6 sm:px-12 rounded-[22px] font-heading font-extrabold text-base sm:text-xl flex items-center justify-center gap-3 sm:gap-4 transition active:scale-95 shadow-2xl text-center ${
               jobState === 'en_route'
                 ? 'bg-gradient-to-r from-[#FFB487] to-[#FF9F6B] text-[#08201C] hover:brightness-105'
                 : jobState === 'arrived'
