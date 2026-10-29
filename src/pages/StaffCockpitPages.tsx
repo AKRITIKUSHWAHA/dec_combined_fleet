@@ -82,7 +82,7 @@ export const DriverCockpitPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 max-w-md mx-auto pb-12 text-[16px]">
+    <div className="space-y-4 w-full max-w-lg mx-auto pb-28 text-[16px]">
       
       {/* Top Mobile App Navigation Bar */}
       <div 
@@ -444,7 +444,7 @@ export const PACockpitPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 max-w-md mx-auto pb-12 text-[16px]">
+    <div className="space-y-4 w-full max-w-lg mx-auto pb-28 text-[16px]">
       
       {/* Top Mobile Bar */}
       <div 
@@ -492,7 +492,7 @@ export const PACockpitPage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => toggleStudentStatus(st.id)}
-                  className={`min-h-[40px] px-3.5 py-1.5 rounded-[12px] font-heading font-bold text-[11px] uppercase transition-all duration-180 ${
+                  className={`min-h-[48px] px-3.5 py-2 rounded-[12px] font-heading font-bold text-[11px] uppercase transition-all duration-180 ${
                     st.status.includes('Handed')
                       ? 'bg-[#3FE0C5]/20 text-[#08201C] dark:text-[#3FE0C5] border border-[#3FE0C5]/40'
                       : 'bg-[#34D399]/20 text-[#08201C] dark:text-[#34D399] border border-[#34D399]/40'

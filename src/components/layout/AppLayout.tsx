@@ -14,9 +14,9 @@ export const AppLayout: React.FC = () => {
   const isDedicatedCockpit = isMobileCockpit || isCarPlay;
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col transition-colors duration-180">
+    <div className="min-h-dvh bg-[var(--bg)] text-[var(--text)] flex flex-col transition-colors duration-180 overflow-x-hidden">
       
-      {/* Top Header */}
+      {/* Top Header with Safe Area Inset */}
       <Header 
         onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
         isMobileMenuOpen={isMobileMenuOpen}
@@ -26,27 +26,27 @@ export const AppLayout: React.FC = () => {
         
         {/* Desktop Sidebar (hidden on mobile & tablet, and in full dedicated cockpits) */}
         {!isDedicatedCockpit && (
-          <div className="hidden lg:block">
+          <div className="hidden lg:block shrink-0">
             <Sidebar />
           </div>
         )}
 
-        {/* Mobile Slideout Drawer */}
+        {/* Mobile / Tablet Collapsible Slideout Drawer */}
         <MobileDrawer 
           isOpen={isMobileMenuOpen} 
           onClose={() => setIsMobileMenuOpen(false)} 
         />
 
-        {/* Main Content Area: Mobile cockpits are max-w-2xl, CarPlay is wide max-w-7xl, standard is full-width */}
-        <main className={`flex-1 min-w-0 pb-20 lg:pb-10 p-3 sm:p-6 lg:p-8 ${
+        {/* Main Content Area: Exactly 16px mobile, 24px tablet, 32px desktop. pb-28 ensures no overlap with bottom nav */}
+        <main className={`flex-1 min-w-0 pb-28 sm:pb-24 lg:pb-10 p-4 sm:p-6 lg:p-8 ${
           isMobileCockpit ? 'max-w-2xl mx-auto' : isCarPlay ? 'w-full max-w-7xl mx-auto' : ''
         }`}>
           <Outlet />
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      {!isDedicatedCockpit && <BottomNav />}
+      {/* Responsive Bottom Navigation (Office or Driver/PA Tab Bar, hidden only on landscape CarPlay) */}
+      {!isCarPlay && <BottomNav />}
     </div>
   );
 };

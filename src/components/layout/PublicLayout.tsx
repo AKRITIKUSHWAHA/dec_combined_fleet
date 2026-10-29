@@ -10,8 +10,7 @@ import {
   Moon, 
   PhoneCall, 
   ShieldCheck, 
-  Lock,
-  ArrowRight
+  Lock
 } from 'lucide-react';
 
 export const PublicLayout: React.FC = () => {
@@ -25,19 +24,22 @@ export const PublicLayout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col transition-colors duration-180 selection:bg-[#B6F23C] selection:text-[#08201C]">
+    <div className="min-h-dvh bg-[var(--bg)] text-[var(--text)] flex flex-col transition-colors duration-180 selection:bg-[#B6F23C] selection:text-[#08201C] overflow-x-hidden">
       
-      {/* Public Header (Strictly NO staff menus or office sidebars) */}
-      <header className="sticky top-0 z-40 bg-[var(--surface)]/90 backdrop-blur-md border-b border-[var(--border)] px-4 sm:px-6 lg:px-8 py-3 transition-colors">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+      {/* Public Header with Safe Area Inset */}
+      <header 
+        className="sticky top-0 z-40 bg-[var(--surface)]/95 backdrop-blur-md border-b border-[var(--border)] px-3 sm:px-6 lg:px-8 py-3 transition-colors select-none"
+        style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}
+      >
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
           
           {/* DEC Brand Wordmark */}
-          <Link to="/book" className="flex items-center gap-3 group nr-focus rounded-[12px] p-1">
+          <Link to="/book" className="flex items-center gap-2.5 sm:gap-3 group nr-focus rounded-[12px] p-1">
             <div className="flex items-baseline">
               <span className="font-heading font-extrabold text-2xl tracking-tight text-[var(--text)] group-hover:text-[#B6F23C] transition-colors">
                 DEC
               </span>
-              <span className="w-5 h-1 bg-[#B6F23C] rounded-full inline-block ml-1 group-hover:w-6 transition-all" />
+              <span className="w-4 h-1 bg-[#B6F23C] rounded-full inline-block ml-1 group-hover:w-6 transition-all" />
             </div>
             <div className="hidden sm:block border-l border-[var(--border)] pl-3">
               <span className="text-[11px] font-heading font-bold uppercase tracking-wider text-[var(--text)] block">
@@ -49,7 +51,7 @@ export const PublicLayout: React.FC = () => {
             </div>
           </Link>
 
-          {/* Navigation Links */}
+          {/* Desktop/Tablet Navigation Links */}
           <nav className="hidden md:flex items-center gap-1 bg-[var(--surface-2)] p-1 rounded-[14px] border border-[var(--border)]" aria-label="Public portals">
             {publicNavLinks.map(link => {
               const Icon = link.icon;
@@ -58,14 +60,14 @@ export const PublicLayout: React.FC = () => {
                   key={link.to}
                   to={link.to}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 px-3 py-1.5 rounded-[10px] text-xs font-heading font-semibold transition-all duration-180 nr-focus ${
+                    `flex items-center gap-2 px-3 py-2 rounded-[10px] text-xs font-heading font-semibold transition-all duration-180 nr-focus min-h-[44px] ${
                       isActive
                         ? 'bg-[#B6F23C] text-[#08201C] font-bold shadow-lime-glow'
                         : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface)]'
                     }`
                   }
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-4 h-4" />
                   <span>{link.label}</span>
                 </NavLink>
               );
@@ -73,39 +75,39 @@ export const PublicLayout: React.FC = () => {
           </nav>
 
           {/* Right Actions: Theme Toggle & Staff Portal Login */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-2 rounded-[12px] bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] hover:border-[#B6F23C] transition nr-focus"
+              className="w-11 h-11 rounded-[12px] bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] hover:border-[#B6F23C] transition nr-focus flex items-center justify-center shrink-0"
               title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
               aria-label="Toggle Night Road theme"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-[#FFC24B]" /> : <Moon className="w-4 h-4 text-[#3FE0C5]" />}
+              {theme === 'dark' ? <Sun className="w-5 h-5 text-[#FFC24B]" /> : <Moon className="w-5 h-5 text-[#3FE0C5]" />}
             </button>
 
             <Link
               to="/login"
-              className="btn-ghost !text-xs !py-1.5 !px-3 !min-h-[36px] hidden sm:flex items-center gap-1.5"
+              className="btn-ghost !text-xs !py-2 !px-3.5 !min-h-[44px] hidden sm:flex items-center gap-1.5"
             >
-              <Lock className="w-3.5 h-3.5" />
+              <Lock className="w-4 h-4" />
               <span>Staff Login</span>
             </Link>
           </div>
 
         </div>
 
-        {/* Mobile Nav Pills on Small Screens */}
-        <div className="md:hidden flex items-center justify-between gap-1 overflow-x-auto pt-2.5 mt-2 border-t border-[var(--border)]">
+        {/* Mobile Navigation Scrollable Pills (Min 44px Touch Targets) */}
+        <div className="md:hidden flex items-center gap-1.5 overflow-x-auto nr-scrollbar pt-2.5 mt-2 border-t border-[var(--border)] pb-1">
           {publicNavLinks.map(link => (
             <NavLink
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `text-[11px] font-heading font-semibold py-1 px-2.5 rounded-[8px] whitespace-nowrap transition ${
+                `text-xs font-heading font-semibold px-3 py-2 rounded-[10px] whitespace-nowrap transition flex items-center gap-1.5 min-h-[44px] shrink-0 ${
                   isActive
-                    ? 'bg-[#B6F23C] text-[#08201C] font-bold'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                    ? 'bg-[#B6F23C] text-[#08201C] font-bold shadow-sm'
+                    : 'text-[var(--text-muted)] bg-[var(--surface-2)] border border-[var(--border)] hover:text-[var(--text)]'
                 }`
               }
             >
@@ -115,7 +117,7 @@ export const PublicLayout: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content (Isolated from staff UI) */}
+      {/* Main Content (Responsive Padding: 16px mobile, 24px tablet, 32px desktop) */}
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8">
         <Outlet />
       </main>
@@ -148,4 +150,3 @@ export const PublicLayout: React.FC = () => {
     </div>
   );
 };
-

@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
 import { useCompany } from '../../context/CompanyContext';
 import { useData } from '../../context/DataContext';
@@ -35,10 +35,16 @@ interface MobileDrawerProps {
 }
 
 export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) => {
+  const location = useLocation();
   const { currentRole } = useRole();
   const { subCompanies, selectedCompanyId, setSelectedCompanyId } = useCompany();
   const { bookings, defects, vehicles } = useData();
   const { user, requestLogout } = useAuth();
+
+  // Close drawer automatically on route change
+  useEffect(() => {
+    if (isOpen) onClose();
+  }, [location.pathname]);
 
   if (!isOpen) return null;
 
@@ -104,7 +110,13 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-[var(--surface)] text-[var(--text)] p-4 flex flex-col shadow-2xl border-r border-[var(--border)] animate-in slide-in-from-left duration-200">
+      <div 
+        className="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-[var(--surface)] text-[var(--text)] p-4 flex flex-col shadow-2xl border-r border-[var(--border)] animate-in slide-in-from-left duration-200"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top, 0px), 16px)',
+          paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)'
+        }}
+      >
         
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-[var(--border)] shrink-0">
@@ -120,7 +132,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-[12px] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] nr-focus"
+            className="w-11 h-11 rounded-[12px] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] flex items-center justify-center nr-focus"
             aria-label="Close navigation"
           >
             <X className="w-5 h-5" />
@@ -132,7 +144,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
           <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)] block mb-1">
             Operating Entity
           </label>
-          <div className="flex items-center gap-2 bg-[var(--surface-2)] p-2 rounded-[12px] border border-[var(--border)]">
+          <div className="flex items-center gap-2 bg-[var(--surface-2)] p-2.5 rounded-[12px] border border-[var(--border)] min-h-[48px]">
             <Building2 className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
             <select
               value={selectedCompanyId}
@@ -162,7 +174,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
                 end={item.to === '/'}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-3.5 py-2.5 rounded-[12px] text-xs font-medium transition-all duration-180 min-h-[44px] ${
+                  `flex items-center justify-between px-3.5 py-2.5 rounded-[12px] text-xs font-medium transition-all duration-180 min-h-[48px] ${
                     isActive
                       ? 'bg-[#B6F23C] text-[#08201C] font-heading font-bold shadow-lime-glow'
                       : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]'

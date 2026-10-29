@@ -172,7 +172,7 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col justify-center items-center p-3 sm:p-6 lg:p-8 relative overflow-hidden select-none transition-colors duration-180">
+    <div className="min-h-dvh bg-[var(--bg)] text-[var(--text)] flex flex-col justify-center items-center p-3 sm:p-6 lg:p-8 relative overflow-hidden select-none transition-colors duration-180">
       
       {/* Ambient background glow orbs */}
       <div 
